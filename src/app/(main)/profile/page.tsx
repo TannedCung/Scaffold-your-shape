@@ -1,0 +1,321 @@
+import React from 'react';
+import { 
+  Container, 
+  Typography, 
+  Box, 
+  Grid, 
+  Card, 
+  CardContent, 
+  Avatar, 
+  Button, 
+  Tabs, 
+  Tab, 
+  Divider,
+  LinearProgress,
+  Stack,
+  Chip
+} from '@mui/material';
+import { 
+  Edit as EditIcon,
+  Settings as SettingsIcon,
+  FitnessCenter as WorkoutIcon,
+  EmojiEvents as AchievementIcon,
+  Groups as ClubsIcon,
+  Timeline as StatsIcon
+} from '@mui/icons-material';
+import MainLayout from '@/components/layout/MainLayout';
+import RecentActivities from '@/components/dashboard/RecentActivities';
+
+export default function ProfilePage() {
+  return (
+    <MainLayout>
+      <Container maxWidth="lg">
+        {/* Profile Header */}
+        <Card sx={{ mb: 4, overflow: 'visible' }}>
+          <Box 
+            sx={{ 
+              height: 200, 
+              backgroundImage: 'linear-gradient(to right, #2da58e, #3b82f6)',
+              position: 'relative'
+            }}
+          />
+          <CardContent 
+            sx={{ 
+              position: 'relative', 
+              mt: -10,
+              pb: 3
+            }}
+          >
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={3} sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-start' } }}>
+                <Avatar 
+                  src="https://source.unsplash.com/random/400x400/?portrait" 
+                  alt="User Profile"
+                  sx={{ 
+                    width: 160,
+                    height: 160,
+                    border: '4px solid white',
+                    boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} md={9}>
+                <Box sx={{ mt: { xs: 2, md: 10 }, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'center', sm: 'flex-end' }, justifyContent: 'space-between' }}>
+                  <Box sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
+                    <Typography variant="h4" component="h1" fontWeight="bold">
+                      John Doe
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary" gutterBottom>
+                      @johndoe • Joined April 2025
+                    </Typography>
+                    <Typography variant="body1" sx={{ mt: 1 }}>
+                      Fitness enthusiast focused on strength training and running. Working towards my first marathon!
+                    </Typography>
+                  </Box>
+                  <Box sx={{ mt: { xs: 2, sm: 0 } }}>
+                    <Button 
+                      variant="outlined" 
+                      startIcon={<EditIcon />} 
+                      sx={{ mr: 1 }}
+                    >
+                      Edit Profile
+                    </Button>
+                    <Button 
+                      variant="outlined" 
+                      startIcon={<SettingsIcon />}
+                    >
+                      Settings
+                    </Button>
+                  </Box>
+                </Box>
+              </Grid>
+            </Grid>
+
+            {/* Stats Cards */}
+            <Grid container spacing={3} sx={{ mt: 2 }}>
+              <Grid item xs={6} sm={3}>
+                <Box sx={{ textAlign: 'center', p: 2, backgroundColor: 'rgba(45, 165, 142, 0.1)', borderRadius: 2 }}>
+                  <Typography variant="h4" fontWeight="bold" color="primary">
+                    156
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Workouts
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={6} sm={3}>
+                <Box sx={{ textAlign: 'center', p: 2, backgroundColor: 'rgba(59, 130, 246, 0.1)', borderRadius: 2 }}>
+                  <Typography variant="h4" fontWeight="bold" color="secondary">
+                    352km
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Distance
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={6} sm={3}>
+                <Box sx={{ textAlign: 'center', p: 2, backgroundColor: 'rgba(16, 185, 129, 0.1)', borderRadius: 2 }}>
+                  <Typography variant="h4" fontWeight="bold" sx={{ color: '#10b981' }}>
+                    12
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Challenges
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={6} sm={3}>
+                <Box sx={{ textAlign: 'center', p: 2, backgroundColor: 'rgba(245, 158, 11, 0.1)', borderRadius: 2 }}>
+                  <Typography variant="h4" fontWeight="bold" sx={{ color: '#f59e0b' }}>
+                    4
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Clubs
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+          </CardContent>
+          
+          {/* Profile Tabs */}
+          <Box sx={{ px: 3 }}>
+            <Tabs value={0}>
+              <Tab icon={<WorkoutIcon />} label="Activities" />
+              <Tab icon={<AchievementIcon />} label="Achievements" />
+              <Tab icon={<ClubsIcon />} label="Clubs" />
+              <Tab icon={<StatsIcon />} label="Stats" />
+            </Tabs>
+          </Box>
+          <Divider />
+        </Card>
+
+        {/* Profile Content */}
+        <Grid container spacing={4}>
+          {/* Activity Feed */}
+          <Grid item xs={12} md={8}>
+            <Typography variant="h5" fontWeight="bold" gutterBottom>
+              Recent Activities
+            </Typography>
+            <RecentActivities activities={[]} />
+          </Grid>
+
+          {/* Sidebar Content */}
+          <Grid item xs={12} md={4}>
+            {/* Current Challenges */}
+            <Card sx={{ mb: 4 }}>
+              <CardContent>
+                <Typography variant="h6" fontWeight="bold" gutterBottom>
+                  Current Challenges
+                </Typography>
+                
+                <Box sx={{ mb: 3 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body1" fontWeight={500}>
+                      30-Day Push-up Challenge
+                    </Typography>
+                    <Typography variant="body2" color="primary">
+                      40%
+                    </Typography>
+                  </Box>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={40} 
+                    sx={{ height: 8, borderRadius: 4, mb: 1 }}
+                  />
+                  <Typography variant="body2" color="text.secondary">
+                    1,200 / 3,000 push-ups • 18 days left
+                  </Typography>
+                </Box>
+                
+                <Box sx={{ mb: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body1" fontWeight={500}>
+                      Cycling Expedition
+                    </Typography>
+                    <Typography variant="body2" color="primary">
+                      40%
+                    </Typography>
+                  </Box>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={40} 
+                    sx={{ height: 8, borderRadius: 4, mb: 1 }}
+                  />
+                  <Typography variant="body2" color="text.secondary">
+                    120 / 300 km • 8 days left
+                  </Typography>
+                </Box>
+                
+                <Button 
+                  variant="outlined" 
+                  fullWidth 
+                  sx={{ mt: 1 }}
+                >
+                  View All Challenges
+                </Button>
+              </CardContent>
+            </Card>
+            
+            {/* Achievements */}
+            <Card sx={{ mb: 4 }}>
+              <CardContent>
+                <Typography variant="h6" fontWeight="bold" gutterBottom>
+                  Recent Achievements
+                </Typography>
+                
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap gap={1} sx={{ mb: 2 }}>
+                  <Chip 
+                    icon={<AchievementIcon />} 
+                    label="First 5K" 
+                    color="primary" 
+                    variant="outlined"
+                  />
+                  <Chip 
+                    icon={<AchievementIcon />} 
+                    label="10K Steps Daily" 
+                    color="primary" 
+                    variant="outlined"
+                  />
+                  <Chip 
+                    icon={<AchievementIcon />} 
+                    label="100 Push-ups" 
+                    color="primary" 
+                    variant="outlined"
+                  />
+                  <Chip 
+                    icon={<AchievementIcon />} 
+                    label="First Challenge" 
+                    color="primary" 
+                    variant="outlined"
+                  />
+                  <Chip 
+                    icon={<AchievementIcon />} 
+                    label="Club Joined" 
+                    color="primary" 
+                    variant="outlined"
+                  />
+                </Stack>
+                
+                <Button 
+                  variant="outlined" 
+                  fullWidth
+                >
+                  View All Achievements
+                </Button>
+              </CardContent>
+            </Card>
+            
+            {/* My Clubs */}
+            <Card>
+              <CardContent>
+                <Typography variant="h6" fontWeight="bold" gutterBottom>
+                  My Clubs
+                </Typography>
+                
+                <Box sx={{ mb: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <Avatar 
+                      src="https://source.unsplash.com/random/100x100/?running" 
+                      alt="Morning Runners"
+                      sx={{ mr: 2 }}
+                    />
+                    <Box>
+                      <Typography variant="body1" fontWeight={500}>
+                        Morning Runners
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        45 members
+                      </Typography>
+                    </Box>
+                  </Box>
+                  
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Avatar 
+                      src="https://source.unsplash.com/random/100x100/?workout" 
+                      alt="Weekend Warriors"
+                      sx={{ mr: 2 }}
+                    />
+                    <Box>
+                      <Typography variant="body1" fontWeight={500}>
+                        Weekend Warriors
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        94 members
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+                
+                <Button 
+                  variant="outlined" 
+                  fullWidth
+                >
+                  View All Clubs
+                </Button>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </Container>
+    </MainLayout>
+  );
+}
