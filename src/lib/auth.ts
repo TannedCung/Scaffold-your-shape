@@ -2,12 +2,18 @@ import NextAuth from 'next-auth';
 import type { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
-import { supabase } from './supabase';
 
 // Generate a default secret for development if not provided
 const defaultSecret = 'THIS_IS_A_DEV_SECRET_DO_NOT_USE_IN_PRODUCTION';
 
-// Define the NextAuth options
+// Simple in-memory user for dev/demo
+const mockUser = {
+  id: '1',
+  email: 'demo@scaffold.com',
+  password: 'demo123',
+  name: 'Demo User',
+};
+
 const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
@@ -21,40 +27,18 @@ const authOptions: NextAuthOptions = {
         password: { label: 'Password', type: 'password' }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null;
-        }
-
-        try {
-          // Use mock user data for development if Supabase credentials aren't set
-          if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-            console.log('Using mock user data for development');
-            return {
-              id: '123456',
-              email: credentials.email,
-              name: 'Test User',
-            };
-          }
-
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email: credentials.email,
-            password: credentials.password,
-          });
-
-          if (error || !data.user) {
-            console.error('Supabase auth error:', error);
-            return null;
-          }
-
+        // Simple local check for demo
+        if (
+          credentials?.email === mockUser.email &&
+          credentials?.password === mockUser.password
+        ) {
           return {
-            id: data.user.id,
-            email: data.user.email,
-            name: data.user.user_metadata?.full_name || data.user.email,
+            id: mockUser.id,
+            email: mockUser.email,
+            name: mockUser.name,
           };
-        } catch (error) {
-          console.error('Auth error:', error);
-          return null;
         }
+        return null;
       }
     })
   ],
@@ -77,7 +61,6 @@ const authOptions: NextAuthOptions = {
       return token;
     },
     async redirect({ url, baseUrl }) {
-      // After sign-in, redirect to dashboard
       if (url === baseUrl || url.startsWith(`${baseUrl}/`)) {
         if (url.includes('callbackUrl=')) {
           const callbackUrl = new URL(url).searchParams.get('callbackUrl');
@@ -97,5 +80,4 @@ const authOptions: NextAuthOptions = {
   debug: process.env.NODE_ENV === 'development',
 };
 
-// Export the authOptions for use in the NextAuth route handler
 export { authOptions };

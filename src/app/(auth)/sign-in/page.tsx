@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { signIn } from "next-auth/react";
 import { 
   Box, 
   Card, 
@@ -105,6 +106,7 @@ export default function SignInPage() {
                   backgroundColor: '#f8f9fa'
                 }
               }}
+              onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
             >
               Sign in with Google
             </MotionButton>
