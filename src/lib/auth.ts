@@ -4,6 +4,9 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import { supabase } from './supabase';
 
+// Generate a default secret for development if not provided
+const defaultSecret = 'THIS_IS_A_DEV_SECRET_DO_NOT_USE_IN_PRODUCTION';
+
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
@@ -22,12 +25,23 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
+          // Use mock user data for development if Supabase credentials aren't set
+          if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+            console.log('Using mock user data for development');
+            return {
+              id: '123456',
+              email: credentials.email,
+              name: 'Test User',
+            };
+          }
+
           const { data, error } = await supabase.auth.signInWithPassword({
             email: credentials.email,
             password: credentials.password,
           });
 
           if (error || !data.user) {
+            console.error('Supabase auth error:', error);
             return null;
           }
 
@@ -65,7 +79,8 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
   },
-  secret: process.env.NEXTAUTH_SECRET
+  secret: process.env.NEXTAUTH_SECRET || defaultSecret,
+  debug: process.env.NODE_ENV === 'development',
 };
 
 export const { handlers, auth, signIn, signOut } = NextAuth(authOptions);

@@ -95,7 +95,7 @@ export default function Sidebar({ isMobile, open, onClose, width = 280 }: Sideba
                 <ListItemButton 
                   selected={pathname === item.path}
                   sx={{ 
-                    borderRadius: '0 24px 24px 0',
+                    borderRadius: '16px',
                     mx: 1,
                     '&.Mui-selected': {
                       backgroundColor: 'rgba(45, 165, 142, 0.12)',
