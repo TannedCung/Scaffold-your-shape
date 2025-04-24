@@ -10,7 +10,6 @@ import {
   Button, 
   Divider, 
   Container,
-  Link as MuiLink,
   InputAdornment,
   IconButton,
   Checkbox,
@@ -32,7 +31,6 @@ const MotionTypography = motion(Typography);
 const MotionButton = motion(Button);
 const MotionTextField = motion(TextField);
 const MotionDivider = motion(Divider);
-const MotionFormControlLabel = motion(FormControlLabel);
 
 export default function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false);

@@ -3,7 +3,6 @@ import {
   Container, 
   Typography, 
   Box, 
-  Grid, 
   Card, 
   CardContent, 
   Avatar, 
@@ -27,6 +26,8 @@ import MainLayout from '@/components/layout/MainLayout';
 import RecentActivities from '@/components/dashboard/RecentActivities';
 
 export default function ProfilePage() {
+  // TODO: Replace hardcoded userId with actual session user id from next-auth
+  const userId = undefined;
   return (
     <MainLayout>
       <Container maxWidth="lg">
@@ -46,8 +47,16 @@ export default function ProfilePage() {
               pb: 3
             }}
           >
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={3} sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-start' } }}>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', md: '3fr 9fr' },
+                gap: 3,
+                alignItems: 'center',
+                mb: 3,
+              }}
+            >
+              <Box sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-start' } }}>
                 <Avatar 
                   src="https://source.unsplash.com/random/400x400/?portrait" 
                   alt="User Profile"
@@ -58,8 +67,8 @@ export default function ProfilePage() {
                     boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
                   }}
                 />
-              </Grid>
-              <Grid item xs={12} md={9}>
+              </Box>
+              <Box>
                 <Box sx={{ mt: { xs: 2, md: 10 }, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'center', sm: 'flex-end' }, justifyContent: 'space-between' }}>
                   <Box sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
                     <Typography variant="h4" component="h1" fontWeight="bold">
@@ -88,52 +97,51 @@ export default function ProfilePage() {
                     </Button>
                   </Box>
                 </Box>
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
 
             {/* Stats Cards */}
-            <Grid container spacing={3} sx={{ mt: 2 }}>
-              <Grid item xs={6} sm={3}>
-                <Box sx={{ textAlign: 'center', p: 2, backgroundColor: 'rgba(45, 165, 142, 0.1)', borderRadius: 2 }}>
-                  <Typography variant="h4" fontWeight="bold" color="primary">
-                    156
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Workouts
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={6} sm={3}>
-                <Box sx={{ textAlign: 'center', p: 2, backgroundColor: 'rgba(59, 130, 246, 0.1)', borderRadius: 2 }}>
-                  <Typography variant="h4" fontWeight="bold" color="secondary">
-                    352km
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Distance
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={6} sm={3}>
-                <Box sx={{ textAlign: 'center', p: 2, backgroundColor: 'rgba(16, 185, 129, 0.1)', borderRadius: 2 }}>
-                  <Typography variant="h4" fontWeight="bold" sx={{ color: '#10b981' }}>
-                    12
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Challenges
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={6} sm={3}>
-                <Box sx={{ textAlign: 'center', p: 2, backgroundColor: 'rgba(245, 158, 11, 0.1)', borderRadius: 2 }}>
-                  <Typography variant="h4" fontWeight="bold" sx={{ color: '#f59e0b' }}>
-                    4
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Clubs
-                  </Typography>
-                </Box>
-              </Grid>
-            </Grid>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' },
+                gap: 3,
+                mb: 3,
+              }}
+            >
+              <Box sx={{ textAlign: 'center', p: 2, backgroundColor: 'rgba(45, 165, 142, 0.1)', borderRadius: 2 }}>
+                <Typography variant="h4" fontWeight="bold" color="primary">
+                  156
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Workouts
+                </Typography>
+              </Box>
+              <Box sx={{ textAlign: 'center', p: 2, backgroundColor: 'rgba(59, 130, 246, 0.1)', borderRadius: 2 }}>
+                <Typography variant="h4" fontWeight="bold" color="secondary">
+                  352km
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Distance
+                </Typography>
+              </Box>
+              <Box sx={{ textAlign: 'center', p: 2, backgroundColor: 'rgba(16, 185, 129, 0.1)', borderRadius: 2 }}>
+                <Typography variant="h4" fontWeight="bold" sx={{ color: '#10b981' }}>
+                  12
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Challenges
+                </Typography>
+              </Box>
+              <Box sx={{ textAlign: 'center', p: 2, backgroundColor: 'rgba(245, 158, 11, 0.1)', borderRadius: 2 }}>
+                <Typography variant="h4" fontWeight="bold" sx={{ color: '#f59e0b' }}>
+                  4
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Clubs
+                </Typography>
+              </Box>
+            </Box>
           </CardContent>
           
           {/* Profile Tabs */}
@@ -149,17 +157,24 @@ export default function ProfilePage() {
         </Card>
 
         {/* Profile Content */}
-        <Grid container spacing={4}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '8fr 4fr' },
+            gap: 4,
+            mb: 4,
+          }}
+        >
           {/* Activity Feed */}
-          <Grid item xs={12} md={8}>
+          <Box>
             <Typography variant="h5" fontWeight="bold" gutterBottom>
               Recent Activities
             </Typography>
-            <RecentActivities activities={[]} />
-          </Grid>
+            <RecentActivities userId={userId} />
+          </Box>
 
           {/* Sidebar Content */}
-          <Grid item xs={12} md={4}>
+          <Box>
             {/* Current Challenges */}
             <Card sx={{ mb: 4 }}>
               <CardContent>
@@ -313,8 +328,8 @@ export default function ProfilePage() {
                 </Button>
               </CardContent>
             </Card>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       </Container>
     </MainLayout>
   );

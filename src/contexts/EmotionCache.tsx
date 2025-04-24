@@ -45,8 +45,8 @@ export function NextAppDirEmotionCacheProvider(props: NextAppDirEmotionCacheProv
       return null;
     }
 
-    let styles = '';
-    let dataEmotionAttributes = new Set<string>();
+    const styles = '';
+    const dataEmotionAttributes = new Set<string>();
 
     inserted.forEach(({ name, isGlobal }) => {
       dataEmotionAttributes.add(`${registry.cache.key}-${name}`);

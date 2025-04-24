@@ -1,21 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, IconButton, 
-  Typography, Avatar, Divider, Tooltip } from '@mui/material';
+  Typography, Avatar, Divider } from '@mui/material';
 import { 
   Dashboard as DashboardIcon,
   People as ClubIcon,
   EmojiEvents as ChallengesIcon,
   Person as ProfileIcon,
   FitnessCenter as FitnessIcon,
-  Menu as MenuIcon,
   Close as CloseIcon 
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { motion } from 'framer-motion';
 
 interface SidebarProps {
   isMobile: boolean;

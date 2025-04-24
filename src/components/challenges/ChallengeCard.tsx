@@ -9,17 +9,10 @@ import {
   Box, 
   Button, 
   LinearProgress, 
-  Chip, 
-  Avatar, 
-  AvatarGroup,
-  useTheme
+  Chip
 } from '@mui/material';
-import { 
-  DateRange as DateIcon,
-  People as PeopleIcon,
-  EmojiEvents as TrophyIcon
-} from '@mui/icons-material';
-import Link from 'next/link';
+import DateRangeIcon from '@mui/icons-material/DateRange';
+import PeopleIcon from '@mui/icons-material/People';
 import { Challenge } from '@/types';
 import { motion } from 'framer-motion';
 
@@ -39,7 +32,6 @@ export default function ChallengeCard({
   isParticipant = false, 
   currentProgress = 0 
 }: ChallengeCardProps) {
-  const theme = useTheme();
   
   // Calculate days remaining
   const endDate = new Date(challenge.endDate);
@@ -205,7 +197,7 @@ export default function ChallengeCard({
             color: 'text.secondary' 
           }}
         >
-          <DateIcon fontSize="small" sx={{ mr: 1 }} />
+          <DateRangeIcon fontSize="small" sx={{ mr: 1 }} />
           <Typography variant="body2">
             {dateRange}
           </Typography>

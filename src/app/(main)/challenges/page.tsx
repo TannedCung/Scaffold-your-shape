@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useChallenges } from '@/hooks/useChallenges';
 import { 
   Container, 
   Typography, 
@@ -14,8 +15,7 @@ import {
   MenuItem,
   Select,
   FormControl,
-  InputLabel,
-  Stack
+  InputLabel
 } from '@mui/material';
 import { 
   Search as SearchIcon,
@@ -26,12 +26,7 @@ import MainLayout from '@/components/layout/MainLayout';
 import ChallengeCard from '@/components/challenges/ChallengeCard';
 import { Challenge } from '@/types';
 import { motion } from 'framer-motion';
-import { 
-  containerVariants, 
-  fadeInUp, 
-  itemVariants, 
-  staggerChildren 
-} from '@/utils/animations';
+import { fadeInUp } from '@/utils/animations';
 
 // Create motion components
 const MotionBox = motion(Box);
@@ -39,99 +34,7 @@ const MotionTypography = motion(Typography);
 const MotionButton = motion(Button);
 
 export default function ChallengesPage() {
-  // Sample challenges data
-  const challenges: Challenge[] = [
-    {
-      id: '1',
-      title: '30-Day Push-up Challenge',
-      description: 'Push yourself to the limit with 100 push-ups every day for 30 days.',
-      creatorId: 'user1',
-      exerciseId: 'push-up',
-      targetValue: 3000,
-      unit: 'reps',
-      startDate: '2025-05-01T00:00:00Z',
-      endDate: '2025-05-30T23:59:59Z',
-      isPublic: true,
-      participantCount: 124,
-      createdAt: '2025-04-15T00:00:00Z',
-      updatedAt: '2025-04-15T00:00:00Z'
-    },
-    {
-      id: '2',
-      title: 'May Marathon',
-      description: 'Run a full marathon (42.2km) during the month of May at your own pace.',
-      creatorId: 'user2',
-      activityType: 'run',
-      targetValue: 42200,
-      unit: 'meters',
-      startDate: '2025-05-01T00:00:00Z',
-      endDate: '2025-05-31T23:59:59Z',
-      isPublic: true,
-      participantCount: 89,
-      createdAt: '2025-04-10T00:00:00Z',
-      updatedAt: '2025-04-10T00:00:00Z'
-    },
-    {
-      id: '3',
-      title: 'Summer Swimming Sprint',
-      description: 'Swim a total of 10km during the summer months.',
-      creatorId: 'user3',
-      activityType: 'swim',
-      targetValue: 10000,
-      unit: 'meters',
-      startDate: '2025-06-01T00:00:00Z',
-      endDate: '2025-08-31T23:59:59Z',
-      isPublic: true,
-      participantCount: 67,
-      createdAt: '2025-04-20T00:00:00Z',
-      updatedAt: '2025-04-20T00:00:00Z'
-    },
-    {
-      id: '4',
-      title: 'Weekly Pull-Up Challenge',
-      description: 'Complete 100 pull-ups each week for 4 weeks.',
-      creatorId: 'user4',
-      exerciseId: 'pull-up',
-      targetValue: 400,
-      unit: 'reps',
-      startDate: '2025-05-01T00:00:00Z',
-      endDate: '2025-05-28T23:59:59Z',
-      isPublic: true,
-      participantCount: 45,
-      createdAt: '2025-04-15T00:00:00Z',
-      updatedAt: '2025-04-15T00:00:00Z'
-    },
-    {
-      id: '5',
-      title: 'Cycling Expedition',
-      description: 'Cycle 300km in one month to build endurance and improve cardiovascular health.',
-      creatorId: 'user5',
-      activityType: 'cycle',
-      targetValue: 300000,
-      unit: 'meters',
-      startDate: '2025-05-01T00:00:00Z',
-      endDate: '2025-05-31T23:59:59Z',
-      isPublic: true,
-      participantCount: 112,
-      createdAt: '2025-04-05T00:00:00Z',
-      updatedAt: '2025-04-05T00:00:00Z'
-    },
-    {
-      id: '6',
-      title: 'Walking for Wellness',
-      description: 'Walk 10,000 steps every day for 30 days to improve health and wellbeing.',
-      creatorId: 'user6',
-      activityType: 'walk',
-      targetValue: 300000,
-      unit: 'meters',
-      startDate: '2025-05-01T00:00:00Z',
-      endDate: '2025-05-30T23:59:59Z',
-      isPublic: true,
-      participantCount: 203,
-      createdAt: '2025-04-12T00:00:00Z',
-      updatedAt: '2025-04-12T00:00:00Z'
-    }
-  ];
+  const { challenges, loading, error } = useChallenges();
 
   // My challenges (sample data)
   const myChallenges: { challengeId: string; progress: number }[] = [
@@ -266,6 +169,9 @@ export default function ChallengesPage() {
             </Box>
           </Box>
         </MotionBox>
+
+        {loading && <Typography>Loading...</Typography>}
+        {error && <Typography color="error">{error}</Typography>}
 
         {/* Trending Challenges Section */}
         <MotionBox 

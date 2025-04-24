@@ -2,7 +2,7 @@
 
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { ReactNode, useState, useEffect } from 'react';
+import { ReactNode } from 'react';
 import { NextAppDirEmotionCacheProvider } from './EmotionCache';
 
 // Create the theme server-side (static definition)

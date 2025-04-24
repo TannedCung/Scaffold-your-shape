@@ -11,7 +11,6 @@ import {
   Button, 
   Divider, 
   Container,
-  Link as MuiLink,
   InputAdornment,
   IconButton 
 } from '@mui/material';
@@ -22,7 +21,7 @@ import {
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { fadeIn, fadeInUp, staggerChildren, itemVariants } from '@/utils/animations';
+import { fadeIn, fadeInUp, staggerChildren } from '@/utils/animations';
 
 // Create motion components
 const MotionBox = motion(Box);
@@ -120,11 +119,11 @@ export default function SignInPage() {
                 my: 3 
               }}
             >
-              <MotionDivider sx={{ flexGrow: 1 }} variants={itemVariants} />
+              <MotionDivider sx={{ flexGrow: 1 }} variants={fadeInUp} />
               <Typography variant="body2" color="text.secondary" sx={{ mx: 2 }}>
                 OR
               </Typography>
-              <MotionDivider sx={{ flexGrow: 1 }} variants={itemVariants} />
+              <MotionDivider sx={{ flexGrow: 1 }} variants={fadeInUp} />
             </Box>
             
             <Box 
@@ -141,7 +140,7 @@ export default function SignInPage() {
                 name="email"
                 autoComplete="email"
                 autoFocus
-                variants={itemVariants}
+                variants={fadeInUp}
                 sx={{ mb: 2 }}
               />
               <MotionTextField
@@ -153,7 +152,7 @@ export default function SignInPage() {
                 type={showPassword ? "text" : "password"}
                 id="password"
                 autoComplete="current-password"
-                variants={itemVariants}
+                variants={fadeInUp}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
@@ -166,7 +165,7 @@ export default function SignInPage() {
               />
               <Box 
                 component={motion.div} 
-                variants={itemVariants} 
+                variants={fadeInUp} 
                 sx={{ 
                   textAlign: 'right', 
                   mt: 1, 
@@ -203,7 +202,7 @@ export default function SignInPage() {
                     bgcolor: '#1b7d6b',
                   }
                 }}
-                variants={itemVariants}
+                variants={fadeInUp}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -211,13 +210,13 @@ export default function SignInPage() {
               </MotionButton>
               <Box 
                 component={motion.div} 
-                variants={itemVariants} 
+                variants={fadeInUp} 
                 sx={{ 
                   textAlign: 'center' 
                 }}
               >
                 <Typography variant="body2">
-                  Don't have an account?{' '}
+                  Don&apos;t have an account?{' '}
                   <Link href="/sign-up" passHref>
                     <Typography
                       component="span"

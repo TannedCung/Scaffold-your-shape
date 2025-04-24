@@ -146,7 +146,7 @@ export default function Header({ onMenuClick, sidebarOpen = true, sidebarWidth =
                 <Box sx={{ width: '100%' }}>
                   <Typography variant="subtitle2">Activity Milestone</Typography>
                   <Typography variant="body2" color="text.secondary">
-                    You've reached 100km of running this month!
+                    You&apos;ve reached 100km of running this month!
                   </Typography>
                 </Box>
               </MenuItem>

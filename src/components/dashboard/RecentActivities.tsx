@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useActivities } from '@/hooks/useActivities';
 import { 
   Card, 
   CardHeader, 
@@ -9,7 +10,6 @@ import {
   List, 
   ListItem, 
   ListItemText,
-  ListItemIcon,
   ListItemAvatar,
   Avatar,
   Divider,
@@ -43,62 +43,12 @@ type Activity = {
 };
 
 interface RecentActivitiesProps {
-  activities: Activity[];
+  userId?: string;
 }
 
-export default function RecentActivities({ activities = [] }: RecentActivitiesProps) {
+export default function RecentActivities({ userId }: RecentActivitiesProps) {
   const theme = useTheme();
-
-  // Use sample data if no activities are provided
-  const sampleActivities: Activity[] = [
-    { 
-      id: '1', 
-      type: 'workout', 
-      name: 'Push-ups', 
-      date: '2025-04-23T10:30:00', 
-      value: 50, 
-      unit: 'reps',
-      timeAgo: '2 hours ago'
-    },
-    { 
-      id: '2', 
-      type: 'run', 
-      name: 'Morning Run', 
-      date: '2025-04-23T07:15:00', 
-      value: 5000, 
-      unit: 'meters',
-      timeAgo: '5 hours ago'
-    },
-    { 
-      id: '3', 
-      type: 'workout', 
-      name: 'Pull-ups', 
-      date: '2025-04-22T18:45:00', 
-      value: 15, 
-      unit: 'reps',
-      timeAgo: '1 day ago'
-    },
-    { 
-      id: '4', 
-      type: 'swim', 
-      name: 'Evening Swim', 
-      date: '2025-04-22T19:30:00', 
-      value: 1000, 
-      unit: 'meters',
-      timeAgo: '1 day ago'
-    },
-    { 
-      id: '5', 
-      type: 'bike', 
-      name: 'Weekend Ride', 
-      date: '2025-04-21T10:00:00', 
-      value: 15000, 
-      unit: 'meters',
-      timeAgo: '2 days ago'
-    }
-  ];
-
-  const displayActivities = activities.length > 0 ? activities : sampleActivities;
+  const { activities, loading, error } = useActivities(userId);
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -155,6 +105,9 @@ export default function RecentActivities({ activities = [] }: RecentActivitiesPr
     }
   };
 
+  if (loading) return <Typography>Loading...</Typography>;
+  if (error) return <Typography color="error">{error}</Typography>;
+
   return (
     <MotionCard 
       initial={{ opacity: 0, y: 20 }}
@@ -180,7 +133,7 @@ export default function RecentActivities({ activities = [] }: RecentActivitiesPr
           animate="visible"
           sx={{ padding: 0 }}
         >
-          {displayActivities.map((activity, index) => (
+          {activities.map((activity, index) => (
             <React.Fragment key={activity.id}>
               <MotionListItem 
                 variants={itemVariants}
@@ -227,7 +180,7 @@ export default function RecentActivities({ activities = [] }: RecentActivitiesPr
                   }
                 />
               </MotionListItem>
-              {index < displayActivities.length - 1 && <Divider component="li" />}
+              {index < activities.length - 1 && <Divider component="li" />}
             </React.Fragment>
           ))}
         </List>

@@ -5,14 +5,12 @@ import {
   Container, 
   Typography, 
   Box, 
-  Grid, 
   TextField, 
   InputAdornment,
   Button,
   Tab, 
   Tabs,
-  Divider,
-  useTheme
+  Divider
 } from '@mui/material';
 import { 
   Search as SearchIcon,
@@ -22,7 +20,8 @@ import MainLayout from '@/components/layout/MainLayout';
 import ClubCard from '@/components/club/ClubCard';
 import { Club } from '@/types';
 import { motion } from 'framer-motion';
-import { containerVariants, fadeInUp, itemVariants } from '@/utils/animations';
+import { containerVariants, fadeInUp } from '@/utils/animations';
+import { useClubs } from '@/hooks/useClubs';
 
 // Create motion components
 const MotionBox = motion(Box);
@@ -30,79 +29,9 @@ const MotionTypography = motion(Typography);
 const MotionButton = motion(Button);
 
 export default function ClubPage() {
-  const theme = useTheme();
   const [searchTerm, setSearchTerm] = useState('');
-  
-  // Sample club data
-  const clubs: Club[] = [
-    {
-      id: '1',
-      name: 'Morning Runners',
-      description: 'A club for early birds who love to start their day with a refreshing run.',
-      creatorId: 'user1',
-      imageUrl: '/images/running-club.jpg',
-      memberCount: 45,
-      isPrivate: false,
-      createdAt: '2025-01-15T00:00:00Z',
-      updatedAt: '2025-04-01T00:00:00Z'
-    },
-    {
-      id: '2',
-      name: 'Fitness Enthusiasts',
-      description: 'Dedicated to all aspects of fitness, from strength training to cardio workouts.',
-      creatorId: 'user2',
-      imageUrl: '/images/gym-club.jpg',
-      memberCount: 138,
-      isPrivate: false,
-      createdAt: '2024-12-10T00:00:00Z',
-      updatedAt: '2025-04-05T00:00:00Z'
-    },
-    {
-      id: '3',
-      name: 'Yoga Masters',
-      description: 'Find your inner peace through mindful practice and connect with other yoga lovers.',
-      creatorId: 'user3',
-      imageUrl: '/images/yoga-club.jpg',
-      memberCount: 87,
-      isPrivate: false,
-      createdAt: '2025-02-20T00:00:00Z',
-      updatedAt: '2025-04-10T00:00:00Z'
-    },
-    {
-      id: '4',
-      name: 'Elite Athletes',
-      description: 'For serious athletes looking to push their limits and achieve peak performance.',
-      creatorId: 'user4',
-      imageUrl: '/images/athlete-club.jpg',
-      memberCount: 52,
-      isPrivate: true,
-      createdAt: '2025-01-05T00:00:00Z',
-      updatedAt: '2025-03-15T00:00:00Z'
-    },
-    {
-      id: '5',
-      name: 'Weekend Warriors',
-      description: 'Balancing work and fitness - maximize your weekend workouts with like-minded people.',
-      creatorId: 'user5',
-      imageUrl: '/images/workout-club.jpg',
-      memberCount: 94,
-      isPrivate: false,
-      createdAt: '2025-03-01T00:00:00Z',
-      updatedAt: '2025-04-15T00:00:00Z'
-    },
-    {
-      id: '6',
-      name: 'Swimmers Club',
-      description: 'Dive into a community of swimming enthusiasts, from beginners to competitive swimmers.',
-      creatorId: 'user6',
-      imageUrl: '/images/swimming-club.jpg',
-      memberCount: 63,
-      isPrivate: false,
-      createdAt: '2025-02-10T00:00:00Z',
-      updatedAt: '2025-03-30T00:00:00Z'
-    }
-  ];
-  
+  const { clubs, loading, error } = useClubs();
+
   // Filter clubs based on search term
   const filteredClubs = clubs.filter(club =>
     club.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -229,6 +158,8 @@ export default function ClubPage() {
             pb: 5
           }}
         >
+          {loading && <Typography>Loading...</Typography>}
+          {error && <Typography color="error">{error}</Typography>}
           {filteredClubs.map((club) => (
             <Box
               key={club.id}

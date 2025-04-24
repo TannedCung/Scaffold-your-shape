@@ -1,4 +1,5 @@
-import NextAuth, { DefaultSession } from "next-auth"
+// Removed unused NextAuth import
+import { DefaultSession } from "next-auth"
 
 declare module "next-auth" {
   /**

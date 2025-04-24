@@ -28,7 +28,7 @@ export default function DashboardPage() {
             Dashboard
           </Typography>
           <Typography variant="body1" color="text.secondary" gutterBottom>
-            Welcome back! Here's an overview of your fitness journey.
+            Welcome back! Here&apos;s an overview of your fitness journey.
           </Typography>
         </Box>
 
