@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, IconButton, 
-  useTheme, Typography, Avatar, Divider, Tooltip } from '@mui/material';
+  Typography, Avatar, Divider, Tooltip } from '@mui/material';
 import { 
   Dashboard as DashboardIcon,
   People as ClubIcon,
@@ -23,7 +23,6 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isMobile, open, onClose }: SidebarProps) {
-  const theme = useTheme();
   const pathname = usePathname();
   const { data: session } = useSession();
   
@@ -41,7 +40,7 @@ export default function Sidebar({ isMobile, open, onClose }: SidebarProps) {
           display: 'flex', 
           flexDirection: 'column', 
           height: '100%',
-          backgroundColor: theme.palette.background.default,
+          backgroundColor: 'background.default',
         }}
       >
         <Box 
@@ -50,7 +49,7 @@ export default function Sidebar({ isMobile, open, onClose }: SidebarProps) {
             display: 'flex', 
             alignItems: 'center',
             justifyContent: isMobile ? 'space-between' : 'center',
-            backgroundColor: theme.palette.primary.main,
+            backgroundColor: 'primary.main',
             color: 'white'
           }}
         >
@@ -97,13 +96,13 @@ export default function Sidebar({ isMobile, open, onClose }: SidebarProps) {
                     borderRadius: '0 24px 24px 0',
                     mx: 1,
                     '&.Mui-selected': {
-                      backgroundColor: `${theme.palette.primary.light}20`,
-                      color: theme.palette.primary.main,
+                      backgroundColor: 'rgba(76, 206, 172, 0.12)',
+                      color: 'primary.main',
                       '&:hover': {
-                        backgroundColor: `${theme.palette.primary.light}30`,
+                        backgroundColor: 'rgba(76, 206, 172, 0.2)',
                       },
                       '& .MuiListItemIcon-root': {
-                        color: theme.palette.primary.main,
+                        color: 'primary.main',
                       }
                     }
                   }}
@@ -112,7 +111,7 @@ export default function Sidebar({ isMobile, open, onClose }: SidebarProps) {
                   <ListItemIcon 
                     sx={{ 
                       minWidth: 40,
-                      color: pathname === item.path ? theme.palette.primary.main : 'inherit'
+                      color: pathname === item.path ? 'primary.main' : 'inherit'
                     }}
                   >
                     {item.icon}

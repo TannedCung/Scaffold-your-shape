@@ -7,7 +7,6 @@ import {
   IconButton, 
   Typography, 
   Box, 
-  useTheme, 
   Button,
   Avatar,
   Menu,
@@ -27,7 +26,6 @@ interface HeaderProps {
 }
 
 export default function Header({ onMenuClick }: HeaderProps) {
-  const theme = useTheme();
   const { data: session } = useSession();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [notificationAnchorEl, setNotificationAnchorEl] = useState<null | HTMLElement>(null);
@@ -57,7 +55,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
     <AppBar 
       position="fixed" 
       sx={{ 
-        zIndex: (theme) => theme.zIndex.drawer + 1,
+        zIndex: 1300, 
         backgroundColor: 'white',
         color: 'text.primary',
         boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
@@ -106,8 +104,9 @@ export default function Header({ onMenuClick }: HeaderProps) {
                 sx={{ p: 0 }}
               >
                 <Avatar 
+                  alt={session.user?.name || 'User'} 
                   src={session.user?.image || undefined}
-                  alt={session.user?.name || 'User'}
+                  sx={{ width: 32, height: 32 }}
                 />
               </IconButton>
             </Tooltip>
@@ -119,12 +118,12 @@ export default function Header({ onMenuClick }: HeaderProps) {
               transformOrigin={{ horizontal: 'right', vertical: 'top' }}
               anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
             >
-              <Link href="/profile" passHref style={{ textDecoration: 'none', color: 'inherit' }}>
-                <MenuItem onClick={handleMenuClose}>Profile</MenuItem>
-              </Link>
-              <Link href="/settings" passHref style={{ textDecoration: 'none', color: 'inherit' }}>
-                <MenuItem onClick={handleMenuClose}>Settings</MenuItem>
-              </Link>
+              <MenuItem component={Link} href="/profile" onClick={handleMenuClose}>
+                Profile
+              </MenuItem>
+              <MenuItem component={Link} href="/settings" onClick={handleMenuClose}>
+                Settings
+              </MenuItem>
               <MenuItem onClick={handleLogout}>Logout</MenuItem>
             </Menu>
             
@@ -134,48 +133,43 @@ export default function Header({ onMenuClick }: HeaderProps) {
               onClose={handleNotificationMenuClose}
               transformOrigin={{ horizontal: 'right', vertical: 'top' }}
               anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-              PaperProps={{
-                sx: { width: 320, maxHeight: 400 }
-              }}
+              sx={{ maxWidth: 320 }}
             >
-              <Box sx={{ p: 2, borderBottom: '1px solid rgba(0, 0, 0, 0.1)' }}>
-                <Typography variant="subtitle1" fontWeight="bold">Notifications</Typography>
-              </Box>
               <MenuItem onClick={handleNotificationMenuClose}>
-                <Box>
-                  <Typography variant="body2">John joined your challenge "100 Push-ups"</Typography>
-                  <Typography variant="caption" color="text.secondary">2 hours ago</Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                  <Typography variant="body2" fontWeight="bold">New Challenge Available</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    30-day full body transformation challenge is now available.
+                  </Typography>
                 </Box>
               </MenuItem>
               <MenuItem onClick={handleNotificationMenuClose}>
-                <Box>
-                  <Typography variant="body2">Sara completed "5K Run Challenge"</Typography>
-                  <Typography variant="caption" color="text.secondary">Yesterday</Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                  <Typography variant="body2" fontWeight="bold">Workout Reminder</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    You haven't logged a workout this week.
+                  </Typography>
                 </Box>
               </MenuItem>
-              <Box sx={{ p: 1, textAlign: 'center' }}>
-                <Link href="/notifications" passHref style={{ textDecoration: 'none' }}>
-                  <Button size="small" onClick={handleNotificationMenuClose}>
-                    View all
-                  </Button>
-                </Link>
-              </Box>
             </Menu>
           </>
         ) : (
           <>
-            <Link href="/sign-in" passHref>
-              <Button color="inherit">Login</Button>
-            </Link>
-            <Link href="/sign-up" passHref>
-              <Button 
-                variant="contained" 
-                color="primary" 
-                sx={{ ml: 1 }}
-              >
-                Sign Up
-              </Button>
-            </Link>
+            <Button 
+              variant="outlined" 
+              component={Link} 
+              href="/sign-in"
+              sx={{ mr: 1 }}
+            >
+              Sign In
+            </Button>
+            <Button 
+              variant="contained" 
+              component={Link} 
+              href="/sign-up"
+            >
+              Sign Up
+            </Button>
           </>
         )}
       </Toolbar>
