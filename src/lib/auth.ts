@@ -7,7 +7,8 @@ import { supabase } from './supabase';
 // Generate a default secret for development if not provided
 const defaultSecret = 'THIS_IS_A_DEV_SECRET_DO_NOT_USE_IN_PRODUCTION';
 
-export const authOptions: NextAuthOptions = {
+// Define the NextAuth options
+const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || '',
@@ -74,6 +75,19 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
       }
       return token;
+    },
+    async redirect({ url, baseUrl }) {
+      // After sign-in, redirect to dashboard
+      if (url === baseUrl || url.startsWith(`${baseUrl}/`)) {
+        if (url.includes('callbackUrl=')) {
+          const callbackUrl = new URL(url).searchParams.get('callbackUrl');
+          if (callbackUrl) return callbackUrl;
+        }
+        return `${baseUrl}/dashboard`;
+      } else if (url.startsWith('/')) {
+        return `${baseUrl}${url}`;
+      }
+      return url;
     }
   },
   session: {
@@ -83,4 +97,5 @@ export const authOptions: NextAuthOptions = {
   debug: process.env.NODE_ENV === 'development',
 };
 
-export const { handlers, auth, signIn, signOut } = NextAuth(authOptions);
+// Export the authOptions for use in the NextAuth route handler
+export { authOptions };
