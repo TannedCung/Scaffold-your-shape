@@ -15,14 +15,16 @@ import {
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { motion } from 'framer-motion';
 
 interface SidebarProps {
   isMobile: boolean;
   open: boolean;
   onClose: () => void;
+  width?: number;
 }
 
-export default function Sidebar({ isMobile, open, onClose }: SidebarProps) {
+export default function Sidebar({ isMobile, open, onClose, width = 280 }: SidebarProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
   
@@ -49,7 +51,7 @@ export default function Sidebar({ isMobile, open, onClose }: SidebarProps) {
             display: 'flex', 
             alignItems: 'center',
             justifyContent: isMobile ? 'space-between' : 'center',
-            backgroundColor: 'primary.main',
+            backgroundColor: '#2da58e',
             color: 'white'
           }}
         >
@@ -96,24 +98,18 @@ export default function Sidebar({ isMobile, open, onClose }: SidebarProps) {
                     borderRadius: '0 24px 24px 0',
                     mx: 1,
                     '&.Mui-selected': {
-                      backgroundColor: 'rgba(76, 206, 172, 0.12)',
-                      color: 'primary.main',
+                      backgroundColor: 'rgba(45, 165, 142, 0.12)',
+                      color: '#2da58e',
                       '&:hover': {
-                        backgroundColor: 'rgba(76, 206, 172, 0.2)',
-                      },
-                      '& .MuiListItemIcon-root': {
-                        color: 'primary.main',
+                        backgroundColor: 'rgba(45, 165, 142, 0.18)',
                       }
                     }
                   }}
-                  onClick={isMobile ? onClose : undefined}
                 >
-                  <ListItemIcon 
-                    sx={{ 
-                      minWidth: 40,
-                      color: pathname === item.path ? 'primary.main' : 'inherit'
-                    }}
-                  >
+                  <ListItemIcon sx={{ 
+                    minWidth: 45,
+                    color: pathname === item.path ? '#2da58e' : 'inherit'
+                  }}>
                     {item.icon}
                   </ListItemIcon>
                   <ListItemText primary={item.text} />
@@ -123,48 +119,61 @@ export default function Sidebar({ isMobile, open, onClose }: SidebarProps) {
           ))}
         </List>
         
-        <Box sx={{ p: 2, textAlign: 'center' }}>
-          <Typography variant="caption" color="text.secondary">
-            {new Date().getFullYear()} Scaffold Your Shape
+        <Box sx={{ p: 2 }}>
+          <Typography variant="caption" color="text.secondary" align="center" display="block">
+            &copy; {new Date().getFullYear()} Scaffold Your Shape
           </Typography>
         </Box>
       </Box>
     </>
   );
 
-  if (isMobile) {
-    return (
+  return (
+    <>
+      {/* Mobile Drawer */}
       <Drawer
-        anchor="left"
-        open={open}
+        variant="temporary"
+        open={isMobile && open}
         onClose={onClose}
+        ModalProps={{ keepMounted: true }}
         sx={{
+          display: { xs: 'block', sm: 'none' },
           '& .MuiDrawer-paper': { 
-            width: 280,
+            width: width,
             boxSizing: 'border-box',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
           },
         }}
       >
         {drawerContent}
       </Drawer>
-    );
-  }
-
-  return (
-    <Drawer
-      variant="permanent"
-      sx={{
-        width: 280,
-        flexShrink: 0,
-        '& .MuiDrawer-paper': {
-          width: 280,
-          boxSizing: 'border-box',
-          border: 'none',
-          boxShadow: '0 0 10px rgba(0, 0, 0, 0.05)',
-        },
-      }}
-    >
-      {drawerContent}
-    </Drawer>
+      
+      {/* Desktop Drawer */}
+      <Drawer
+        variant="persistent"
+        open={!isMobile && open}
+        sx={{
+          display: { xs: 'none', sm: 'block' },
+          width: open ? width : 0,
+          flexShrink: 0,
+          transition: theme => theme.transitions.create('width', {
+            easing: theme.transitions.easing.easeOut,
+            duration: theme.transitions.duration.standard,
+          }),
+          '& .MuiDrawer-paper': {
+            width: width,
+            boxSizing: 'border-box',
+            borderRight: '1px solid',
+            borderColor: 'divider',
+            transition: theme => theme.transitions.create('width', {
+              easing: theme.transitions.easing.easeOut,
+              duration: theme.transitions.duration.standard,
+            }),
+          },
+        }}
+      >
+        {drawerContent}
+      </Drawer>
+    </>
   );
 }

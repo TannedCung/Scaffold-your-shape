@@ -2,6 +2,10 @@
 
 import React from 'react';
 import { Card, CardContent, Typography, Box, useTheme, SvgIconProps } from '@mui/material';
+import { motion } from 'framer-motion';
+
+// Create motion components
+const MotionCard = motion(Card);
 
 interface StatCardProps {
   title: string;
@@ -27,12 +31,15 @@ export default function StatCard({ title, value, subtitle, icon, color = 'primar
   };
 
   return (
-    <Card 
+    <MotionCard 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
       sx={{ 
         height: '100%',
-        transition: 'transform 0.3s, box-shadow 0.3s',
+        transition: 'box-shadow 0.3s',
         '&:hover': {
-          transform: 'translateY(-4px)',
           boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
         }
       }}
@@ -43,6 +50,10 @@ export default function StatCard({ title, value, subtitle, icon, color = 'primar
             {title}
           </Typography>
           <Box 
+            component={motion.div}
+            initial={{ scale: 0.8 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
             sx={{ 
               display: 'flex',
               alignItems: 'center',
@@ -51,20 +62,40 @@ export default function StatCard({ title, value, subtitle, icon, color = 'primar
               color: getColorValue(),
               borderRadius: '50%',
               p: 1,
+              width: 40,
+              height: 40
             }}
           >
             {icon}
           </Box>
         </Box>
-        <Typography variant="h4" component="div" sx={{ fontWeight: 700, mb: 0.5 }}>
+        <Typography 
+          component={motion.div}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+          variant="h4" 
+          sx={{ 
+            fontWeight: 700, 
+            color: 'text.primary',
+            mb: 0.5
+          }}
+        >
           {value}
         </Typography>
         {subtitle && (
-          <Typography variant="body2" color="text.secondary">
+          <Typography 
+            component={motion.div}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, delay: 0.3 }}
+            variant="body2" 
+            color="text.secondary"
+          >
             {subtitle}
           </Typography>
         )}
       </CardContent>
-    </Card>
+    </MotionCard>
   );
 }

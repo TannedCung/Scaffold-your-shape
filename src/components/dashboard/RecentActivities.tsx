@@ -26,6 +26,11 @@ import {
   AccessTime as TimeIcon
 } from '@mui/icons-material';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
+
+// Create motion components
+const MotionCard = motion(Card);
+const MotionListItem = motion(ListItem);
 
 type Activity = {
   id: string;
@@ -128,9 +133,35 @@ export default function RecentActivities({ activities = [] }: RecentActivitiesPr
         return theme.palette.secondary.main;
     }
   };
+  
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+  
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.3 }
+    }
+  };
 
   return (
-    <Card>
+    <MotionCard 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      sx={{ height: '100%' }}
+    >
       <CardHeader 
         title="Recent Activities" 
         titleTypographyProps={{ variant: 'h6', fontWeight: 600 }}
@@ -142,12 +173,25 @@ export default function RecentActivities({ activities = [] }: RecentActivitiesPr
       />
       <Divider />
       <CardContent sx={{ px: 0, py: 0 }}>
-        <List disablePadding>
+        <List 
+          component={motion.ul}
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          sx={{ padding: 0 }}
+        >
           {displayActivities.map((activity, index) => (
             <React.Fragment key={activity.id}>
-              <ListItem alignItems="flex-start" sx={{ px: 2, py: 1.5 }}>
+              <MotionListItem 
+                variants={itemVariants}
+                whileHover={{ backgroundColor: 'rgba(0, 0, 0, 0.02)' }}
+                sx={{ px: 2, py: 1.5 }}
+              >
                 <ListItemAvatar>
-                  <Avatar 
+                  <Avatar
+                    component={motion.div}
+                    whileHover={{ scale: 1.1 }}
+                    transition={{ duration: 0.2 }}
                     sx={{ 
                       bgcolor: `${getActivityColor(activity.type)}20`, 
                       color: getActivityColor(activity.type) 
@@ -182,12 +226,12 @@ export default function RecentActivities({ activities = [] }: RecentActivitiesPr
                     </Box>
                   }
                 />
-              </ListItem>
+              </MotionListItem>
               {index < displayActivities.length - 1 && <Divider component="li" />}
             </React.Fragment>
           ))}
         </List>
       </CardContent>
-    </Card>
+    </MotionCard>
   );
 }

@@ -25,6 +25,18 @@ import {
 import MainLayout from '@/components/layout/MainLayout';
 import ChallengeCard from '@/components/challenges/ChallengeCard';
 import { Challenge } from '@/types';
+import { motion } from 'framer-motion';
+import { 
+  containerVariants, 
+  fadeInUp, 
+  itemVariants, 
+  staggerChildren 
+} from '@/utils/animations';
+
+// Create motion components
+const MotionBox = motion(Box);
+const MotionTypography = motion(Typography);
+const MotionButton = motion(Button);
 
 export default function ChallengesPage() {
   // Sample challenges data
@@ -130,36 +142,87 @@ export default function ChallengesPage() {
   return (
     <MainLayout>
       <Container maxWidth="lg">
-        <Box sx={{ mb: 4 }}>
+        <MotionBox 
+          initial="hidden"
+          animate="visible"
+          variants={fadeInUp}
+          sx={{ mb: 4 }}
+        >
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h4" component="h1" fontWeight="bold">
+            <MotionTypography 
+              variant="h4" 
+              fontWeight="bold"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+            >
               Challenges
-            </Typography>
-            <Button 
+            </MotionTypography>
+            <MotionButton 
               variant="contained" 
               startIcon={<AddIcon />}
-              sx={{ borderRadius: 2 }}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              sx={{ 
+                borderRadius: 2,
+                bgcolor: '#2da58e',
+                '&:hover': {
+                  bgcolor: '#1b7d6b',
+                }
+              }}
             >
               Create Challenge
-            </Button>
+            </MotionButton>
           </Box>
-          <Typography variant="body1" color="text.secondary">
+          <MotionTypography 
+            variant="body1" 
+            color="text.secondary"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.4 }}
+          >
             Join challenges to compete with others and track your progress.
-          </Typography>
-        </Box>
+          </MotionTypography>
+        </MotionBox>
 
         {/* Tabs */}
-        <Box sx={{ mb: 4 }}>
-          <Tabs value={0}>
+        <MotionBox 
+          sx={{ mb: 4 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.4 }}
+        >
+          <Tabs 
+            value={0}
+            TabIndicatorProps={{
+              style: {
+                backgroundColor: '#2da58e',
+              }
+            }}
+            sx={{
+              '& .MuiTab-root': {
+                color: 'text.secondary',
+                '&.Mui-selected': {
+                  color: '#2da58e',
+                  fontWeight: 600
+                }
+              }
+            }}
+          >
             <Tab label="Discover" />
             <Tab label="My Challenges" />
             <Tab label="Completed" />
           </Tabs>
           <Divider />
-        </Box>
+        </MotionBox>
 
         {/* Search and Filter */}
-        <Box sx={{ mb: 4 }}>
+        <MotionBox 
+          sx={{ mb: 4 }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.4 }}
+        >
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
             <Box sx={{ width: { xs: '100%', md: 'auto' }, flexGrow: 1 }}>
               <TextField
@@ -202,10 +265,15 @@ export default function ChallengesPage() {
               </Button>
             </Box>
           </Box>
-        </Box>
+        </MotionBox>
 
         {/* Trending Challenges Section */}
-        <Box sx={{ mb: 5 }}>
+        <MotionBox 
+          sx={{ mb: 5 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5, duration: 0.4 }}
+        >
           <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
             Trending Challenges
           </Typography>
@@ -223,10 +291,15 @@ export default function ChallengesPage() {
               );
             })}
           </Box>
-        </Box>
+        </MotionBox>
 
         {/* Upcoming Challenges Section */}
-        <Box sx={{ mb: 5 }}>
+        <MotionBox 
+          sx={{ mb: 5 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6, duration: 0.4 }}
+        >
           <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
             Upcoming Challenges
           </Typography>
@@ -244,10 +317,15 @@ export default function ChallengesPage() {
               );
             })}
           </Box>
-        </Box>
+        </MotionBox>
 
         {/* All Challenges Section */}
-        <Box sx={{ mb: 4 }}>
+        <MotionBox 
+          sx={{ mb: 4 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.7, duration: 0.4 }}
+        >
           <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
             All Challenges
           </Typography>
@@ -265,7 +343,7 @@ export default function ChallengesPage() {
               );
             })}
           </Box>
-        </Box>
+        </MotionBox>
       </Container>
     </MainLayout>
   );
