@@ -1,6 +1,7 @@
+'use client';
+
 import React from 'react';
 import { 
-  Grid, 
   Box, 
   Typography, 
   Card, 
@@ -31,9 +32,9 @@ export default function DashboardPage() {
           </Typography>
         </Box>
 
-        <Grid container spacing={3}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', mx: -1.5 }}>
           {/* Stats Cards */}
-          <Grid item xs={12} sm={6} lg={3}>
+          <Box sx={{ width: { xs: '100%', sm: '50%', lg: '25%' }, px: 1.5, mb: 3 }}>
             <StatCard 
               title="Workouts" 
               value="24" 
@@ -41,8 +42,8 @@ export default function DashboardPage() {
               icon={<FitnessCenterIcon />}
               color="primary"
             />
-          </Grid>
-          <Grid item xs={12} sm={6} lg={3}>
+          </Box>
+          <Box sx={{ width: { xs: '100%', sm: '50%', lg: '25%' }, px: 1.5, mb: 3 }}>
             <StatCard 
               title="Distance" 
               value="42.5 km" 
@@ -50,8 +51,8 @@ export default function DashboardPage() {
               icon={<RunIcon />}
               color="info"
             />
-          </Grid>
-          <Grid item xs={12} sm={6} lg={3}>
+          </Box>
+          <Box sx={{ width: { xs: '100%', sm: '50%', lg: '25%' }, px: 1.5, mb: 3 }}>
             <StatCard 
               title="Active Days" 
               value="18" 
@@ -59,8 +60,8 @@ export default function DashboardPage() {
               icon={<TimelineIcon />}
               color="success"
             />
-          </Grid>
-          <Grid item xs={12} sm={6} lg={3}>
+          </Box>
+          <Box sx={{ width: { xs: '100%', sm: '50%', lg: '25%' }, px: 1.5, mb: 3 }}>
             <StatCard 
               title="Challenges" 
               value="3" 
@@ -68,25 +69,25 @@ export default function DashboardPage() {
               icon={<ChallengesIcon />}
               color="warning"
             />
-          </Grid>
+          </Box>
 
           {/* Recent Activity */}
-          <Grid item xs={12} md={6}>
+          <Box sx={{ width: { xs: '100%', md: '50%' }, px: 1.5, mb: 3 }}>
             <RecentActivities activities={[]} />
-          </Grid>
+          </Box>
 
           {/* Upcoming Challenges */}
-          <Grid item xs={12} md={6}>
+          <Box sx={{ width: { xs: '100%', md: '50%' }, px: 1.5, mb: 3 }}>
             <Card>
               <CardContent>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                   <Typography variant="h6" sx={{ fontWeight: 600 }}>
                     Upcoming Challenges
                   </Typography>
-                  <Button size="small" color="primary">View All</Button>
+                  <Button size="small" color="primary" sx={{ color: '#2da58e' }}>View All</Button>
                 </Box>
                 
-                <Box sx={{ p: 2, backgroundColor: 'rgba(59, 130, 246, 0.1)', borderRadius: 2, mb: 2 }}>
+                <Box sx={{ p: 2, backgroundColor: 'rgba(45, 165, 142, 0.1)', borderRadius: 2, mb: 2 }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
                     30-Day Push-up Challenge
                   </Typography>
@@ -97,45 +98,28 @@ export default function DashboardPage() {
                     <Typography variant="caption" color="text.secondary">
                       Starts in 2 days
                     </Typography>
-                    <Button size="small" variant="outlined">Join</Button>
+                    <Button size="small" variant="outlined" sx={{ borderColor: '#2da58e', color: '#2da58e' }}>Join</Button>
                   </Box>
                 </Box>
                 
-                <Box sx={{ p: 2, backgroundColor: 'rgba(16, 185, 129, 0.1)', borderRadius: 2 }}>
+                <Box sx={{ p: 2, backgroundColor: 'rgba(45, 165, 142, 0.1)', borderRadius: 2 }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-                    10K Running Challenge
+                    5K Running Event
                   </Typography>
                   <Typography variant="body2" sx={{ mb: 1 }}>
-                    Run a total of 10K within a week
+                    Virtual 5K running challenge with friends
                   </Typography>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant="caption" color="text.secondary">
                       Starts in 5 days
                     </Typography>
-                    <Button size="small" variant="outlined">Join</Button>
+                    <Button size="small" variant="outlined" sx={{ borderColor: '#2da58e', color: '#2da58e' }}>Join</Button>
                   </Box>
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
-
-          {/* Progress Overview */}
-          <Grid item xs={12}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                  Weekly Progress
-                </Typography>
-                
-                <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Typography variant="body1" color="text.secondary">
-                    Chart component will be implemented here to show weekly progress
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       </Container>
     </MainLayout>
   );

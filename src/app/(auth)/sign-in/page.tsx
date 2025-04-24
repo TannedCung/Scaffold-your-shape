@@ -172,9 +172,19 @@ export default function SignInPage() {
                 }}
               >
                 <Link href="/forgot-password" passHref>
-                  <MuiLink variant="body2" underline="hover">
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      color: '#2da58e',
+                      textDecoration: 'none',
+                      '&:hover': {
+                        textDecoration: 'underline'
+                      },
+                      cursor: 'pointer'
+                    }}
+                  >
                     Forgot password?
-                  </MuiLink>
+                  </Typography>
                 </Link>
               </Box>
               <MotionButton
@@ -207,9 +217,21 @@ export default function SignInPage() {
                 <Typography variant="body2">
                   Don't have an account?{' '}
                   <Link href="/sign-up" passHref>
-                    <MuiLink variant="body2" underline="hover" fontWeight="bold" color="#2da58e">
+                    <Typography
+                      component="span"
+                      variant="body2"
+                      sx={{
+                        fontWeight: 'bold',
+                        color: '#2da58e',
+                        textDecoration: 'none',
+                        '&:hover': {
+                          textDecoration: 'underline'
+                        },
+                        cursor: 'pointer'
+                      }}
+                    >
                       Sign Up
-                    </MuiLink>
+                    </Typography>
                   </Link>
                 </Typography>
               </Box>

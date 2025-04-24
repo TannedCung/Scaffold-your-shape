@@ -1,9 +1,10 @@
+'use client';
+
 import React from 'react';
 import { 
   Container, 
   Typography, 
   Box, 
-  Grid, 
   TextField,
   InputAdornment,
   Button,
@@ -159,8 +160,8 @@ export default function ChallengesPage() {
 
         {/* Search and Filter */}
         <Box sx={{ mb: 4 }}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={8}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+            <Box sx={{ width: { xs: '100%', md: 'auto' }, flexGrow: 1 }}>
               <TextField
                 fullWidth
                 placeholder="Search challenges..."
@@ -178,31 +179,29 @@ export default function ChallengesPage() {
                   }
                 }}
               />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Stack direction="row" spacing={2}>
-                <FormControl fullWidth variant="outlined">
-                  <InputLabel id="activity-type-label">Activity Type</InputLabel>
-                  <Select
-                    labelId="activity-type-label"
-                    label="Activity Type"
-                    defaultValue="all"
-                    sx={{ borderRadius: 2 }}
-                  >
-                    <MenuItem value="all">All Activities</MenuItem>
-                    <MenuItem value="run">Running</MenuItem>
-                    <MenuItem value="swim">Swimming</MenuItem>
-                    <MenuItem value="cycle">Cycling</MenuItem>
-                    <MenuItem value="walk">Walking</MenuItem>
-                    <MenuItem value="exercise">Exercises</MenuItem>
-                  </Select>
-                </FormControl>
-                <Button variant="outlined" startIcon={<FilterIcon />} sx={{ borderRadius: 2 }}>
-                  Filters
-                </Button>
-              </Stack>
-            </Grid>
-          </Grid>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 2, width: { xs: '100%', md: 'auto' } }}>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="activity-type-label">Activity Type</InputLabel>
+                <Select
+                  labelId="activity-type-label"
+                  label="Activity Type"
+                  defaultValue="all"
+                  sx={{ borderRadius: 2 }}
+                >
+                  <MenuItem value="all">All Activities</MenuItem>
+                  <MenuItem value="run">Running</MenuItem>
+                  <MenuItem value="swim">Swimming</MenuItem>
+                  <MenuItem value="cycle">Cycling</MenuItem>
+                  <MenuItem value="walk">Walking</MenuItem>
+                  <MenuItem value="exercise">Exercises</MenuItem>
+                </Select>
+              </FormControl>
+              <Button variant="outlined" startIcon={<FilterIcon />} sx={{ borderRadius: 2 }}>
+                Filters
+              </Button>
+            </Box>
+          </Box>
         </Box>
 
         {/* Trending Challenges Section */}
@@ -210,20 +209,20 @@ export default function ChallengesPage() {
           <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
             Trending Challenges
           </Typography>
-          <Grid container spacing={3}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', mx: -2 }}>
             {challenges.slice(0, 3).map((challenge) => {
               const participation = myChallenges.find(mc => mc.challengeId === challenge.id);
               return (
-                <Grid item key={challenge.id} xs={12} sm={6} md={4}>
+                <Box key={challenge.id} sx={{ width: { xs: '100%', sm: '50%', md: '33.333%' }, p: 2 }}>
                   <ChallengeCard 
                     challenge={challenge} 
                     isParticipant={!!participation}
                     currentProgress={participation?.progress || 0}
                   />
-                </Grid>
+                </Box>
               );
             })}
-          </Grid>
+          </Box>
         </Box>
 
         {/* Upcoming Challenges Section */}
@@ -231,20 +230,20 @@ export default function ChallengesPage() {
           <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
             Upcoming Challenges
           </Typography>
-          <Grid container spacing={3}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', mx: -2 }}>
             {challenges.slice(2, 5).map((challenge) => {
               const participation = myChallenges.find(mc => mc.challengeId === challenge.id);
               return (
-                <Grid item key={challenge.id} xs={12} sm={6} md={4}>
+                <Box key={challenge.id} sx={{ width: { xs: '100%', sm: '50%', md: '33.333%' }, p: 2 }}>
                   <ChallengeCard 
                     challenge={challenge} 
                     isParticipant={!!participation}
                     currentProgress={participation?.progress || 0}
                   />
-                </Grid>
+                </Box>
               );
             })}
-          </Grid>
+          </Box>
         </Box>
 
         {/* All Challenges Section */}
@@ -252,20 +251,20 @@ export default function ChallengesPage() {
           <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
             All Challenges
           </Typography>
-          <Grid container spacing={3}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', mx: -2 }}>
             {challenges.map((challenge) => {
               const participation = myChallenges.find(mc => mc.challengeId === challenge.id);
               return (
-                <Grid item key={challenge.id} xs={12} sm={6} md={4}>
+                <Box key={challenge.id} sx={{ width: { xs: '100%', sm: '50%', md: '33.333%' }, p: 2 }}>
                   <ChallengeCard 
                     challenge={challenge} 
                     isParticipant={!!participation}
                     currentProgress={participation?.progress || 0}
                   />
-                </Grid>
+                </Box>
               );
             })}
-          </Grid>
+          </Box>
         </Box>
       </Container>
     </MainLayout>

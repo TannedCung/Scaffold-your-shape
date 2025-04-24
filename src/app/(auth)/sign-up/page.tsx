@@ -220,15 +220,37 @@ export default function SignUpPage() {
                     <Typography variant="body2">
                       I agree to the{' '}
                       <Link href="/terms" passHref>
-                        <MuiLink variant="body2" underline="hover" color="#2da58e">
+                        <Typography
+                          component="span"
+                          variant="body2"
+                          sx={{
+                            color: '#2da58e',
+                            textDecoration: 'none',
+                            '&:hover': {
+                              textDecoration: 'underline'
+                            },
+                            cursor: 'pointer'
+                          }}
+                        >
                           Terms of Service
-                        </MuiLink>
+                        </Typography>
                       </Link>
                       {' '}and{' '}
                       <Link href="/privacy" passHref>
-                        <MuiLink variant="body2" underline="hover" color="#2da58e">
+                        <Typography
+                          component="span"
+                          variant="body2"
+                          sx={{
+                            color: '#2da58e',
+                            textDecoration: 'none',
+                            '&:hover': {
+                              textDecoration: 'underline'
+                            },
+                            cursor: 'pointer'
+                          }}
+                        >
                           Privacy Policy
-                        </MuiLink>
+                        </Typography>
                       </Link>
                     </Typography>
                   }
@@ -265,9 +287,21 @@ export default function SignUpPage() {
                 <Typography variant="body2">
                   Already have an account?{' '}
                   <Link href="/sign-in" passHref>
-                    <MuiLink variant="body2" underline="hover" fontWeight="bold" color="#2da58e">
+                    <Typography
+                      component="span"
+                      variant="body2"
+                      sx={{
+                        fontWeight: 'bold',
+                        color: '#2da58e',
+                        textDecoration: 'none',
+                        '&:hover': {
+                          textDecoration: 'underline'
+                        },
+                        cursor: 'pointer'
+                      }}
+                    >
                       Sign In
-                    </MuiLink>
+                    </Typography>
                   </Link>
                 </Typography>
               </Box>
