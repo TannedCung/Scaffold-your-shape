@@ -39,6 +39,9 @@
 
 ## Core Features
 
+### 0. **Strava Sync**
+- **Sync with Strava:** Users can connect their Strava account to import activities (runs, rides, swims, etc.) into Scaffold Your Shape. Activities logged in Strava will automatically appear in the dashboard and can be used in clubs and challenges. Optionally, users can export activities from Scaffold Your Shape to Strava.
+
 ### 1. **Authentication & User Management**
 - Sign up/in with email, OAuth (Google, etc.) via Auth.js.
 - Secure session management.
@@ -106,7 +109,7 @@
 ## Stretch Features
 
 - **Badges/Achievements:** Reward users for milestones.
-- **Integrations:** Sync with Strava, Apple Health, etc.
+- **Additional Integrations:** Sync with Apple Health, Google Fit, etc.
 - **Push Notifications:** For new challenges, club invites, etc.
 - **Dark Mode:** Optional minimal dark theme.
 
