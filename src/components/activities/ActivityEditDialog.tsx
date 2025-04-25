@@ -1,3 +1,6 @@
+"use client";
+import type { Activity } from '@/types';
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Stack, Typography, MenuItem } from '@mui/material';
 import { supabase } from '@/lib/supabase';
@@ -11,7 +14,7 @@ const activityTypes = [
   { value: 'other', label: 'Other' },
 ];
 
-export default function ActivityEditDialog({ open, activity, onClose }: { open: boolean, activity: any, onClose: () => void }) {
+export default function ActivityEditDialog({ open, activity, onClose }: { open: boolean, activity: Activity | null, onClose: () => void }) {
   const [type, setType] = useState('run');
   const [distance, setDistance] = useState('');
   const [duration, setDuration] = useState('');
@@ -36,6 +39,7 @@ export default function ActivityEditDialog({ open, activity, onClose }: { open: 
   }, [activity]);
 
   const handleSave = async () => {
+    if (!activity) return;
     setLoading(true);
     setError(null);
     setSuccess(false);

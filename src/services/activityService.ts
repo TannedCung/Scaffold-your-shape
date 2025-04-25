@@ -1,16 +1,5 @@
 import { supabase } from '@/lib/supabase';
-
-// Activity type matches OutdoorActivity in types/index.ts
-export interface Activity {
-  id: string;
-  userId: string;
-  type: string;
-  distance: number;
-  duration: number;
-  date: string;
-  location?: string;
-  notes?: string;
-}
+import type { Activity } from '@/types';
 
 export async function fetchActivities(userId?: string): Promise<Activity[]> {
   let query = supabase

@@ -1,8 +1,11 @@
+"use client";
+import type { Profile } from '@/types';
+
 import React, { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Box, Button, TextField, Stack, Typography } from '@mui/material';
 
-export default function EditProfileForm({ profile, onSave }: { profile: any, onSave?: () => void }) {
+export default function EditProfileForm({ profile, onSave }: { profile: Profile, onSave?: () => void }) {
   const [name, setName] = useState(profile?.name || '');
   const [bio, setBio] = useState(profile?.bio || '');
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || '');

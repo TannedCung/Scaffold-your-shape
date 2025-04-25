@@ -1,8 +1,11 @@
+"use client";
+import type { Club } from '@/types';
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Stack, Typography, Switch, FormControlLabel } from '@mui/material';
 import { supabase } from '@/lib/supabase';
 
-export default function ClubEditDialog({ open, club, onClose }: { open: boolean, club: any, onClose: () => void }) {
+export default function ClubEditDialog({ open, club, onClose }: { open: boolean, club: Club | null, onClose: () => void }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
@@ -14,13 +17,14 @@ export default function ClubEditDialog({ open, club, onClose }: { open: boolean,
     if (club) {
       setName(club.name || '');
       setDescription(club.description || '');
-      setIsPrivate(club.is_private || false);
+      setIsPrivate(club.isPrivate || false);
       setError(null);
       setSuccess(false);
     }
   }, [club]);
 
   const handleSave = async () => {
+    if (!club) return;
     setLoading(true);
     setError(null);
     setSuccess(false);

@@ -190,6 +190,31 @@ export default function Header({ onMenuClick, sidebarOpen = true, sidebarWidth =
               </MenuItem>
               <MenuItem onClick={handleLogout}>Logout</MenuItem>
             </Menu>
+            
+            {/* GitHub Repo Link */}
+            <Box sx={{ ml: 2 }}>
+              <Button
+                component="a"
+                href="https://github.com/TannedCung/Scaffold-your-shape"
+                target="_blank"
+                rel="noopener noreferrer"
+                variant="outlined"
+                size="small"
+                sx={{
+                  borderColor: '#2da58e',
+                  color: '#2da58e',
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  ml: 1,
+                  '&:hover': {
+                    borderColor: '#22796a',
+                    background: 'rgba(45,165,142,0.04)',
+                  },
+                }}
+              >
+                GitHub
+              </Button>
+            </Box>
           </>
         ) : (
           <Link href="/sign-in" passHref>

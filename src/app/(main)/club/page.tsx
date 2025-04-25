@@ -18,7 +18,8 @@ import {
 } from '@mui/icons-material';
 import MainLayout from '@/components/layout/MainLayout';
 import ClubCard from '@/components/club/ClubCard';
-import { Club } from '@/types';
+import CreateClubForm from '@/components/club/CreateClubForm';
+import ClubList from '@/components/club/ClubList';
 import { motion } from 'framer-motion';
 import { containerVariants, fadeInUp } from '@/utils/animations';
 import { useClubs } from '@/hooks/useClubs';
@@ -83,6 +84,11 @@ export default function ClubPage() {
             Join clubs to connect with like-minded fitness enthusiasts and share your journey.
           </MotionTypography>
         </MotionBox>
+
+        <Box sx={{ mb: 4 }}>
+          <CreateClubForm />
+        </Box>
+        <ClubList />
 
         {/* Tabs */}
         <MotionBox 

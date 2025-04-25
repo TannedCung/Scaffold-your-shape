@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Box, Button, TextField, Stack, Typography, MenuItem } from '@mui/material';

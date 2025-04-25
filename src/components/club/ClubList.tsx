@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from 'react';
 import { useClubs } from '@/hooks/useClubs';
 import { Box, Typography, IconButton, Stack, Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
@@ -5,10 +7,11 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ClubEditDialog from './ClubEditDialog';
 import { supabase } from '@/lib/supabase';
+import type { Club } from '@/types';
 
 export default function ClubList() {
   const { clubs, loading, error } = useClubs();
-  const [editClub, setEditClub] = useState(null);
+  const [editClub, setEditClub] = useState<Club | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 

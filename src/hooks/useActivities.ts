@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { fetchActivities, Activity } from '@/services/activityService';
+import { fetchActivities } from '@/services/activityService';
+import type { Activity } from '@/types';
 
 export function useActivities(userId?: string) {
   const [activities, setActivities] = useState<Activity[]>([]);

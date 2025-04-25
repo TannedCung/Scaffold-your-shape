@@ -73,7 +73,7 @@ export default function DashboardPage() {
 
           {/* Recent Activity */}
           <Box sx={{ width: { xs: '100%', md: '50%' }, px: 1.5, mb: 3 }}>
-            <RecentActivities activities={[]} />
+            <RecentActivities />
           </Box>
 
           {/* Upcoming Challenges */}

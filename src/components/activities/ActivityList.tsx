@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from 'react';
 import { useActivities } from '@/hooks/useActivities';
 import { Box, Typography, IconButton, Stack, Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
@@ -5,10 +7,11 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ActivityEditDialog from './ActivityEditDialog';
 import { supabase } from '@/lib/supabase';
+import type { Activity } from '@/types';
 
 export default function ActivityList({ userId }: { userId?: string }) {
   const { activities, loading, error } = useActivities(userId);
-  const [editActivity, setEditActivity] = useState(null);
+  const [editActivity, setEditActivity] = useState<Activity | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 

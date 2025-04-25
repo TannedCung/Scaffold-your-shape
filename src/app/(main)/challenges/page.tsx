@@ -24,7 +24,8 @@ import {
 } from '@mui/icons-material';
 import MainLayout from '@/components/layout/MainLayout';
 import ChallengeCard from '@/components/challenges/ChallengeCard';
-import { Challenge } from '@/types';
+import CreateChallengeForm from '@/components/challenges/CreateChallengeForm';
+import ChallengeList from '@/components/challenges/ChallengeList';
 import { motion } from 'framer-motion';
 import { fadeInUp } from '@/utils/animations';
 
@@ -169,6 +170,11 @@ export default function ChallengesPage() {
             </Box>
           </Box>
         </MotionBox>
+
+        <Box sx={{ mb: 4 }}>
+          <CreateChallengeForm />
+        </Box>
+        <ChallengeList />
 
         {loading && <Typography>Loading...</Typography>}
         {error && <Typography color="error">{error}</Typography>}

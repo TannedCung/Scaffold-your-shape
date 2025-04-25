@@ -1,8 +1,11 @@
+"use client";
+import type { Challenge } from '@/types';
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Stack, Typography } from '@mui/material';
 import { supabase } from '@/lib/supabase';
 
-export default function ChallengeEditDialog({ open, challenge, onClose }: { open: boolean, challenge: any, onClose: () => void }) {
+export default function ChallengeEditDialog({ open, challenge, onClose }: { open: boolean, challenge: Challenge | null, onClose: () => void }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,6 +22,7 @@ export default function ChallengeEditDialog({ open, challenge, onClose }: { open
   }, [challenge]);
 
   const handleSave = async () => {
+    if (!challenge) return;
     setLoading(true);
     setError(null);
     setSuccess(false);

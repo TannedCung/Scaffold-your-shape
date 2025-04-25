@@ -15,19 +15,22 @@ import {
   Chip
 } from '@mui/material';
 import { 
-  Edit as EditIcon,
-  Settings as SettingsIcon,
   FitnessCenter as WorkoutIcon,
   EmojiEvents as AchievementIcon,
   Groups as ClubsIcon,
   Timeline as StatsIcon
 } from '@mui/icons-material';
 import MainLayout from '@/components/layout/MainLayout';
-import RecentActivities from '@/components/dashboard/RecentActivities';
+import EditProfileForm from '@/components/profile/EditProfileForm';
+import ActivityList from '@/components/activities/ActivityList';
+import CreateActivityForm from '@/components/activities/CreateActivityForm';
 
 export default function ProfilePage() {
   // TODO: Replace hardcoded userId with actual session user id from next-auth
-  const userId = undefined;
+  const userId = 'mock-user-id';
+  // TODO: Replace hardcoded profile object with fetched profile data
+  const profile = { id: userId, email: 'user@email.com', name: 'John Doe', bio: 'Fitness enthusiast focused on strength training and running. Working towards my first marathon!', avatar_url: 'https://source.unsplash.com/random/400x400/?portrait' };
+
   return (
     <MainLayout>
       <Container maxWidth="lg">
@@ -36,7 +39,7 @@ export default function ProfilePage() {
           <Box 
             sx={{ 
               height: 200, 
-              backgroundImage: 'linear-gradient(to right, #2da58e, #3b82f6)',
+              background: '#2da58e',
               position: 'relative'
             }}
           />
@@ -58,7 +61,7 @@ export default function ProfilePage() {
             >
               <Box sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-start' } }}>
                 <Avatar 
-                  src="https://source.unsplash.com/random/400x400/?portrait" 
+                  src={profile.avatar_url}
                   alt="User Profile"
                   sx={{ 
                     width: 160,
@@ -72,29 +75,17 @@ export default function ProfilePage() {
                 <Box sx={{ mt: { xs: 2, md: 10 }, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'center', sm: 'flex-end' }, justifyContent: 'space-between' }}>
                   <Box sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
                     <Typography variant="h4" component="h1" fontWeight="bold">
-                      John Doe
+                      {profile.name}
                     </Typography>
                     <Typography variant="body1" color="text.secondary" gutterBottom>
                       @johndoe • Joined April 2025
                     </Typography>
                     <Typography variant="body1" sx={{ mt: 1 }}>
-                      Fitness enthusiast focused on strength training and running. Working towards my first marathon!
+                      {profile.bio}
                     </Typography>
                   </Box>
                   <Box sx={{ mt: { xs: 2, sm: 0 } }}>
-                    <Button 
-                      variant="outlined" 
-                      startIcon={<EditIcon />} 
-                      sx={{ mr: 1 }}
-                    >
-                      Edit Profile
-                    </Button>
-                    <Button 
-                      variant="outlined" 
-                      startIcon={<SettingsIcon />}
-                    >
-                      Settings
-                    </Button>
+                    <EditProfileForm profile={profile} />
                   </Box>
                 </Box>
               </Box>
@@ -170,7 +161,10 @@ export default function ProfilePage() {
             <Typography variant="h5" fontWeight="bold" gutterBottom>
               Recent Activities
             </Typography>
-            <RecentActivities userId={userId} />
+            <Box sx={{ mb: 2 }}>
+              <CreateActivityForm />
+            </Box>
+            <ActivityList userId={userId} />
           </Box>
 
           {/* Sidebar Content */}

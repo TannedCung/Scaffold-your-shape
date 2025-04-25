@@ -40,6 +40,19 @@ export interface WorkoutLog {
 // Outdoor activity types
 export type ActivityType = 'run' | 'walk' | 'swim' | 'cycle' | 'hike' | 'other';
 
+export interface Activity {
+  id: string;
+  userId: string;
+  type: ActivityType;
+  distance: number; // in meters
+  duration: number; // in seconds
+  date: string;
+  location?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface OutdoorActivity {
   id: string;
   userId: string;
@@ -100,6 +113,17 @@ export interface ChallengeParticipant {
   completed: boolean;
   completedAt?: string;
   joinedAt: string;
+}
+
+// Profile type
+export interface Profile {
+  id: string;
+  email: string;
+  name: string;
+  avatar_url?: string;
+  bio?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 // Stats types

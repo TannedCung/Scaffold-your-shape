@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from 'react';
 import { useChallenges } from '@/hooks/useChallenges';
 import { Box, Typography, IconButton, Stack, Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
@@ -5,10 +7,11 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ChallengeEditDialog from './ChallengeEditDialog';
 import { supabase } from '@/lib/supabase';
+import type { Challenge } from '@/types';
 
 export default function ChallengeList() {
   const { challenges, loading, error } = useChallenges();
-  const [editChallenge, setEditChallenge] = useState(null);
+  const [editChallenge, setEditChallenge] = useState<Challenge | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 

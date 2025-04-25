@@ -32,16 +32,6 @@ import { motion } from 'framer-motion';
 const MotionCard = motion(Card);
 const MotionListItem = motion(ListItem);
 
-type Activity = {
-  id: string;
-  type: 'workout' | 'run' | 'swim' | 'bike' | 'walk';
-  name: string;
-  date: string;
-  value: number;
-  unit: string;
-  timeAgo: string;
-};
-
 interface RecentActivitiesProps {
   userId?: string;
 }
@@ -156,7 +146,7 @@ export default function RecentActivities({ userId }: RecentActivitiesProps) {
                 <ListItemText
                   primary={
                     <Typography variant="subtitle2" fontWeight={600}>
-                      {activity.name}
+                      {activity.notes || activity.type.charAt(0).toUpperCase() + activity.type.slice(1)}
                     </Typography>
                   }
                   secondary={
@@ -167,14 +157,14 @@ export default function RecentActivities({ userId }: RecentActivitiesProps) {
                         component="span"
                         sx={{ mb: 0.5 }}
                       >
-                        {activity.value} {activity.unit}
+                        {activity.distance} m, {activity.duration} s
                       </Typography>
                       <Typography
                         component="span"
                         variant="caption"
                         color="text.secondary"
                       >
-                        {activity.timeAgo}
+                        {new Date(activity.date).toLocaleDateString()}
                       </Typography>
                     </Box>
                   }
