@@ -32,6 +32,26 @@ git clone https://github.com/your-username/scaffold-your-shape.git
 cd scaffold-your-shape
 ```
 
+### Supabase Schema Migration
+
+To ensure your Supabase database matches the latest schema, run the following (requires the Supabase CLI):
+
+```bash
+# Install Supabase CLI if you haven't already
+Follow the instructions here: https://supabase.com/docs/guides/cli to install the Supabase CLI
+
+# Log in to Supabase CLI (you'll need your access token)
+supabase login
+
+# Link your project (replace <project-ref> with your Supabase project ref)
+ <project-ref>
+supabase link --project-ref
+# Push the schema to your Supabase database
+supabase db push --file supabase_schema.sql
+```
+
+Alternatively, you can copy the contents of `supabase_schema.sql` and run them in the Supabase SQL editor in your dashboard.
+
 2. Install dependencies:
 
 ```bash
