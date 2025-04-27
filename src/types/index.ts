@@ -43,14 +43,14 @@ export type ActivityType = 'run' | 'walk' | 'swim' | 'cycle' | 'hike' | 'other';
 export interface Activity {
   id: string;
   userId: string;
-  type: ActivityType;
-  distance: number; // in meters
-  duration: number; // in seconds
+  type: string; // e.g., 'workout', 'run', 'swim', 'bike'
+  name: string; // e.g., 'Push-ups', 'Morning Run'
   date: string;
-  location?: string;
-  notes?: string;
+  value: number; // e.g., 50, 5000, 15
+  unit: string; // e.g., 'reps', 'meters'
   createdAt: string;
   updatedAt: string;
+  timeAgo?: string; // UI-only, not stored in DB
 }
 
 export interface OutdoorActivity {

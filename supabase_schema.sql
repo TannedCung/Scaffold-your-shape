@@ -66,10 +66,11 @@ create table if not exists challenge_participants (
 create table if not exists activities (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid references profiles(id) not null,
-  type text,
-  distance integer,
-  duration integer,
-  date timestamp with time zone,
-  location text,
-  notes text
+  type text not null,
+  name text not null,
+  date timestamp with time zone not null,
+  value integer not null,
+  unit text not null,
+  created_at timestamp with time zone default now(),
+  updated_at timestamp with time zone default now()
 );
