@@ -73,6 +73,7 @@ export interface Club {
   description: string;
   creatorId: string;
   imageUrl?: string;
+  backgroundImageUrl?: string;
   memberCount: number;
   isPrivate: boolean;
   created_at: string;
@@ -101,6 +102,7 @@ export interface Challenge {
   endDate: string;
   isPublic: boolean;
   participantCount: number;
+  backgroundImageUrl?: string;
   created_at: string;
   updatedAt: string;
 }
