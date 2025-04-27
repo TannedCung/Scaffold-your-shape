@@ -146,7 +146,7 @@ export default function RecentActivities({ userId }: RecentActivitiesProps) {
                 <ListItemText
                   primary={
                     <Typography variant="subtitle2" fontWeight={600}>
-                      {activity.notes || activity.type.charAt(0).toUpperCase() + activity.type.slice(1)}
+                      {activity.name || activity.type.charAt(0).toUpperCase() + activity.type.slice(1)}
                     </Typography>
                   }
                   secondary={
@@ -157,7 +157,7 @@ export default function RecentActivities({ userId }: RecentActivitiesProps) {
                         component="span"
                         sx={{ mb: 0.5 }}
                       >
-                        {activity.distance} m, {activity.duration} s
+                        {activity.value} {activity.unit}
                       </Typography>
                       <Typography
                         component="span"

@@ -10,9 +10,8 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+
 # Local env files
-.env
-.env.*
 
 # OS and editor files
 .DS_Store
@@ -24,7 +23,6 @@ pnpm-debug.log*
 *.log
 .idea/
 .vscode/
-*.local
 
 # Test and mock data
 __tests__/

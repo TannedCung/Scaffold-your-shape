@@ -2,7 +2,11 @@ import React, { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Box, Button, TextField, Stack, Typography, Switch, FormControlLabel } from '@mui/material';
 
-export default function CreateClubForm() {
+interface CreateClubFormProps {
+  onSuccess?: () => void;
+}
+
+export default function CreateClubForm({ onSuccess }: CreateClubFormProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
@@ -22,6 +26,7 @@ export default function CreateClubForm() {
       setName('');
       setDescription('');
       setIsPrivate(false);
+      if (onSuccess) onSuccess();
     }
   };
 

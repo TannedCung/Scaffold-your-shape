@@ -29,7 +29,7 @@
 - imageUrl (text, nullable)
 - memberCount (integer)
 - isPrivate (boolean)
-- createdAt (timestamp)
+- created_at (timestamp)
 - updatedAt (timestamp)
 
 ## ClubMembers
@@ -51,7 +51,7 @@
 - endDate (timestamp)
 - isPublic (boolean)
 - participantCount (integer)
-- createdAt (timestamp)
+- created_at (timestamp)
 - updatedAt (timestamp)
 
 ## ChallengeParticipants

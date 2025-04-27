@@ -5,7 +5,7 @@ export interface User {
   name: string;
   avatarUrl?: string;
   bio?: string;
-  createdAt: string;
+  created_at: string;
   updatedAt: string;
 }
 
@@ -33,7 +33,7 @@ export interface WorkoutLog {
   unit: ExerciseUnit;
   date: string;
   notes?: string;
-  createdAt: string;
+  created_at: string;
   updatedAt: string;
 }
 
@@ -48,7 +48,7 @@ export interface Activity {
   date: string;
   value: number; // e.g., 50, 5000, 15
   unit: string; // e.g., 'reps', 'meters'
-  createdAt: string;
+  created_at: string;
   updatedAt: string;
   timeAgo?: string; // UI-only, not stored in DB
 }
@@ -62,7 +62,7 @@ export interface OutdoorActivity {
   date: string;
   location?: string;
   notes?: string;
-  createdAt: string;
+  created_at: string;
   updatedAt: string;
 }
 
@@ -75,7 +75,7 @@ export interface Club {
   imageUrl?: string;
   memberCount: number;
   isPrivate: boolean;
-  createdAt: string;
+  created_at: string;
   updatedAt: string;
 }
 
@@ -101,7 +101,7 @@ export interface Challenge {
   endDate: string;
   isPublic: boolean;
   participantCount: number;
-  createdAt: string;
+  created_at: string;
   updatedAt: string;
 }
 

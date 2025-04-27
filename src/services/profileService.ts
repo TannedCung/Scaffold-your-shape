@@ -7,7 +7,7 @@ export interface Profile {
   name: string;
   avatarUrl?: string;
   bio?: string;
-  createdAt: string;
+  created_at: string;
   updatedAt: string;
 }
 

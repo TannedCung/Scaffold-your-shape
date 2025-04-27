@@ -16,11 +16,10 @@ const activityTypes = [
 
 export default function ActivityEditDialog({ open, activity, onClose }: { open: boolean, activity: Activity | null, onClose: () => void }) {
   const [type, setType] = useState('run');
-  const [distance, setDistance] = useState('');
-  const [duration, setDuration] = useState('');
+  const [name, setName] = useState('');
+  const [value, setValue] = useState('');
+  const [unit, setUnit] = useState('reps');
   const [date, setDate] = useState('');
-  const [location, setLocation] = useState('');
-  const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -28,11 +27,10 @@ export default function ActivityEditDialog({ open, activity, onClose }: { open: 
   useEffect(() => {
     if (activity) {
       setType(activity.type || 'run');
-      setDistance(activity.distance?.toString() || '');
-      setDuration(activity.duration?.toString() || '');
+      setName(activity.name || '');
+      setValue(activity.value?.toString() || '');
+      setUnit(activity.unit || 'reps');
       setDate(activity.date ? activity.date.slice(0, 16) : '');
-      setLocation(activity.location || '');
-      setNotes(activity.notes || '');
       setError(null);
       setSuccess(false);
     }
@@ -43,7 +41,13 @@ export default function ActivityEditDialog({ open, activity, onClose }: { open: 
     setLoading(true);
     setError(null);
     setSuccess(false);
-    const { error } = await supabase.from('activities').update({ type, distance: distance ? Number(distance) : null, duration: duration ? Number(duration) : null, date, location, notes }).eq('id', activity.id);
+    const { error } = await supabase.from('activities').update({
+      type,
+      name,
+      value: value ? Number(value) : null,
+      unit,
+      date,
+    }).eq('id', activity.id);
     setLoading(false);
     if (error) setError(error.message);
     else setSuccess(true);
@@ -58,11 +62,10 @@ export default function ActivityEditDialog({ open, activity, onClose }: { open: 
           <TextField select label="Type" value={type} onChange={e => setType(e.target.value)} size="small" fullWidth>
             {activityTypes.map(opt => <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>)}
           </TextField>
-          <TextField label="Distance (meters)" value={distance} onChange={e => setDistance(e.target.value)} size="small" fullWidth type="number" />
-          <TextField label="Duration (seconds)" value={duration} onChange={e => setDuration(e.target.value)} size="small" fullWidth type="number" />
+          <TextField label="Name" value={name} onChange={e => setName(e.target.value)} size="small" fullWidth />
+          <TextField label="Value" value={value} onChange={e => setValue(e.target.value)} size="small" fullWidth type="number" />
+          <TextField label="Unit" value={unit} onChange={e => setUnit(e.target.value)} size="small" fullWidth />
           <TextField label="Date" value={date} onChange={e => setDate(e.target.value)} size="small" fullWidth type="datetime-local" InputLabelProps={{ shrink: true }} />
-          <TextField label="Location" value={location} onChange={e => setLocation(e.target.value)} size="small" fullWidth />
-          <TextField label="Notes" value={notes} onChange={e => setNotes(e.target.value)} size="small" fullWidth multiline minRows={2} />
           {success && <Typography color="success.main">Saved!</Typography>}
           {error && <Typography color="error.main">{error}</Typography>}
         </Stack>

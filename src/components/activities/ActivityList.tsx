@@ -33,7 +33,7 @@ export default function ActivityList({ userId }: { userId?: string }) {
           <Box key={activity.id} sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 2, bgcolor: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Box>
               <Typography variant="subtitle1" fontWeight={600}>{activity.type}</Typography>
-              <Typography variant="body2" color="text.secondary">{activity.notes}</Typography>
+              <Typography variant="body2" color="text.secondary">{activity.name} {activity.value} {activity.unit}</Typography>
             </Box>
             <Box>
               <IconButton onClick={() => setEditActivity(activity)}><EditIcon sx={{ color: '#2da58e' }} /></IconButton>
