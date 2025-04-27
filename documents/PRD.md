@@ -13,7 +13,7 @@
 
 ## Goals
 
-- Provide a seamless and friendly interface for tracking various exercises and activities.
+- Provide a seamless and friendly interface for tracking various activities (reps and distance-based).
 - Enable social interaction and motivation through clubs and challenges.
 - Offer real-time, personalized dashboards for users to monitor their progress.
 - Ensure security and scalability with modern authentication and backend solutions.
@@ -52,9 +52,9 @@
 - Visualizations: charts for weekly/monthly progress.
 - Quick-add activity/exercise.
 
-### 3. **Exercise & Activity Tracking**
-- **Indoor Exercises:** Log reps for push-ups, pull-ups, bench press, squats, etc.
-- **Outdoor Activities:** Log distance (meters) and duration for running, walking, swimming, cycling, etc.
+### 3. **Activity Tracking**
+- **Reps-based Activities:** Log reps for push-ups, pull-ups, bench press, squats, etc.
+- **Distance-based Activities:** Log distance (meters) and duration for running, walking, swimming, cycling, etc.
 - Edit/delete entries.
 - Activity history.
 
@@ -88,8 +88,7 @@
 ## Data Model (Supabase)
 
 - **Users:** id, email, name, avatar, bio, created_at, updated_at
-- **Exercises:** id, user_id, type, reps, date, notes, created_at, updated_at
-- **Activities:** id, user_id, type, distance, duration, date, location, notes, created_at, updated_at
+- **Activities:** id, user_id, type, reps, distance, duration, date, location, notes, created_at, updated_at
 - **Clubs:** id, name, description, creator_id, image, created_at, updated_at
 - **ClubMembers:** id, club_id, user_id, role, joined_at
 - **Challenges:** id, title, description, creator_id, activity_type, target_value, unit, start_date, end_date, is_public, created_at, updated_at
@@ -126,6 +125,6 @@
 
 ## Milestones
 
-1. **MVP:** Auth, dashboard, activity/exercise tracking.
+1. **MVP:** Auth, dashboard, activity tracking.
 2. **Social:** Clubs and challenges.
 3. **Polish:** UI/UX improvements, stretch features.

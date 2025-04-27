@@ -9,36 +9,28 @@
 - created_at (timestamp)
 - updated_at (timestamp)
 
-## Exercises
-- id (uuid, PK)
-- user_id (uuid, FK -> users.id)
-- type (text)
-- reps (integer)
-- date (date)
-- notes (text, nullable)
-- created_at (timestamp)
-- updated_at (timestamp)
-
 ## Activities
 - id (uuid, PK)
 - user_id (uuid, FK -> users.id)
-- type (text)
-- distance (integer)
-- duration (integer)
-- date (date)
-- location (text, nullable)
-- notes (text, nullable)
+- type (text)  # e.g., 'workout', 'run', 'swim', 'bike'
+- name (text)  # e.g., 'Push-ups', 'Morning Run'
+- date (timestamp)
+- value (integer)  # e.g., 50, 5000, 15
+- unit (text)     # e.g., 'reps', 'meters'
 - created_at (timestamp)
 - updated_at (timestamp)
+- timeAgo (text, generated in UI)
 
 ## Clubs
 - id (uuid, PK)
 - name (text)
 - description (text)
-- creator_id (uuid, FK -> users.id)
-- image (text, nullable)
-- created_at (timestamp)
-- updated_at (timestamp)
+- creatorId (uuid, FK -> users.id)
+- imageUrl (text, nullable)
+- memberCount (integer)
+- isPrivate (boolean)
+- createdAt (timestamp)
+- updatedAt (timestamp)
 
 ## ClubMembers
 - id (uuid, PK)
@@ -51,15 +43,16 @@
 - id (uuid, PK)
 - title (text)
 - description (text)
-- creator_id (uuid, FK -> users.id)
-- activity_type (text)
-- target_value (integer)
+- creatorId (uuid, FK -> users.id)
+- exerciseId (text)
+- targetValue (integer)
 - unit (text)
-- start_date (date)
-- end_date (date)
-- is_public (boolean)
-- created_at (timestamp)
-- updated_at (timestamp)
+- startDate (timestamp)
+- endDate (timestamp)
+- isPublic (boolean)
+- participantCount (integer)
+- createdAt (timestamp)
+- updatedAt (timestamp)
 
 ## ChallengeParticipants
 - id (uuid, PK)

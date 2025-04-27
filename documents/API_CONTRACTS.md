@@ -9,18 +9,10 @@
 ## Activities
 - **GET /api/activities?userId=** — Get all activities for a user
 - **POST /api/activities** — Add new activity
-  - Body: `{ type, distance, duration, date, location?, notes? }`
+  - Body: `{ type, reps?, distance?, duration?, date, location?, notes? }`
 - **PUT /api/activities/:id** — Update activity
-  - Body: `{ type?, distance?, duration?, date?, location?, notes? }`
+  - Body: `{ type?, reps?, distance?, duration?, date?, location?, notes? }`
 - **DELETE /api/activities/:id** — Delete activity
-
-## Exercises
-- **GET /api/exercises?userId=** — Get all exercises for a user
-- **POST /api/exercises** — Add new exercise
-  - Body: `{ type, reps, date, notes? }`
-- **PUT /api/exercises/:id** — Update exercise
-  - Body: `{ type?, reps?, date?, notes? }`
-- **DELETE /api/exercises/:id** — Delete exercise
 
 ## Clubs
 - **GET /api/clubs** — List all clubs
@@ -35,7 +27,7 @@
 ## Challenges
 - **GET /api/challenges** — List all challenges
 - **POST /api/challenges** — Create challenge
-  - Body: `{ title, description, activity_type, target_value, unit, start_date, end_date, is_public }`
+  - Body: `{ title, description, creatorId, exerciseId, targetValue, unit, startDate, endDate, isPublic, participantCount }`
 - **GET /api/challenges/:id** — Get challenge details
 - **PUT /api/challenges/:id** — Update challenge
 - **DELETE /api/challenges/:id** — Delete challenge

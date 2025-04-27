@@ -11,11 +11,6 @@
 - **Filters:** By type/date
 - **Add/Edit/Delete:** Modal dialogs
 
-## 3. Exercises Page
-- **Exercise List:** Table or cards of exercises
-- **Filters:** By type/date
-- **Add/Edit/Delete:** Modal dialogs
-
 ## 4. Clubs
 - **Club Directory:** Grid/list of clubs with join buttons
 - **Club Detail:** Members, feed, leaderboard
