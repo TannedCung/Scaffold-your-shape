@@ -40,7 +40,7 @@ export default function ClubCard({ club, isMember = false }: ClubCardProps) {
       <CardMedia
         component="img"
         height="140"
-        image={club.imageUrl || 'https://source.unsplash.com/random/800x600/?fitness'}
+        image={club.imageUrl || '/club-wallpaper-placeholder.png'}
         alt={club.name}
       />
       <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>

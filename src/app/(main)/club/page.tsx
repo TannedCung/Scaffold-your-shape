@@ -10,7 +10,10 @@ import {
   Button,
   Tab, 
   Tabs,
-  Divider
+  Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent
 } from '@mui/material';
 import { 
   Search as SearchIcon,
@@ -32,6 +35,7 @@ const MotionButton = motion(Button);
 export default function ClubPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const { clubs, loading, error } = useClubs();
+  const [createOpen, setCreateOpen] = useState(false);
 
   // Filter clubs based on search term
   const filteredClubs = clubs.filter(club =>
@@ -70,6 +74,7 @@ export default function ClubPage() {
                   bgcolor: '#1b7d6b',
                 }
               }}
+              onClick={() => setCreateOpen(true)}
             >
               Create Club
             </MotionButton>
@@ -85,9 +90,12 @@ export default function ClubPage() {
           </MotionTypography>
         </MotionBox>
 
-        <Box sx={{ mb: 4 }}>
-          <CreateClubForm />
-        </Box>
+        <Dialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="xs" fullWidth>
+          <DialogTitle sx={{ bgcolor: '#2da58e', color: '#fff', fontWeight: 600, pb: 1 }}>Create Club</DialogTitle>
+          <DialogContent sx={{ pt: 2 }}>
+            <CreateClubForm onSuccess={() => { setCreateOpen(false); window.location.reload(); }} />
+          </DialogContent>
+        </Dialog>
         <ClubList />
 
         {/* Tabs */}

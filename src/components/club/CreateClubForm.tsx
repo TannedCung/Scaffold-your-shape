@@ -1,12 +1,41 @@
 import React, { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Box, Button, TextField, Stack, Typography, Switch, FormControlLabel } from '@mui/material';
+import { Box, Button, TextField, Stack, Typography, Switch, FormControlLabel, Input, Avatar, CircularProgress } from '@mui/material';
 
 interface CreateClubFormProps {
   onSuccess?: () => void;
 }
 
 export default function CreateClubForm({ onSuccess }: CreateClubFormProps) {
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  // Uploads file to /api/upload/r2 and returns the TTL URL
+  const uploadImageToR2 = async (file: File): Promise<string | null> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const res = await fetch('/api/upload/r2', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.url as string;
+    } catch (e) {
+      return null;
+    }
+  };
+
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
@@ -18,7 +47,20 @@ export default function CreateClubForm({ onSuccess }: CreateClubFormProps) {
     setLoading(true);
     setError(null);
     setSuccess(false);
-    const { error } = await supabase.from('clubs').insert([{ name, description, is_private: isPrivate }]);
+    let backgroundImageUrl: string | null = null;
+    if (imageFile) {
+      setUploading(true);
+      backgroundImageUrl = await uploadImageToR2(imageFile);
+      setUploading(false);
+      if (!backgroundImageUrl) {
+        setLoading(false);
+        setError('Failed to upload background image.');
+        return;
+      }
+    }
+    const { error } = await supabase.from('clubs').insert([
+      { name, description, is_private: isPrivate, background_image_url: backgroundImageUrl }
+    ]);
     setLoading(false);
     if (error) setError(error.message);
     else {
@@ -26,23 +68,66 @@ export default function CreateClubForm({ onSuccess }: CreateClubFormProps) {
       setName('');
       setDescription('');
       setIsPrivate(false);
+      setImageFile(null);
+      setImagePreview(null);
       if (onSuccess) onSuccess();
     }
   };
 
   return (
-    <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 2, boxShadow: 0, border: '1px solid #e0e0e0', maxWidth: 400 }}>
-      <Typography variant="h6" sx={{ color: '#2da58e', mb: 2 }}>Create Club</Typography>
-      <Stack spacing={2}>
-        <TextField label="Name" value={name} onChange={e => setName(e.target.value)} size="small" fullWidth />
-        <TextField label="Description" value={description} onChange={e => setDescription(e.target.value)} size="small" fullWidth multiline minRows={2} />
-        <FormControlLabel control={<Switch checked={isPrivate} onChange={e => setIsPrivate(e.target.checked)} color="primary" />} label="Private Club" />
-        <Button onClick={handleCreate} disabled={loading || !name} variant="contained" sx={{ bgcolor: '#2da58e', color: '#fff', ':hover': { bgcolor: '#22796a' }, borderRadius: 1, textTransform: 'none' }}>
-          {loading ? 'Creating...' : 'Create'}
-        </Button>
-        {success && <Typography color="success.main">Club created!</Typography>}
-        {error && <Typography color="error.main">{error}</Typography>}
-      </Stack>
+    <Box sx={{ p: 0, bgcolor: '#f8fafc', borderRadius: 2, boxShadow: 0, border: '1px solid #e0e0e0', maxWidth: 400, overflow: 'hidden' }}>
+      {/* Wallpaper-style background image */}
+      <Box sx={{ position: 'relative', width: '100%', height: 140, bgcolor: '#e0f7f3', mb: 2 }}>
+        <img
+          src={imagePreview || '/images/club-wallpaper-placeholder.png'}
+          alt="Background Preview"
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+        />
+        <label htmlFor="club-bg-upload">
+          <Input
+            id="club-bg-upload"
+            type="file"
+            inputProps={{ accept: 'image/*' }}
+            onChange={handleImageChange}
+            sx={{ display: 'none' }}
+          />
+          <Button
+            variant="contained"
+            component="span"
+            size="small"
+            sx={{
+              position: 'absolute',
+              right: 12,
+              bottom: 12,
+              minWidth: 0,
+              p: 1,
+              bgcolor: '#2da58e',
+              color: '#fff',
+              borderRadius: 2,
+              boxShadow: 1,
+              textTransform: 'none',
+              fontWeight: 500,
+              ':hover': { bgcolor: '#22796a' }
+            }}
+            aria-label="Upload background image"
+          >
+            {uploading ? <CircularProgress size={18} color="inherit" /> : 'Upload'}
+          </Button>
+        </label>
+      </Box>
+      <Box sx={{ px: 3, pb: 3 }}>
+        <Typography variant="h6" sx={{ color: '#2da58e', mb: 2 }}>Create Club</Typography>
+        <Stack spacing={2}>
+          <TextField label="Name" value={name} onChange={e => setName(e.target.value)} size="small" fullWidth />
+          <TextField label="Description" value={description} onChange={e => setDescription(e.target.value)} size="small" fullWidth multiline minRows={2} />
+          <FormControlLabel control={<Switch checked={isPrivate} onChange={e => setIsPrivate(e.target.checked)} color="primary" />} label="Private Club" />
+          <Button onClick={handleCreate} disabled={loading || !name} variant="contained" sx={{ bgcolor: '#2da58e', color: '#fff', ':hover': { bgcolor: '#22796a' }, borderRadius: 1, textTransform: 'none' }}>
+            {loading ? 'Creating...' : 'Create'}
+          </Button>
+          {success && <Typography color="success.main">Club created!</Typography>}
+          {error && <Typography color="error.main">{error}</Typography>}
+        </Stack>
+      </Box>
     </Box>
   );
 }
