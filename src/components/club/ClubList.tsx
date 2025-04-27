@@ -27,17 +27,6 @@ export default function ClubList() {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-        <Typography variant="h6" sx={{ color: '#2da58e' }}>Clubs</Typography>
-        <Button
-          variant="contained"
-          size="small"
-          sx={{ bgcolor: '#2da58e', color: '#fff', textTransform: 'none', ':hover': { bgcolor: '#22796a' }, borderRadius: 1 }}
-          onClick={() => setCreateOpen(true)}
-        >
-          Create Club
-        </Button>
-      </Box>
       {loading && <Typography>Loading...</Typography>}
       {error && <Typography color="error">{error}</Typography>}
       <Stack spacing={2}>
@@ -55,12 +44,14 @@ export default function ClubList() {
         ))}
       </Stack>
       <ClubEditDialog open={!!editClub} club={editClub} onClose={() => setEditClub(null)} />
-      <Dialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ bgcolor: '#2da58e', color: '#fff' }}>Create Club</DialogTitle>
-        <DialogContent>
-          <CreateClubForm onSuccess={() => { setCreateOpen(false); window.location.reload(); }} />
-        </DialogContent>
-      </Dialog>
+      {createOpen && (
+        <Dialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="xs" fullWidth>
+          <DialogTitle sx={{ bgcolor: '#2da58e', color: '#fff' }}>Create Club</DialogTitle>
+          <DialogContent>
+            <CreateClubForm onSuccess={() => { setCreateOpen(false); window.location.reload(); }} />
+          </DialogContent>
+        </Dialog>
+      )}
       <Dialog open={!!deleteId} onClose={() => setDeleteId(null)}>
         <DialogTitle>Delete Club?</DialogTitle>
         <DialogContent>

@@ -43,16 +43,18 @@ export default function ChallengeList() {
         ))}
       </Stack>
       <ChallengeEditDialog open={!!editChallenge} challenge={editChallenge} onClose={() => setEditChallenge(null)} />
-      <Dialog open={!!deleteId} onClose={() => setDeleteId(null)}>
-        <DialogTitle>Delete Challenge?</DialogTitle>
-        <DialogContent>
-          <Typography>Are you sure you want to delete this challenge?</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteId(null)} disabled={deleting}>Cancel</Button>
-          <Button onClick={handleDelete} color="error" disabled={deleting}>{deleting ? 'Deleting...' : 'Delete'}</Button>
-        </DialogActions>
-      </Dialog>
+      {deleteId && (
+        <Dialog open={!!deleteId} onClose={() => setDeleteId(null)}>
+          <DialogTitle>Delete Challenge?</DialogTitle>
+          <DialogContent>
+            <Typography>Are you sure you want to delete this challenge?</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setDeleteId(null)} disabled={deleting}>Cancel</Button>
+            <Button onClick={handleDelete} color="error" disabled={deleting}>{deleting ? 'Deleting...' : 'Delete'}</Button>
+          </DialogActions>
+        </Dialog>
+      )}
     </Box>
   );
 }

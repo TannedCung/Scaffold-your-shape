@@ -2,7 +2,11 @@ import React, { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Box, Button, TextField, Stack, Typography } from '@mui/material';
 
-export default function CreateChallengeForm() {
+interface CreateChallengeFormProps {
+  onSuccess?: () => void;
+}
+
+export default function CreateChallengeForm({ onSuccess }: CreateChallengeFormProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
@@ -20,6 +24,7 @@ export default function CreateChallengeForm() {
       setSuccess(true);
       setTitle('');
       setDescription('');
+      if (onSuccess) onSuccess();
     }
   };
 

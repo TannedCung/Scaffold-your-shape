@@ -15,7 +15,10 @@ import {
   MenuItem,
   Select,
   FormControl,
-  InputLabel
+  InputLabel,
+  Dialog,
+  DialogTitle,
+  DialogContent
 } from '@mui/material';
 import { 
   Search as SearchIcon,
@@ -35,6 +38,7 @@ const MotionTypography = motion(Typography);
 const MotionButton = motion(Button);
 
 export default function ChallengesPage() {
+  const [createOpen, setCreateOpen] = React.useState(false);
   const { challenges, loading, error } = useChallenges();
 
   // My challenges (sample data)
@@ -74,6 +78,7 @@ export default function ChallengesPage() {
                   bgcolor: '#1b7d6b',
                 }
               }}
+              onClick={() => setCreateOpen(true)}
             >
               Create Challenge
             </MotionButton>
@@ -171,9 +176,12 @@ export default function ChallengesPage() {
           </Box>
         </MotionBox>
 
-        <Box sx={{ mb: 4 }}>
-          <CreateChallengeForm />
-        </Box>
+        <Dialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="xs" fullWidth>
+          <DialogTitle sx={{ bgcolor: '#2da58e', color: '#fff' }}>Create Challenge</DialogTitle>
+          <DialogContent>
+            <CreateChallengeForm onSuccess={() => { setCreateOpen(false); window.location.reload(); }} />
+          </DialogContent>
+        </Dialog>
         <ChallengeList />
 
         {loading && <Typography>Loading...</Typography>}

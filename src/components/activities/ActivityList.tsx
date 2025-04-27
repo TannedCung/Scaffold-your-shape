@@ -43,16 +43,18 @@ export default function ActivityList({ userId }: { userId?: string }) {
         ))}
       </Stack>
       <ActivityEditDialog open={!!editActivity} activity={editActivity} onClose={() => setEditActivity(null)} />
-      <Dialog open={!!deleteId} onClose={() => setDeleteId(null)}>
-        <DialogTitle>Delete Activity?</DialogTitle>
-        <DialogContent>
-          <Typography>Are you sure you want to delete this activity?</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteId(null)} disabled={deleting}>Cancel</Button>
-          <Button onClick={handleDelete} color="error" disabled={deleting}>{deleting ? 'Deleting...' : 'Delete'}</Button>
-        </DialogActions>
-      </Dialog>
+      {deleteId && (
+        <Dialog open={!!deleteId} onClose={() => setDeleteId(null)}>
+          <DialogTitle>Delete Activity?</DialogTitle>
+          <DialogContent>
+            <Typography>Are you sure you want to delete this activity?</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setDeleteId(null)} disabled={deleting}>Cancel</Button>
+            <Button onClick={handleDelete} color="error" disabled={deleting}>{deleting ? 'Deleting...' : 'Delete'}</Button>
+          </DialogActions>
+        </Dialog>
+      )}
     </Box>
   );
 }
