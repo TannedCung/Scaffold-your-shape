@@ -1,0 +1,41 @@
+# Node modules and build output
+node_modules
+.next
+out
+coverage
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local env files
+.env
+.env.*
+
+# OS and editor files
+.DS_Store
+*.swp
+*.swo
+*.swn
+*.bak
+*.tmp
+*.log
+.idea/
+.vscode/
+*.local
+
+# Test and mock data
+__tests__/
+__mocks__/
+*.spec.*
+*.test.*
+
+# Misc
+third-party/
+documents/
+.git
+.gitignore
+.dockerignore
+*.md
