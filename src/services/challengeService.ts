@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { Challenge } from '@/types';
+import { mapChallengeDbToChallenge, ChallengeDb, Challenge } from '@/types';
 
 export async function fetchChallenges(): Promise<Challenge[]> {
   const { data, error } = await supabase
@@ -7,5 +7,5 @@ export async function fetchChallenges(): Promise<Challenge[]> {
     .select('*')
     .order('created_at', { ascending: false });
   if (error) throw error;
-  return data || [];
+  return (data as ChallengeDb[] | null)?.map(mapChallengeDbToChallenge) || [];
 }

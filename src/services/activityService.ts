@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import type { Activity } from '@/types';
+import { mapActivityDbToActivity, ActivityDb, Activity } from '@/types';
 
 // Fetch activities (Read)
 type ActivityRow = {
@@ -22,17 +22,8 @@ export async function fetchActivities(userId?: string): Promise<Activity[]> {
   if (userId) query = query.eq('user_id', userId);
   const { data, error } = await query;
   if (error) throw error;
-  return (data as ActivityRow[] | null || []).map((a) => ({
-    id: a.id,
-    userId: a.user_id,
-    type: a.type,
-    name: a.name,
-    date: a.date,
-    value: a.value,
-    unit: a.unit,
-    created_at: a.created_at,
-    updatedAt: a.updated_at,
-  }));
+  return (data as ActivityDb[] | null)?.map(mapActivityDbToActivity) || [];
+
 }
 
 // Create activity (Create)
@@ -48,17 +39,7 @@ export async function createActivity(activity: Omit<Activity, 'id' | 'created_at
     }
   ]).select('id, user_id, type, name, date, value, unit, created_at, updated_at').single();
   if (error) throw error;
-  return {
-    id: data.id,
-    userId: data.user_id,
-    type: data.type,
-    name: data.name,
-    date: data.date,
-    value: data.value,
-    unit: data.unit,
-    created_at: data.created_at,
-    updatedAt: data.updated_at,
-  };
+  return mapActivityDbToActivity(data as ActivityDb);
 }
 
 // Delete activity (Remove)

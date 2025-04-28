@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { Club } from '@/types';
+import { mapClubDbToClub, ClubDb, Club } from '@/types';
 
 export async function fetchClubs(): Promise<Club[]> {
   const { data, error } = await supabase
@@ -7,5 +7,5 @@ export async function fetchClubs(): Promise<Club[]> {
     .select('*')
     .order('created_at', { ascending: false });
   if (error) throw error;
-  return data || [];
+  return (data as ClubDb[] | null)?.map(mapClubDbToClub) || [];
 }

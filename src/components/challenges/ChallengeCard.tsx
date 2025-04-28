@@ -4,13 +4,13 @@ import React from 'react';
 import { 
   Card, 
   CardContent, 
-  CardMedia, 
   Typography, 
   Box, 
   Button, 
   LinearProgress, 
   Chip
 } from '@mui/material';
+import ChallengeCardImage from './ChallengeCardImage';
 import DateRangeIcon from '@mui/icons-material/DateRange';
 import PeopleIcon from '@mui/icons-material/People';
 import { Challenge } from '@/types';
@@ -45,26 +45,7 @@ export default function ChallengeCard({
   // Calculate progress percentage
   const progressPercentage = isParticipant ? Math.min(100, Math.round((currentProgress / challenge.targetValue) * 100)) : 0;
   
-  // Get image based on activity type or exercise
-  const getChallengeImage = () => {
-    if (challenge.activityType) {
-      switch (challenge.activityType) {
-        case 'run':
-          return '/images/running.jpg';
-        case 'cycle':
-          return '/images/cycling.jpg';
-        case 'swim':
-          return '/images/swimming.jpg';
-        case 'walk':
-          return '/images/walking.jpg';
-        default:
-          return '/images/fitness.jpg';
-      }
-    } else {
-      // Exercise-based challenge
-      return '/images/fitness.jpg';
-    }
-  };
+
   
   // Badge color
   const getBadgeColor = () => {
@@ -93,15 +74,10 @@ export default function ChallengeCard({
       }}
     >
       <Box sx={{ position: 'relative' }}>
-        <CardMedia
-          component="img"
-          height="140"
-          image={getChallengeImage()}
-          alt={challenge.title}
-          sx={{ 
-            objectFit: 'cover',
-            filter: 'brightness(0.85)'
-          }}
+        <ChallengeCardImage 
+          imageUrl={challenge.backgroundImageUrl || '/images/fitness.jpg'} 
+          alt={challenge.title} 
+          sx={{ objectFit: 'cover', filter: 'brightness(0.85)' }}
         />
         
         {/* Status badge */}

@@ -2,7 +2,6 @@ import React from 'react';
 import { 
   Card, 
   CardContent, 
-  CardMedia, 
   Typography, 
   Box, 
   Button, 
@@ -17,6 +16,7 @@ import {
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { Club } from '@/types';
+import ClubCardImage from './ClubCardImage';
 
 interface ClubCardProps {
   club: Club;
@@ -24,6 +24,7 @@ interface ClubCardProps {
 }
 
 export default function ClubCard({ club, isMember = false }: ClubCardProps) {
+  console.log('club:', club);
   return (
     <Card 
       sx={{ 
@@ -37,12 +38,8 @@ export default function ClubCard({ club, isMember = false }: ClubCardProps) {
         }
       }}
     >
-      <CardMedia
-        component="img"
-        height="140"
-        image={club.imageUrl || '/club-wallpaper-placeholder.png'}
-        alt={club.name}
-      />
+      {/* Club background image with signed URL support */}
+      <ClubCardImage imageUrl={club.backgroundImageUrl || '/club-wallpaper-placeholder.png'} alt={club.name} />
       <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
           <Typography variant="h6" component="div" fontWeight="bold">
