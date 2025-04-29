@@ -1,3 +1,4 @@
+"use client";
 import React, { useEffect, useState } from 'react';
 import { CardMedia, CircularProgress } from '@mui/material';
 
@@ -47,6 +48,7 @@ export default function ClubCardImage({ imageUrl, alt }: ClubCardImageProps) {
     };
   }, [imageUrl]);
 
+  console.log('signedUrl: ', signedUrl);
   // Show loading spinner while fetching signed URL
   if (loading) {
     return <CardMedia component="div" sx={{ height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#e0f7f3' }}><CircularProgress size={24} color="inherit" /></CardMedia>;
@@ -56,7 +58,7 @@ export default function ClubCardImage({ imageUrl, alt }: ClubCardImageProps) {
     <CardMedia
       component="img"
       height="140"
-      image={signedUrl || imageUrl || '/club-wallpaper-placeholder.png'}
+      image={signedUrl || '/club-wallpaper-placeholder.png'}
       alt={alt}
       sx={{ bgcolor: '#e0f7f3' }}
     />
