@@ -1,18 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { mapActivityDbToActivity, ActivityDb, Activity } from '@/types';
 
-// Fetch activities (Read)
-type ActivityRow = {
-  id: string;
-  user_id: string;
-  type: string;
-  name: string;
-  date: string;
-  value: number;
-  unit: string;
-  created_at: string;
-  updated_at: string;
-};
+;
 
 export async function fetchActivities(userId?: string): Promise<Activity[]> {
   let query = supabase

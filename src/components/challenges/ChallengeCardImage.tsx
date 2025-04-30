@@ -4,7 +4,7 @@ import { CardMedia, CircularProgress } from '@mui/material';
 interface ChallengeCardImageProps {
   imageUrl: string | null | undefined;
   alt: string;
-  sx?: any;
+  sx?: React.CSSProperties;
 }
 
 function isR2Url(url: string | null | undefined) {

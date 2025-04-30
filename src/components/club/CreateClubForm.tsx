@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Box, Button, TextField, Stack, Typography, Switch, FormControlLabel, Input, Avatar, CircularProgress } from '@mui/material';
+import { Box, Button, TextField, Stack, Typography, Switch, FormControlLabel, Input, CircularProgress } from '@mui/material';
+import Image from 'next/image';
+import { useSession } from 'next-auth/react';
 
 interface CreateClubFormProps {
   onSuccess?: () => void;
@@ -32,6 +34,7 @@ export default function CreateClubForm({ onSuccess }: CreateClubFormProps) {
       const data = await res.json();
       return data.url as string;
     } catch (e) {
+      console.error('Error uploading image:', e);
       return null;
     }
   };
@@ -42,6 +45,8 @@ export default function CreateClubForm({ onSuccess }: CreateClubFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  const { data: session } = useSession();
 
   const handleCreate = async () => {
     setLoading(true);
@@ -58,30 +63,55 @@ export default function CreateClubForm({ onSuccess }: CreateClubFormProps) {
         return;
       }
     }
-    const { error } = await supabase.from('clubs').insert([
-      { name, description, is_private: isPrivate, background_image_url: backgroundImageUrl }
-    ]);
-    setLoading(false);
-    if (error) setError(error.message);
-    else {
-      setSuccess(true);
-      setName('');
-      setDescription('');
-      setIsPrivate(false);
-      setImageFile(null);
-      setImagePreview(null);
-      if (onSuccess) onSuccess();
+    const userId = session?.user?.id;
+    let clubId = null;
+    if (userId) {
+      // Insert club and get its ID
+      const { data: clubData, error: clubError } = await supabase.from('clubs').insert([
+        { name, description, is_private: isPrivate, background_image_url: backgroundImageUrl, creator_id: userId }
+      ]).select();
+      if (clubError || !clubData || !clubData[0]) {
+        setLoading(false);
+        setError(clubError?.message || 'Failed to create club.');
+        return;
+      }
+      clubId = clubData[0].id;
+      // Add creator as admin member
+      await supabase.from('club_members').insert([
+        { club_id: clubId, user_id: userId, role: 'admin' }
+      ]);
+    } else {
+      // Fallback: insert club without creator_id
+      const { error } = await supabase.from('clubs').insert([
+        { name, description, is_private: isPrivate, background_image_url: backgroundImageUrl }
+      ]);
+      if (error) {
+        setLoading(false);
+        setError(error.message);
+        return;
+      }
     }
+    setLoading(false);
+    setSuccess(true);
+    setName('');
+    setDescription('');
+    setIsPrivate(false);
+    setImageFile(null);
+    setImagePreview(null);
+    if (onSuccess) onSuccess();
   };
 
   return (
     <Box sx={{ p: 0, bgcolor: '#f8fafc', borderRadius: 2, boxShadow: 0, border: '1px solid #e0e0e0', maxWidth: 400, overflow: 'hidden' }}>
       {/* Wallpaper-style background image */}
       <Box sx={{ position: 'relative', width: '100%', height: 140, bgcolor: '#e0f7f3', mb: 2 }}>
-        <img
+        <Image
           src={imagePreview || '/images/club-wallpaper-placeholder.png'}
           alt="Background Preview"
-          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          width={400}
+          height={140}
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          priority
         />
         <label htmlFor="club-bg-upload">
           <Input
@@ -120,7 +150,7 @@ export default function CreateClubForm({ onSuccess }: CreateClubFormProps) {
         <Stack spacing={2}>
           <TextField label="Name" value={name} onChange={e => setName(e.target.value)} size="small" fullWidth />
           <TextField label="Description" value={description} onChange={e => setDescription(e.target.value)} size="small" fullWidth multiline minRows={2} />
-          <FormControlLabel control={<Switch checked={isPrivate} onChange={e => setIsPrivate(e.target.checked)} color="primary" />} label="Private Club" />
+          <FormControlLabel control={<Switch checked={isPrivate} onChange={event => setIsPrivate(event.target.checked)} color="primary" />} label="Private Club" />
           <Button onClick={handleCreate} disabled={loading || !name} variant="contained" sx={{ bgcolor: '#2da58e', color: '#fff', ':hover': { bgcolor: '#22796a' }, borderRadius: 1, textTransform: 'none' }}>
             {loading ? 'Creating...' : 'Create'}
           </Button>

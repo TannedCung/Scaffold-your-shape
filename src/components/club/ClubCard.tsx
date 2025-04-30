@@ -19,10 +19,9 @@ import ClubCardImage from './ClubCardImage';
 
 interface ClubCardProps {
   club: Club;
-  isMember?: boolean;
 }
 
-export default function ClubCard({ club, isMember = false }: ClubCardProps) {
+export default function ClubCard({ club }: ClubCardProps) {
   console.log('club:', club);
   return (
     <Link href={`/club/${club.id}`} passHref legacyBehavior>

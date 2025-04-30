@@ -1,36 +1,24 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { signIn } from "next-auth/react";
 import { 
   Box, 
   Card, 
   CardContent, 
   Typography, 
-  TextField, 
   Button, 
-  Divider, 
-  Container,
-  InputAdornment,
-  IconButton 
+  Container
 } from '@mui/material';
-import {
-  Google as GoogleIcon,
-  Visibility,
-  VisibilityOff
-} from '@mui/icons-material';
-import Link from 'next/link';
+import { Google as GoogleIcon } from '@mui/icons-material';
 import { motion } from "framer-motion";
-import { fadeIn, fadeInUp, staggerChildren } from '@/utils/animations';
+import { fadeInUp } from '@/utils/animations';
 
 // Remove custom motion components. Use MUI components with component={motion.div} or motion.button, etc. as needed.
 
 export default function SignInPage() {
-  const [showPassword, setShowPassword] = useState(false);
 
-  const handleTogglePassword = () => {
-    setShowPassword(!showPassword);
-  };
+
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', backgroundColor: 'background.default', py: 8 }}>
