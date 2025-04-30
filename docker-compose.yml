@@ -6,7 +6,7 @@ services:
     ports:
       - "3008:3006"
     env_file:
-      - .env.local
+      - .env.prod
     environment:
       - NODE_ENV=production
     restart: unless-stopped
