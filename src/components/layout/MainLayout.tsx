@@ -4,6 +4,7 @@ import React, { useState, ReactNode } from 'react';
 import { Box, Toolbar, useMediaQuery, CssBaseline } from '@mui/material';
 import Header from './Header';
 import Sidebar from './Sidebar';
+import EnsureProfile from '@/contexts/EnsureProfile';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -49,7 +50,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
         }}
       >
         <Toolbar />
-        {children}
+        <EnsureProfile>
+          {children}
+        </EnsureProfile>
       </Box>
     </Box>
   );
