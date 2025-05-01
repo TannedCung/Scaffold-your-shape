@@ -48,7 +48,6 @@ export default function ClubCardImage({ imageUrl, alt }: ClubCardImageProps) {
     };
   }, [imageUrl]);
 
-  console.log('signedUrl: ', signedUrl);
   // Show loading spinner while fetching signed URL
   if (loading) {
     return <CardMedia component="div" sx={{ height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#e0f7f3' }}><CircularProgress size={24} color="inherit" /></CardMedia>;
