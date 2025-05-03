@@ -23,7 +23,12 @@ export default function ClubList() {
     await supabase.from('clubs').delete().eq('id', deleteId);
     setDeleting(false);
     setDeleteId(null);
+    // Reload after delete
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    }
   };
+
 
   return (
     <Box>
