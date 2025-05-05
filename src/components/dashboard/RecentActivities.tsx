@@ -33,6 +33,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import CreateActivityDialog from '@/components/activities/CreateActivityDialog';
+import { useSession } from 'next-auth/react';
 
 // Create motion components
 const MotionCard = motion(Card);
@@ -48,9 +49,13 @@ export default function RecentActivities({ userId, limit = 5 }: RecentActivities
   const router = useRouter();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const { activities, loading, error } = useActivities(userId);
+  const { status } = useSession();
 
   // Take only the most recent activities up to the limit
   const recentActivities = activities.slice(0, limit);
+  
+  // Determine if we're still checking authentication
+  const isAuthLoading = status === 'loading';
 
   const getActivityIcon = (type: string) => {
     switch (type.toLowerCase()) {
@@ -213,9 +218,9 @@ export default function RecentActivities({ userId, limit = 5 }: RecentActivities
       />
       <Divider />
       <CardContent sx={{ px: 0, py: 0 }}>
-        {loading ? (
+        {loading || isAuthLoading ? (
           renderLoadingState()
-        ) : error ? (
+        ) : error && !isAuthLoading ? (
           <Typography color="error" sx={{ p: 2 }}>{error}</Typography>
         ) : recentActivities.length === 0 ? (
           renderEmptyState()

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Container, 
   Typography, 
@@ -27,8 +27,10 @@ import ActivityList from '@/components/activities/ActivityList';
 import CreateActivityDialog from '@/components/activities/CreateActivityDialog';
 import { useActivities } from '@/hooks/useActivities';
 import { useUser } from '@/hooks/useUser';
+import { useSession } from 'next-auth/react';
 
 export default function ActivitiesPage() {
+  const { data: session, status: sessionStatus } = useSession();
   const { user, loading: userLoading, error: userError } = useUser();
   const [searchQuery, setSearchQuery] = useState('');
   const [activityType, setActivityType] = useState('all');
@@ -39,8 +41,11 @@ export default function ActivitiesPage() {
   // Only fetch activities if user is logged in
   const { activities, loading: activitiesLoading, error: activitiesError } = useActivities(user?.id);
 
-  const loading = userLoading || activitiesLoading;
+  const loading = userLoading || activitiesLoading || sessionStatus === 'loading';
   const error = userError || activitiesError;
+  
+  // Determine authenticated state
+  const isAuthenticated = !!session?.user || !!user;
 
   const filteredActivities = activities
     .filter(activity => {
@@ -75,7 +80,7 @@ export default function ActivitiesPage() {
             color="primary" 
             startIcon={<AddIcon />}
             onClick={() => setIsCreateDialogOpen(true)}
-            disabled={loading || !user}
+            disabled={loading || !isAuthenticated}
             sx={{ 
               backgroundColor: '#2da58e', 
               '&:hover': { backgroundColor: '#1a8a73' } 
@@ -95,7 +100,7 @@ export default function ActivitiesPage() {
           <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
             <CircularProgress />
           </Box>
-        ) : !user ? (
+        ) : !isAuthenticated && sessionStatus !== 'loading' ? (
           <Alert severity="info" sx={{ mb: 3 }}>
             Please log in to view and manage your activities.
           </Alert>
@@ -199,7 +204,7 @@ export default function ActivitiesPage() {
             color="primary" 
             aria-label="add activity"
             onClick={() => setIsCreateDialogOpen(true)}
-            disabled={loading || !user}
+            disabled={loading || !isAuthenticated}
             sx={{ backgroundColor: '#2da58e', '&:hover': { backgroundColor: '#1a8a73' } }}
           >
             <AddIcon />

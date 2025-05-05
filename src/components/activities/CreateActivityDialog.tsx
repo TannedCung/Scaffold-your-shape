@@ -22,6 +22,7 @@ import {
 import { createActivity } from '@/services/activityService';
 import CloseIcon from '@mui/icons-material/Close';
 import { useUser } from '@/hooks/useUser';
+import { useSession } from 'next-auth/react';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -70,7 +71,8 @@ const unitOptions = [
 ];
 
 export default function CreateActivityDialog({ open, onClose }: { open: boolean, onClose: () => void }) {
-  const { user } = useUser();
+  const { data: session, status: sessionStatus } = useSession();
+  const { user, loading: userLoading } = useUser();
   const [tabValue, setTabValue] = useState(0);
   
   // Basic activity fields
@@ -87,6 +89,10 @@ export default function CreateActivityDialog({ open, onClose }: { open: boolean,
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  // Combined authentication check
+  const isAuthenticated = !!session?.user || !!user;
+  const isAuthLoading = sessionStatus === 'loading' || userLoading;
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -111,8 +117,25 @@ export default function CreateActivityDialog({ open, onClose }: { open: boolean,
   };
 
   const handleCreate = async () => {
-    if (!user) {
+    // First check if user is authenticated at all
+    if (!isAuthenticated && !isAuthLoading) {
       setError('You must be logged in to create an activity');
+      return;
+    }
+    
+    if (isAuthLoading) {
+      setError('Please wait while we verify your login status...');
+      return;
+    }
+    
+    // Get user ID from either session or user object
+    // NextAuth ID is in session?.user?.id
+    // Supabase user ID is in user?.id
+    const userId = session?.user?.id || user?.id;
+    
+    if (!userId) {
+      console.error('Missing user ID:', { session, user });
+      setError('Unable to determine your user ID. Please try refreshing the page.');
       return;
     }
     
@@ -122,7 +145,7 @@ export default function CreateActivityDialog({ open, onClose }: { open: boolean,
     
     try {
       await createActivity({
-        userId: user.id,
+        userId,
         type,
         name: name || type.charAt(0).toUpperCase() + type.slice(1),
         date,
@@ -137,6 +160,7 @@ export default function CreateActivityDialog({ open, onClose }: { open: boolean,
         handleClose();
       }, 1000);
     } catch (err) {
+      console.error('Error creating activity:', err);
       if (err instanceof Error) {
         setError(err.message);
       } else {
