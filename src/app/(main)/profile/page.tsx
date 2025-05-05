@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import { 
   Container, 
   Typography, 
@@ -23,9 +25,11 @@ import {
 import MainLayout from '@/components/layout/MainLayout';
 import EditProfileForm from '@/components/profile/EditProfileForm';
 import ActivityList from '@/components/activities/ActivityList';
-import CreateActivityForm from '@/components/activities/CreateActivityForm';
+import CreateActivityDialog from '@/components/activities/CreateActivityDialog';
+import AddIcon from '@mui/icons-material/Add';
 
 export default function ProfilePage() {
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   // TODO: Replace hardcoded userId with actual session user id from next-auth
   const userId = 'mock-user-id';
   // TODO: Replace hardcoded profile object with fetched profile data
@@ -162,7 +166,22 @@ export default function ProfilePage() {
               Recent Activities
             </Typography>
             <Box sx={{ mb: 2 }}>
-              <CreateActivityForm />
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => setIsCreateDialogOpen(true)}
+                sx={{
+                  backgroundColor: '#2da58e',
+                  '&:hover': { backgroundColor: '#1a8a73' },
+                  mb: 2
+                }}
+              >
+                Log Activity
+              </Button>
+              <CreateActivityDialog 
+                open={isCreateDialogOpen} 
+                onClose={() => setIsCreateDialogOpen(false)} 
+              />
             </Box>
             <ActivityList userId={userId} />
           </Box>

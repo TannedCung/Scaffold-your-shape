@@ -122,6 +122,8 @@ export interface ActivityDb {
   date: string;
   value: number;
   unit: string;
+  location?: string | null;
+  notes?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -134,6 +136,8 @@ export interface Activity {
   date: string;
   value: number; // e.g., 50, 5000, 15
   unit: string; // e.g., 'reps', 'meters'
+  location?: string; // e.g., 'Gym', 'Park'
+  notes?: string; // Additional notes about the activity
   created_at: string;
   updatedAt: string;
   timeAgo?: string; // UI-only, not stored in DB
@@ -148,6 +152,8 @@ export function mapActivityDbToActivity(db: ActivityDb): Activity {
     date: db.date,
     value: db.value,
     unit: db.unit,
+    location: db.location ?? undefined,
+    notes: db.notes ?? undefined,
     created_at: db.created_at,
     updatedAt: db.updated_at,
   };

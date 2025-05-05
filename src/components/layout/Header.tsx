@@ -21,6 +21,7 @@ import {
 } from '@mui/icons-material';
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
+import CreateActivityDialog from '@/components/activities/CreateActivityDialog';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -32,6 +33,7 @@ export default function Header({ onMenuClick, sidebarOpen = true, sidebarWidth =
   const { data: session } = useSession();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [notificationAnchorEl, setNotificationAnchorEl] = useState<null | HTMLElement>(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   
   const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -55,54 +57,55 @@ export default function Header({ onMenuClick, sidebarOpen = true, sidebarWidth =
   };
 
   return (
-    <AppBar 
-      position="fixed" 
-      color="default" 
-      elevation={1}
-      sx={{
-        width: { sm: sidebarOpen ? `calc(100% - ${sidebarWidth}px)` : '100%' },
-        ml: { sm: sidebarOpen ? `${sidebarWidth}px` : 0 },
-        transition: theme => theme.transitions.create(['margin', 'width'], {
-          easing: theme.transitions.easing.easeOut,
-          duration: theme.transitions.duration.standard,
-        }),
-        bgcolor: 'background.paper',
-        borderBottom: '1px solid',
-        borderColor: 'divider',
-        zIndex: theme => theme.zIndex.drawer + 1,
-      }}
-    >
-      <Toolbar>
-        <IconButton
-          color="inherit"
-          edge="start"
-          onClick={onMenuClick}
-          sx={{ mr: 2 }}
-        >
-          {sidebarOpen ? <ChevronLeftIcon /> : <MenuIcon />}
-        </IconButton>
-        
-        <Typography 
-          variant="h6" 
-          component="div" 
-          sx={{ 
-            display: { xs: 'none', sm: 'block' },
-            fontWeight: 'bold',
-            color: '#2da58e'
-          }}
-        >
-          Scaffold Your Shape
-        </Typography>
-        
-        <Box sx={{ flexGrow: 1 }} />
-        
-        {session ? (
-          <>
-            <Link href="/activity/log" passHref>
+    <>
+      <AppBar 
+        position="fixed" 
+        color="default" 
+        elevation={1}
+        sx={{
+          width: { sm: sidebarOpen ? `calc(100% - ${sidebarWidth}px)` : '100%' },
+          ml: { sm: sidebarOpen ? `${sidebarWidth}px` : 0 },
+          transition: theme => theme.transitions.create(['margin', 'width'], {
+            easing: theme.transitions.easing.easeOut,
+            duration: theme.transitions.duration.standard,
+          }),
+          bgcolor: 'background.paper',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          zIndex: theme => theme.zIndex.drawer + 1,
+        }}
+      >
+        <Toolbar>
+          <IconButton
+            color="inherit"
+            edge="start"
+            onClick={onMenuClick}
+            sx={{ mr: 2 }}
+          >
+            {sidebarOpen ? <ChevronLeftIcon /> : <MenuIcon />}
+          </IconButton>
+          
+          <Typography 
+            variant="h6" 
+            component="div" 
+            sx={{ 
+              display: { xs: 'none', sm: 'block' },
+              fontWeight: 'bold',
+              color: '#2da58e'
+            }}
+          >
+            Scaffold Your Shape
+          </Typography>
+          
+          <Box sx={{ flexGrow: 1 }} />
+          
+          {session ? (
+            <>
               <Button 
                 variant="contained" 
                 size="small" 
                 startIcon={<AddIcon />}
+                onClick={() => setIsCreateDialogOpen(true)}
                 sx={{ 
                   mr: { xs: 1, sm: 2 },
                   display: { xs: 'none', sm: 'flex' },
@@ -114,124 +117,129 @@ export default function Header({ onMenuClick, sidebarOpen = true, sidebarWidth =
               >
                 Log Activity
               </Button>
-            </Link>
-            
-            <Tooltip title="Notifications">
-              <IconButton 
-                color="inherit" 
-                onClick={handleNotificationMenuOpen}
-                sx={{ mr: { xs: 1, sm: 2 } }}
-              >
-                <NotificationsIcon />
-              </IconButton>
-            </Tooltip>
-            
-            <Menu
-              anchorEl={notificationAnchorEl}
-              open={Boolean(notificationAnchorEl)}
-              onClose={handleNotificationMenuClose}
-              PaperProps={{
-                sx: { width: 320, maxHeight: 400 }
-              }}
-            >
-              <MenuItem onClick={handleNotificationMenuClose}>
-                <Box sx={{ width: '100%' }}>
-                  <Typography variant="subtitle2">New Challenge Available</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    30-Day Running Challenge has started!
-                  </Typography>
-                </Box>
-              </MenuItem>
-              <MenuItem onClick={handleNotificationMenuClose}>
-                <Box sx={{ width: '100%' }}>
-                  <Typography variant="subtitle2">Activity Milestone</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    You&apos;ve reached 100km of running this month!
-                  </Typography>
-                </Box>
-              </MenuItem>
-              <MenuItem onClick={handleNotificationMenuClose}>
-                <Box sx={{ width: '100%' }}>
-                  <Typography variant="subtitle2">New Club Member</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    John Doe has joined Morning Runners club
-                  </Typography>
-                </Box>
-              </MenuItem>
-            </Menu>
-            
-            <Tooltip title="Account">
-              <IconButton
-                onClick={handleProfileMenuOpen}
-                size="small"
-                sx={{ p: 0 }}
-              >
-                <Avatar 
-                  alt={session.user?.name || 'User'} 
-                  src={session.user?.image || undefined}
-                />
-              </IconButton>
-            </Tooltip>
-            
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleMenuClose}
-            >
-              <MenuItem onClick={handleMenuClose}>
-                <Link href="/profile" passHref style={{ color: 'inherit', textDecoration: 'none' }}>
-                  Profile
-                </Link>
-              </MenuItem>
-              <MenuItem onClick={handleMenuClose}>
-                <Link href="/settings" passHref style={{ color: 'inherit', textDecoration: 'none' }}>
-                  Settings
-                </Link>
-              </MenuItem>
-              <MenuItem onClick={handleLogout}>Logout</MenuItem>
-            </Menu>
-            
-            {/* GitHub Repo Link */}
-            <Box sx={{ ml: 2 }}>
-              <Button
-                component="a"
-                href="https://github.com/TannedCung/Scaffold-your-shape"
-                target="_blank"
-                rel="noopener noreferrer"
-                variant="outlined"
-                size="small"
-                sx={{
-                  borderColor: '#2da58e',
-                  color: '#2da58e',
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  ml: 1,
-                  '&:hover': {
-                    borderColor: '#22796a',
-                    background: 'rgba(45,165,142,0.04)',
-                  },
+              
+              <Tooltip title="Notifications">
+                <IconButton 
+                  color="inherit" 
+                  onClick={handleNotificationMenuOpen}
+                  sx={{ mr: { xs: 1, sm: 2 } }}
+                >
+                  <NotificationsIcon />
+                </IconButton>
+              </Tooltip>
+              
+              <Menu
+                anchorEl={notificationAnchorEl}
+                open={Boolean(notificationAnchorEl)}
+                onClose={handleNotificationMenuClose}
+                PaperProps={{
+                  sx: { width: 320, maxHeight: 400 }
                 }}
               >
-                GitHub
+                <MenuItem onClick={handleNotificationMenuClose}>
+                  <Box sx={{ width: '100%' }}>
+                    <Typography variant="subtitle2">New Challenge Available</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      30-Day Running Challenge has started!
+                    </Typography>
+                  </Box>
+                </MenuItem>
+                <MenuItem onClick={handleNotificationMenuClose}>
+                  <Box sx={{ width: '100%' }}>
+                    <Typography variant="subtitle2">Activity Milestone</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      You&apos;ve reached 100km of running this month!
+                    </Typography>
+                  </Box>
+                </MenuItem>
+                <MenuItem onClick={handleNotificationMenuClose}>
+                  <Box sx={{ width: '100%' }}>
+                    <Typography variant="subtitle2">New Club Member</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      John Doe has joined Morning Runners club
+                    </Typography>
+                  </Box>
+                </MenuItem>
+              </Menu>
+              
+              <Tooltip title="Account">
+                <IconButton
+                  onClick={handleProfileMenuOpen}
+                  size="small"
+                  sx={{ p: 0 }}
+                >
+                  <Avatar 
+                    alt={session.user?.name || 'User'} 
+                    src={session.user?.image || undefined}
+                  />
+                </IconButton>
+              </Tooltip>
+              
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleMenuClose}
+              >
+                <MenuItem onClick={handleMenuClose}>
+                  <Link href="/profile" passHref style={{ color: 'inherit', textDecoration: 'none' }}>
+                    Profile
+                  </Link>
+                </MenuItem>
+                <MenuItem onClick={handleMenuClose}>
+                  <Link href="/settings" passHref style={{ color: 'inherit', textDecoration: 'none' }}>
+                    Settings
+                  </Link>
+                </MenuItem>
+                <MenuItem onClick={handleLogout}>Logout</MenuItem>
+              </Menu>
+              
+              {/* GitHub Repo Link */}
+              <Box sx={{ ml: 2 }}>
+                <Button
+                  component="a"
+                  href="https://github.com/TannedCung/Scaffold-your-shape"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    borderColor: '#2da58e',
+                    color: '#2da58e',
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    ml: 1,
+                    '&:hover': {
+                      borderColor: '#22796a',
+                      background: 'rgba(45,165,142,0.04)',
+                    },
+                  }}
+                >
+                  GitHub
+                </Button>
+              </Box>
+            </>
+          ) : (
+            <Link href="/sign-in" passHref>
+              <Button 
+                variant="contained"
+                sx={{ 
+                  bgcolor: '#2da58e',
+                  '&:hover': {
+                    bgcolor: '#1b7d6b',
+                  }
+                }}
+              >
+                Sign In
               </Button>
-            </Box>
-          </>
-        ) : (
-          <Link href="/sign-in" passHref>
-            <Button 
-              variant="contained"
-              sx={{ 
-                bgcolor: '#2da58e',
-                '&:hover': {
-                  bgcolor: '#1b7d6b',
-                }
-              }}
-            >
-              Sign In
-            </Button>
-          </Link>
-        )}
-      </Toolbar>
-    </AppBar>
+            </Link>
+          )}
+        </Toolbar>
+      </AppBar>
+      
+      <CreateActivityDialog 
+        open={isCreateDialogOpen} 
+        onClose={() => setIsCreateDialogOpen(false)} 
+      />
+    </>
   );
 }

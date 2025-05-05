@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState, ReactNode } from 'react';
-import { Box, Toolbar, useMediaQuery, CssBaseline } from '@mui/material';
+import { Box, Toolbar, useMediaQuery, CssBaseline, Fab, Tooltip } from '@mui/material';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import EnsureProfile from '@/contexts/EnsureProfile';
+import { Add as AddIcon } from '@mui/icons-material';
+import CreateActivityDialog from '@/components/activities/CreateActivityDialog';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -12,6 +14,7 @@ interface MainLayoutProps {
 
 export default function MainLayout({ children }: MainLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const isSmallScreen = useMediaQuery('(max-width:900px)');
 
   const handleDrawerToggle = () => {
@@ -54,6 +57,31 @@ export default function MainLayout({ children }: MainLayoutProps) {
           {children}
         </EnsureProfile>
       </Box>
+      
+      {/* Mobile FAB for logging activity */}
+      <Tooltip title="Log Activity">
+        <Fab 
+          color="primary" 
+          aria-label="log activity" 
+          sx={{ 
+            position: 'fixed', 
+            bottom: 20, 
+            right: 20, 
+            display: { xs: 'flex', sm: 'none' },
+            bgcolor: '#2da58e',
+            '&:hover': { bgcolor: '#1a8a73' },
+            zIndex: theme => theme.zIndex.drawer - 1,
+          }}
+          onClick={() => setIsCreateDialogOpen(true)}
+        >
+          <AddIcon />
+        </Fab>
+      </Tooltip>
+      
+      <CreateActivityDialog 
+        open={isCreateDialogOpen} 
+        onClose={() => setIsCreateDialogOpen(false)} 
+      />
     </Box>
   );
 }

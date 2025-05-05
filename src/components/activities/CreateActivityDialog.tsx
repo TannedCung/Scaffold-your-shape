@@ -1,7 +1,6 @@
 "use client";
-import type { Activity } from '@/types';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Dialog, 
   DialogTitle, 
@@ -13,14 +12,15 @@ import {
   Typography, 
   MenuItem, 
   Box,
+  InputAdornment,
   IconButton,
   Alert,
   CircularProgress,
   Tabs,
   Tab
 } from '@mui/material';
+import { createActivity } from '@/services/activityService';
 import CloseIcon from '@mui/icons-material/Close';
-import { updateActivity } from '@/services/activityService';
 import { useUser } from '@/hooks/useUser';
 
 interface TabPanelProps {
@@ -36,8 +36,8 @@ function TabPanel(props: TabPanelProps) {
     <div
       role="tabpanel"
       hidden={value !== index}
-      id={`edit-tabpanel-${index}`}
-      aria-labelledby={`edit-tab-${index}`}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
       {...other}
     >
       {value === index && (
@@ -69,16 +69,16 @@ const unitOptions = [
   { value: 'calories', label: 'Calories' },
 ];
 
-export default function ActivityEditDialog({ open, activity, onClose }: { open: boolean, activity: Activity | null, onClose: () => void }) {
+export default function CreateActivityDialog({ open, onClose }: { open: boolean, onClose: () => void }) {
   const { user } = useUser();
   const [tabValue, setTabValue] = useState(0);
   
   // Basic activity fields
-  const [type, setType] = useState('');
+  const [type, setType] = useState('workout');
   const [name, setName] = useState('');
   const [value, setValue] = useState('');
-  const [unit, setUnit] = useState('');
-  const [date, setDate] = useState('');
+  const [unit, setUnit] = useState('reps');
+  const [date, setDate] = useState(new Date().toISOString().substring(0, 16));
   
   // Advanced fields (optional)
   const [description, setDescription] = useState('');
@@ -92,46 +92,37 @@ export default function ActivityEditDialog({ open, activity, onClose }: { open: 
     setTabValue(newValue);
   };
 
-  useEffect(() => {
-    if (activity) {
-      setType(activity.type || 'workout');
-      setName(activity.name || '');
-      setValue(activity.value?.toString() || '');
-      setUnit(activity.unit || 'reps');
-      // Set location and description if they exist
-      setLocation(activity.location || '');
-      setDescription(activity.notes || '');
-      
-      // Format date for datetime-local input
-      const dateObj = new Date(activity.date);
-      if (!isNaN(dateObj.getTime())) {
-        // Make sure it's a valid date before formatting
-        const localDate = new Date(dateObj.getTime() - dateObj.getTimezoneOffset() * 60000)
-          .toISOString()
-          .slice(0, 16);
-        setDate(localDate);
-      } else {
-        setDate(new Date().toISOString().slice(0, 16));
-      }
-      
-      // Reset state
-      setError(null);
-      setSuccess(false);
-      setTabValue(0);
-    }
-  }, [activity]);
+  const resetForm = () => {
+    setType('workout');
+    setName('');
+    setValue('');
+    setUnit('reps');
+    setDate(new Date().toISOString().substring(0, 16));
+    setDescription('');
+    setLocation('');
+    setError(null);
+    setSuccess(false);
+    setTabValue(0);
+  };
 
-  const handleSave = async () => {
-    if (!activity || !user) return;
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
+  const handleCreate = async () => {
+    if (!user) {
+      setError('You must be logged in to create an activity');
+      return;
+    }
     
     setLoading(true);
     setError(null);
     setSuccess(false);
     
     try {
-      await updateActivity({
-        id: activity.id,
-        userId: activity.userId,
+      await createActivity({
+        userId: user.id,
         type,
         name: name || type.charAt(0).toUpperCase() + type.slice(1),
         date,
@@ -139,13 +130,11 @@ export default function ActivityEditDialog({ open, activity, onClose }: { open: 
         unit,
         location,
         notes: description,
-        created_at: activity.created_at,
-        updatedAt: new Date().toISOString(),
       });
       
       setSuccess(true);
       setTimeout(() => {
-        onClose();
+        handleClose();
       }, 1000);
     } catch (err) {
       if (err instanceof Error) {
@@ -163,8 +152,8 @@ export default function ActivityEditDialog({ open, activity, onClose }: { open: 
   return (
     <Dialog 
       open={open} 
-      onClose={loading ? undefined : onClose}
-      maxWidth="sm"
+      onClose={loading ? undefined : handleClose} 
+      maxWidth="sm" 
       fullWidth
       PaperProps={{
         sx: {
@@ -174,7 +163,7 @@ export default function ActivityEditDialog({ open, activity, onClose }: { open: 
       }}
     >
       <DialogTitle sx={{ 
-        bgcolor: '#3b82f6',
+        bgcolor: '#2da58e',
         color: 'white',
         display: 'flex',
         justifyContent: 'space-between',
@@ -182,12 +171,12 @@ export default function ActivityEditDialog({ open, activity, onClose }: { open: 
         p: 2,
       }}>
         <Typography variant="h6" component="div">
-          Edit Activity
+          Add New Activity
         </Typography>
         <IconButton 
           edge="end" 
           color="inherit" 
-          onClick={onClose} 
+          onClick={handleClose} 
           disabled={loading}
           aria-label="close"
         >
@@ -211,7 +200,7 @@ export default function ActivityEditDialog({ open, activity, onClose }: { open: 
         )}
         {success && (
           <Alert severity="success" sx={{ mb: 2 }}>
-            Activity updated successfully!
+            Activity added successfully!
           </Alert>
         )}
         
@@ -304,26 +293,26 @@ export default function ActivityEditDialog({ open, activity, onClose }: { open: 
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button 
-          onClick={onClose} 
+          onClick={handleClose} 
           disabled={loading}
         >
           Cancel
         </Button>
         <Button 
-          onClick={handleSave} 
+          onClick={handleCreate} 
           variant="contained" 
           disabled={loading || !isFormValid}
           startIcon={loading ? <CircularProgress size={20} /> : null}
           sx={{ 
-            bgcolor: '#3b82f6', 
+            bgcolor: '#2da58e', 
             '&:hover': { 
-              bgcolor: '#2563eb' 
+              bgcolor: '#1a8a73' 
             } 
           }}
         >
-          {loading ? 'Saving...' : 'Save Changes'}
+          {loading ? 'Adding...' : 'Add Activity'}
         </Button>
       </DialogActions>
     </Dialog>
   );
-}
+} 

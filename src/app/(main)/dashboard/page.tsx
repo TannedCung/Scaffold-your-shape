@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Box, 
   Typography, 
@@ -18,8 +18,11 @@ import {
 import StatCard from '@/components/dashboard/StatCard';
 import RecentActivities from '@/components/dashboard/RecentActivities';
 import MainLayout from '@/components/layout/MainLayout';
+import CreateActivityDialog from '@/components/activities/CreateActivityDialog';
 
 export default function DashboardPage() {
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+
   return (
     <MainLayout>
       <Container maxWidth="lg">
@@ -120,6 +123,12 @@ export default function DashboardPage() {
             </Card>
           </Box>
         </Box>
+
+        {/* Create Activity Dialog */}
+        <CreateActivityDialog 
+          open={isCreateDialogOpen} 
+          onClose={() => setIsCreateDialogOpen(false)} 
+        />
       </Container>
     </MainLayout>
   );
