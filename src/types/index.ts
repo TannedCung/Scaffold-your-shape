@@ -124,6 +124,7 @@ export interface ActivityDb {
   unit: string;
   location?: string | null;
   notes?: string | null;
+  strava_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -138,6 +139,7 @@ export interface Activity {
   unit: string; // e.g., 'reps', 'meters'
   location?: string; // e.g., 'Gym', 'Park'
   notes?: string; // Additional notes about the activity
+  strava_id?: string; // Reference to the Strava activity ID
   created_at: string;
   updatedAt: string;
   timeAgo?: string; // UI-only, not stored in DB
@@ -154,6 +156,7 @@ export function mapActivityDbToActivity(db: ActivityDb): Activity {
     unit: db.unit,
     location: db.location ?? undefined,
     notes: db.notes ?? undefined,
+    strava_id: db.strava_id ?? undefined,
     created_at: db.created_at,
     updatedAt: db.updated_at,
   };
@@ -372,6 +375,10 @@ export interface ProfileDb {
   name: string;
   avatar_url?: string | null;
   bio?: string | null;
+  strava_id?: string | null;
+  strava_access_token?: string | null;
+  strava_refresh_token?: string | null;
+  strava_token_expires_at?: number | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -382,6 +389,10 @@ export interface Profile {
   name: string;
   avatar_url?: string;
   bio?: string;
+  strava_id?: string;
+  strava_access_token?: string;
+  strava_refresh_token?: string;
+  strava_token_expires_at?: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -393,6 +404,10 @@ export function mapProfileDbToProfile(db: ProfileDb): Profile {
     name: db.name,
     avatar_url: db.avatar_url ?? undefined,
     bio: db.bio ?? undefined,
+    strava_id: db.strava_id ?? undefined,
+    strava_access_token: db.strava_access_token ?? undefined,
+    strava_refresh_token: db.strava_refresh_token ?? undefined,
+    strava_token_expires_at: db.strava_token_expires_at ?? undefined,
     created_at: db.created_at,
     updated_at: db.updated_at,
   };

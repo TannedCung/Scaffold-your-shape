@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { fetchActivities } from '@/services/activityService';
 import type { Activity } from '@/types';
 import { supabase } from '@/lib/supabase';
@@ -13,8 +13,8 @@ export function useActivities(userId?: string) {
   // Determine the effective userId (from props or session)
   const effectiveUserId = userId || session?.user?.id;
 
-  // Function to load activities
-  const loadActivities = async () => {
+  // Function to load activities - wrap in useCallback to prevent dependency issues
+  const loadActivities = useCallback(async () => {
     // Don't attempt to load if authentication is still being determined
     if (status === 'loading') return;
     
@@ -39,7 +39,7 @@ export function useActivities(userId?: string) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [effectiveUserId, status, userId]);
 
   useEffect(() => {
     // Initial fetch
@@ -68,7 +68,7 @@ export function useActivities(userId?: string) {
         subscription.unsubscribe();
       }
     };
-  }, [effectiveUserId, status]);
+  }, [effectiveUserId, status, loadActivities]);
 
   return { 
     activities, 
