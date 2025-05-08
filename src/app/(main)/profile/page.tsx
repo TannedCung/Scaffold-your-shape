@@ -135,31 +135,38 @@ function ProfileContent() {
               alignItems: 'center',
               position: 'relative'
             }}>
-              <Avatar 
-                src={profile?.avatar_url || session?.user?.image || undefined}
-                alt="User Profile"
-                sx={{ 
-                  width: 160,
-                  height: 160,
-                  border: '4px solid white',
-                  boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
-                }}
-              />
-              <Tooltip title="Edit Profile">
-                <IconButton 
-                  onClick={() => setIsEditProfileOpen(true)}
+              <Box sx={{ position: 'relative' }}>
+                <Avatar 
+                  src={profile?.avatar_url || session?.user?.image || undefined}
+                  alt="User Profile"
                   sx={{ 
-                    position: 'absolute',
-                    bottom: 5,
-                    right: 5,
-                    backgroundColor: 'white',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                    '&:hover': { backgroundColor: '#f5f5f5' }
+                    width: 160,
+                    height: 160,
+                    border: '4px solid white',
+                    boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
                   }}
-                >
-                  <EditIcon />
-                </IconButton>
-              </Tooltip>
+                />
+                <Tooltip title="Edit Profile">
+                  <IconButton 
+                    onClick={() => setIsEditProfileOpen(true)}
+                    sx={{ 
+                      position: 'absolute',
+                      bottom: 5,
+                      right: 5,
+                      backgroundColor: 'white',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                      '&:hover': { backgroundColor: '#f5f5f5' },
+                      border: '2px solid white',
+                      width: 36,
+                      height: 36,
+                      zIndex: 1
+                    }}
+                    size="small"
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
               
               {/* Strava connect button */}
               {stravaError && (
@@ -180,79 +187,95 @@ function ProfileContent() {
                 width: '100%',
               }}>
                 {/* Strava Logo */}
-                <Box 
-                  onClick={!stravaLoading ? (isConnectedToStrava ? undefined : connectToStrava) : undefined}
-                  sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: stravaLoading || isConnectedToStrava ? 'default' : 'pointer',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                    transition: 'transform 0.2s',
-                    '&:hover': {
-                      transform: stravaLoading || isConnectedToStrava ? 'none' : 'scale(1.03)'
-                    },
-                    opacity: isConnectedToStrava ? 0.6 : 1,
-                    position: 'relative'
-                  }}
+                <Tooltip 
+                  title={isConnectedToStrava ? "Connected to Strava" : "Connect your Strava account"}
+                  arrow
+                  placement="top"
                 >
-                  <Image 
-                    src="/btn_strava_connect_with_white.svg" 
-                    alt="Connect to Strava" 
-                    width={200}
-                    height={48} 
-                    priority
-                  />
-                  {isConnectedToStrava && (
-                    <Box 
-                      sx={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
+                  <Box 
+                    onClick={!stravaLoading ? (isConnectedToStrava ? undefined : connectToStrava) : undefined}
+                    sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: stravaLoading || isConnectedToStrava ? 'default' : 'pointer',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                      transition: 'transform 0.2s',
+                      '&:hover': {
+                        transform: stravaLoading || isConnectedToStrava ? 'none' : 'scale(1.03)'
+                      },
+                      opacity: isConnectedToStrava ? 0.6 : 1,
+                      position: 'relative'
+                    }}
+                  >
+                    <Image 
+                      src="/btn_strava_connect_with_white.svg" 
+                      alt="Connect to Strava" 
+                      width={200}
+                      height={48} 
+                      priority
+                    />
+                    {isConnectedToStrava && (
+                      <Box 
+                        sx={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: 'rgba(0,0,0,0.1)',
+                          borderRadius: 1
+                        }}
+                      >
+                        <Typography variant="body2" sx={{ color: 'white', fontWeight: 600 }}>
+                          Connected
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+                </Tooltip>
+                
+                {/* Connection Status Button */}
+                {isConnectedToStrava && (
+                  <Tooltip 
+                    title="Disconnect from Strava"
+                    arrow
+                    placement="bottom"
+                  >
+                    <Button
+                      variant="outlined"
+                      onClick={disconnectFromStrava}
+                      sx={{ 
+                        borderColor: '#fc4c02',
+                        color: '#fc4c02',
+                        '&:hover': { 
+                          backgroundColor: 'rgba(252, 76, 2, 0.04)',
+                          borderColor: '#fc4c02'
+                        },
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: 'rgba(0,0,0,0.1)',
-                        borderRadius: 1
+                        gap: 1,
+                        fontSize: '0.8rem',
+                        px: 2,
+                        py: 0.5
                       }}
+                      disabled={stravaLoading}
+                      size="small"
                     >
-                      <Typography variant="body2" sx={{ color: 'white', fontWeight: 600 }}>
-                        Connected
-                      </Typography>
-                    </Box>
-                  )}
-                </Box>
-                
-                {/* Connection Status Circular Button */}
-                <Button
-                  variant={isConnectedToStrava ? "outlined" : "contained"}
-                  onClick={isConnectedToStrava ? disconnectFromStrava : connectToStrava}
-                  sx={{ 
-                    backgroundColor: isConnectedToStrava ? 'transparent' : '#2da58e',
-                    borderColor: isConnectedToStrava ? '#2da58e' : 'transparent',
-                    color: isConnectedToStrava ? '#2da58e' : 'white',
-                    '&:hover': { 
-                      backgroundColor: isConnectedToStrava ? 'rgba(45, 165, 142, 0.04)' : '#259a83',
-                      borderColor: isConnectedToStrava ? '#2da58e' : 'transparent'
-                    },
-                    minWidth: 'unset',
-                    width: 48,
-                    height: 48,
-                    borderRadius: '50%',
-                    p: 0
-                  }}
-                  disabled={stravaLoading}
-                >
-                  {stravaLoading ? (
-                    <CircularProgress size={24} sx={{ color: 'inherit' }} />
-                  ) : isConnectedToStrava ? (
-                    <LinkOffIcon />
-                  ) : (
-                    <LinkIcon />
-                  )}
-                </Button>
+                      {stravaLoading ? (
+                        <CircularProgress size={16} sx={{ color: 'inherit' }} />
+                      ) : (
+                        <>
+                          <LinkOffIcon fontSize="small" />
+                          Disconnect
+                        </>
+                      )}
+                    </Button>
+                  </Tooltip>
+                )}
               </Box>
               
               {/* Strava Activity Importer - only shown when connected to Strava */}

@@ -125,6 +125,8 @@ export interface ActivityDb {
   location?: string | null;
   notes?: string | null;
   strava_id?: string | null;
+  source?: string | null;
+  url?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -140,6 +142,8 @@ export interface Activity {
   location?: string; // e.g., 'Gym', 'Park'
   notes?: string; // Additional notes about the activity
   strava_id?: string; // Reference to the Strava activity ID
+  source?: string; // e.g., 'Strava', 'TannedandMiked'
+  url?: string; // URL to original activity (for external sources)
   created_at: string;
   updatedAt: string;
   timeAgo?: string; // UI-only, not stored in DB
@@ -157,6 +161,8 @@ export function mapActivityDbToActivity(db: ActivityDb): Activity {
     location: db.location ?? undefined,
     notes: db.notes ?? undefined,
     strava_id: db.strava_id ?? undefined,
+    source: db.source ?? undefined,
+    url: db.url ?? undefined,
     created_at: db.created_at,
     updatedAt: db.updated_at,
   };

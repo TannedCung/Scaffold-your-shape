@@ -48,6 +48,7 @@ export async function POST(request: NextRequest) {
       location_city?: string;
       location_country?: string;
       description?: string;
+      external_id?: string;
     }) => ({
       user_id: session.user.id,
       strava_id: activity.id.toString(),
@@ -58,6 +59,8 @@ export async function POST(request: NextRequest) {
       unit: 'meters',
       location: activity.location_city || activity.location_country || null,
       notes: `Imported from Strava. ${activity.description || ''}`.trim(),
+      source: 'Strava',
+      url: `https://www.strava.com/activities/${activity.id}`,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })));
