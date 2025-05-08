@@ -28,14 +28,14 @@ import {
   Timeline as StatsIcon,
   Edit as EditIcon,
   Link as LinkIcon,
-  LinkOff as LinkOffIcon
+  LinkOff as LinkOffIcon,
+  Add as AddIcon
 } from '@mui/icons-material';
 import MainLayout from '@/components/layout/MainLayout';
 import EditProfileForm from '@/components/profile/EditProfileForm';
 import RecentActivities from '@/components/dashboard/RecentActivities';
 import CreateActivityDialog from '@/components/activities/CreateActivityDialog';
 import StravaActivityImporter from '@/components/strava/StravaActivityImporter';
-import AddIcon from '@mui/icons-material/Add';
 import { useSession } from 'next-auth/react';
 import { useUser } from '@/hooks/useUser';
 import { useStrava } from '@/hooks/useStrava';
@@ -171,30 +171,89 @@ function ProfileContent() {
                 </Alert>
               )}
               
-              <Button
-                variant={isConnectedToStrava ? "outlined" : "contained"}
-                onClick={isConnectedToStrava ? disconnectFromStrava : connectToStrava}
-                startIcon={
-                  isConnectedToStrava ? 
-                  <LinkOffIcon /> : 
-                  <Box sx={{ width: 20, height: 20, display: 'inline-flex', mr: 1 }}>
-                    <Image src="/strava-logo.svg" alt="Strava logo" width={20} height={20} />
-                  </Box>
-                }
-                sx={{ 
-                  mt: 2,
-                  backgroundColor: isConnectedToStrava ? 'transparent' : '#fc4c02',
-                  borderColor: '#fc4c02',
-                  color: isConnectedToStrava ? '#fc4c02' : 'white',
-                  '&:hover': { 
-                    backgroundColor: isConnectedToStrava ? 'rgba(252, 76, 2, 0.04)' : '#e34402',
-                    borderColor: '#fc4c02'
-                  }
-                }}
-                disabled={stravaLoading}
-              >
-                {stravaLoading ? 'Loading...' : (isConnectedToStrava ? 'Disconnect from Strava' : 'Connect to Strava')}
-              </Button>
+              <Box sx={{ 
+                mt: 2, 
+                display: 'flex', 
+                flexDirection: 'column',
+                alignItems: 'center', 
+                gap: 2,
+                width: '100%',
+              }}>
+                {/* Strava Logo */}
+                <Box 
+                  onClick={!stravaLoading ? (isConnectedToStrava ? undefined : connectToStrava) : undefined}
+                  sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: stravaLoading || isConnectedToStrava ? 'default' : 'pointer',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    transition: 'transform 0.2s',
+                    '&:hover': {
+                      transform: stravaLoading || isConnectedToStrava ? 'none' : 'scale(1.03)'
+                    },
+                    opacity: isConnectedToStrava ? 0.6 : 1,
+                    position: 'relative'
+                  }}
+                >
+                  <Image 
+                    src="/btn_strava_connect_with_white.svg" 
+                    alt="Connect to Strava" 
+                    width={200}
+                    height={48} 
+                    priority
+                  />
+                  {isConnectedToStrava && (
+                    <Box 
+                      sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: 'rgba(0,0,0,0.1)',
+                        borderRadius: 1
+                      }}
+                    >
+                      <Typography variant="body2" sx={{ color: 'white', fontWeight: 600 }}>
+                        Connected
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
+                
+                {/* Connection Status Circular Button */}
+                <Button
+                  variant={isConnectedToStrava ? "outlined" : "contained"}
+                  onClick={isConnectedToStrava ? disconnectFromStrava : connectToStrava}
+                  sx={{ 
+                    backgroundColor: isConnectedToStrava ? 'transparent' : '#2da58e',
+                    borderColor: isConnectedToStrava ? '#2da58e' : 'transparent',
+                    color: isConnectedToStrava ? '#2da58e' : 'white',
+                    '&:hover': { 
+                      backgroundColor: isConnectedToStrava ? 'rgba(45, 165, 142, 0.04)' : '#259a83',
+                      borderColor: isConnectedToStrava ? '#2da58e' : 'transparent'
+                    },
+                    minWidth: 'unset',
+                    width: 48,
+                    height: 48,
+                    borderRadius: '50%',
+                    p: 0
+                  }}
+                  disabled={stravaLoading}
+                >
+                  {stravaLoading ? (
+                    <CircularProgress size={24} sx={{ color: 'inherit' }} />
+                  ) : isConnectedToStrava ? (
+                    <LinkOffIcon />
+                  ) : (
+                    <LinkIcon />
+                  )}
+                </Button>
+              </Box>
               
               {/* Strava Activity Importer - only shown when connected to Strava */}
               {isConnectedToStrava && (

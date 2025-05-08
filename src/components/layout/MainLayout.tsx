@@ -4,6 +4,7 @@ import React, { useState, ReactNode } from 'react';
 import { Box, Toolbar, useMediaQuery, CssBaseline, Fab, Tooltip } from '@mui/material';
 import Header from './Header';
 import Sidebar from './Sidebar';
+import Footer from './Footer';
 import EnsureProfile from '@/contexts/EnsureProfile';
 import { Add as AddIcon } from '@mui/icons-material';
 import CreateActivityDialog from '@/components/activities/CreateActivityDialog';
@@ -25,7 +26,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const sidebarWidth = 280;
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <CssBaseline />
       <Header 
         onMenuClick={handleDrawerToggle} 
@@ -50,12 +51,17 @@ export default function MainLayout({ children }: MainLayoutProps) {
             duration: theme.transitions.duration.standard,
           }),
           backgroundColor: 'background.default',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         <Toolbar />
-        <EnsureProfile>
-          {children}
-        </EnsureProfile>
+        <Box sx={{ flexGrow: 1 }}>
+          <EnsureProfile>
+            {children}
+          </EnsureProfile>
+        </Box>
+        <Footer />
       </Box>
       
       {/* Mobile FAB for logging activity */}
