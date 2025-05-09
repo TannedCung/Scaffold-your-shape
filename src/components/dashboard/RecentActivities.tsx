@@ -27,7 +27,8 @@ import {
   DirectionsWalk as WalkIcon,
   Landscape as HikeIcon,
   AccessTime as TimeIcon,
-  Add as AddIcon
+  Add as AddIcon,
+  OpenInNew as OpenInNewIcon
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -271,6 +272,20 @@ export default function RecentActivities({ userId, limit = 5 }: RecentActivities
                           }}
                           variant="outlined"
                         />
+                        {activity.source === 'Strava' && (
+                          <Chip
+                            size="small"
+                            label="Strava"
+                            sx={{
+                              height: 20,
+                              fontSize: '0.7rem',
+                              bgcolor: '#fc520020',
+                              color: '#fc5200',
+                              borderColor: '#fc5200'
+                            }}
+                            variant="outlined"
+                          />
+                        )}
                       </Box>
                     }
                     secondary={
@@ -283,13 +298,46 @@ export default function RecentActivities({ userId, limit = 5 }: RecentActivities
                         >
                           <strong>{activity.value}</strong> {activity.unit}
                         </Typography>
-                        <Typography
-                          component="span"
-                          variant="caption"
-                          color="text.secondary"
-                        >
-                          {formatDate(activity.date)}
-                        </Typography>
+                        <Box component="span" sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                          <Typography
+                            component="span"
+                            variant="caption"
+                            color="text.secondary"
+                          >
+                            {formatDate(activity.date)}
+                          </Typography>
+                          
+                          {activity.source === 'Strava' && activity.url && (
+                            <Box 
+                              component="span" 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(activity.url, '_blank');
+                              }}
+                              sx={{ 
+                                display: 'flex',
+                                alignItems: 'center',
+                              }}
+                            >
+                              <Typography 
+                                variant="caption" 
+                                component="span"
+                                sx={{ 
+                                  color: '#fc5200',
+                                  fontWeight: 'bold',
+                                  textDecoration: 'none',
+                                  cursor: 'pointer',
+                                  '&:hover': { textDecoration: 'underline' },
+                                  display: 'flex',
+                                  alignItems: 'center'
+                                }}
+                              >
+                                <OpenInNewIcon sx={{ fontSize: 12, mr: 0.5 }} />
+                                View on Strava
+                              </Typography>
+                            </Box>
+                          )}
+                        </Box>
                       </Box>
                     }
                   />
