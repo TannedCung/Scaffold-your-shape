@@ -5,7 +5,7 @@ import { mapActivityDbToActivity, ActivityDb, Activity } from '@/types';
 export async function fetchActivities(userId?: string): Promise<Activity[]> {
   let query = supabase
     .from('activities')
-    .select('id, user_id, type, name, date, value, unit, location, notes, created_at, updated_at')
+    .select('id, user_id, type, name, date, value, unit, location, notes, strava_id, source, url, created_at, updated_at')
     .order('date', { ascending: false });
   if (userId) query = query.eq('user_id', userId);
   const { data, error } = await query;
@@ -17,7 +17,7 @@ export async function fetchActivities(userId?: string): Promise<Activity[]> {
 export async function fetchActivityById(activityId: string): Promise<Activity | null> {
   const { data, error } = await supabase
     .from('activities')
-    .select('id, user_id, type, name, date, value, unit, location, notes, created_at, updated_at')
+    .select('id, user_id, type, name, date, value, unit, location, notes, strava_id, source, url, created_at, updated_at')
     .eq('id', activityId)
     .single();
   
@@ -42,7 +42,7 @@ export async function createActivity(activity: Omit<Activity, 'id' | 'created_at
       location: activity.location,
       notes: activity.notes,
     }
-  ]).select('id, user_id, type, name, date, value, unit, location, notes, created_at, updated_at').single();
+  ]).select('id, user_id, type, name, date, value, unit, location, notes, strava_id, source, url, created_at, updated_at').single();
   if (error) throw error;
   return mapActivityDbToActivity(data as ActivityDb);
 }
@@ -62,7 +62,7 @@ export async function updateActivity(activity: Activity & { notes?: string, loca
       updated_at: new Date().toISOString(),
     })
     .eq('id', activity.id)
-    .select('id, user_id, type, name, date, value, unit, location, notes, created_at, updated_at')
+    .select('id, user_id, type, name, date, value, unit, location, notes, strava_id, source, url, created_at, updated_at')
     .single();
   
   if (error) throw error;
