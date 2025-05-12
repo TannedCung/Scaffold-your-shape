@@ -1,511 +1,158 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { 
-  Box, 
-  Container, 
-  Typography, 
-  Grid as MuiGrid, 
-  Avatar, 
-  Chip, 
-  Divider, 
-  IconButton, 
-  Button,
-  CircularProgress,
-  Card,
-  Tooltip,
-  Paper
-} from '@mui/material';
-import { 
-  DirectionsRun as RunIcon,
-  DirectionsWalk as WalkIcon,
-  Pool as SwimIcon,
-  DirectionsBike as CycleIcon,
-  Landscape as HikeIcon,
-  FitnessCenter as WorkoutIcon,
-  SportsTennis as OtherIcon,
-  CalendarToday as CalendarIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  ArrowBack as ArrowBackIcon,
-  AccessTime as TimeIcon,
-  Speed as PaceIcon,
-  OpenInNew as OpenInNewIcon,
-  Share as ShareIcon
-} from '@mui/icons-material';
+import { Box, Typography, Paper, Chip, Divider, Avatar, Button, CircularProgress, Grid, Tooltip } from '@mui/material';
 import { useRouter } from 'next/navigation';
-import { formatDistanceToNow } from 'date-fns';
-import MainLayout from '@/components/layout/MainLayout';
-import { supabase } from '@/lib/supabase';
-import ActivityEditDialog from '@/components/activities/ActivityEditDialog';
-import { deleteActivity } from '@/services/activityService';
 import { Activity } from '@/types';
-import Image from 'next/image';
-import { useSession } from 'next-auth/react';
+import { fetchGlobalConversionRates } from '@/services/activityPointService';
+import { calculateActivityPoints } from '@/utils/activityPoints';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import PlaceIcon from '@mui/icons-material/Place';
+import NotesIcon from '@mui/icons-material/Notes';
+import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
+import LinkIcon from '@mui/icons-material/Link';
+import SourceIcon from '@mui/icons-material/Source';
+import NumbersIcon from '@mui/icons-material/Numbers';
+import UpdateIcon from '@mui/icons-material/Update';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 
-interface ActivityDetailClientProps {
-  id: string;
-}
-
-export default function ActivityDetailClient({ id }: ActivityDetailClientProps) {
+export default function ActivityDetailClient({ id }: { id: string }) {
   const router = useRouter();
-  const { data: session } = useSession();
   const [activity, setActivity] = useState<Activity | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  
+  const [conversionRates, setConversionRates] = useState<any[]>([]);
+
   useEffect(() => {
-    async function fetchActivityDetails() {
+    async function fetchData() {
       setLoading(true);
       setError(null);
-      
       try {
-        const { data, error } = await supabase
+        // Fetch activity from supabase
+        const { data, error } = await window.supabase
           .from('activities')
           .select('*')
           .eq('id', id)
           .single();
-          
         if (error) throw error;
-        
-        if (data) {
-          const formattedActivity: Activity = {
-            id: data.id,
-            userId: data.user_id,
-            type: data.type,
-            name: data.name,
-            date: data.date,
-            value: data.value,
-            unit: data.unit,
-            location: data.location || undefined,
-            notes: data.notes || undefined,
-            strava_id: data.strava_id || undefined,
-            source: data.source || undefined,
-            url: data.url || undefined,
-            created_at: data.created_at,
-            updatedAt: data.updated_at,
-            timeAgo: formatDistanceToNow(new Date(data.date), { addSuffix: true })
-          };
-          
-          setActivity(formattedActivity);
-        } else {
-          throw new Error('Activity not found');
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch activity details');
-        console.error(err);
+        setActivity(data as Activity);
+        const rates = await fetchGlobalConversionRates();
+        setConversionRates(rates);
+      } catch (err: any) {
+        setError(err.message || 'Failed to load activity');
       } finally {
         setLoading(false);
       }
     }
-    
-    if (id) {
-      fetchActivityDetails();
-    }
+    if (id) fetchData();
   }, [id]);
 
-  const handleEdit = () => {
-    setIsEditDialogOpen(true);
-  };
+  if (loading) return <Box sx={{ p: 6, textAlign: 'center' }}><CircularProgress /></Box>;
+  if (error || !activity) return <Box sx={{ p: 6, color: 'error.main', textAlign: 'center' }}>{error || 'Activity not found'}</Box>;
 
-  const handleBack = () => {
-    router.back();
-  };
-
-  const handleDelete = async () => {
-    if (!activity) return;
-    
-    setIsDeleting(true);
-    try {
-      await deleteActivity(activity.id);
-      router.push('/activities');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete activity');
-      setIsDeleting(false);
-    }
-  };
-
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'run':
-        return <RunIcon fontSize="large" />;
-      case 'walk':
-        return <WalkIcon fontSize="large" />;
-      case 'swim':
-        return <SwimIcon fontSize="large" />;
-      case 'cycle':
-        return <CycleIcon fontSize="large" />;
-      case 'hike':
-        return <HikeIcon fontSize="large" />;
-      case 'workout':
-        return <WorkoutIcon fontSize="large" />;
-      default:
-        return <OtherIcon fontSize="large" />;
-    }
-  };
-
-  const getActivityColor = (type: string) => {
-    switch (type) {
-      case 'run':
-        return '#fc5200';  // Using Strava orange for consistency
-      case 'walk':
-        return '#fc5200';
-      case 'swim':
-        return '#fc5200';
-      case 'cycle':
-        return '#fc5200';
-      case 'hike':
-        return '#fc5200';
-      case 'workout':
-        return '#fc5200';
-      default:
-        return '#fc5200';
-    }
-  };
-
-  // Calculate pace from distance and time (placeholder logic)
-  const calculatePace = (distance: number): string => {
-    // Placeholder - in real app, would use activity duration
-    return '13:54 /km';  
-  };
+  // Calculate points
+  const points = calculateActivityPoints(activity, conversionRates);
 
   return (
-    <MainLayout>
-      <Container maxWidth="lg" sx={{ py: 3 }}>
-        <Button 
-          startIcon={<ArrowBackIcon />} 
-          onClick={handleBack}
-          variant="text"
-          sx={{ mb: 2, color: '#666' }}
-        >
-          Back
-        </Button>
-        
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-            <CircularProgress size={40} sx={{ color: '#fc5200' }} />
+    <Box sx={{ maxWidth: 700, mx: 'auto', mt: 4, px: { xs: 1, sm: 0 } }}>
+      <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 3, bgcolor: '#f7faf9', boxShadow: '0 2px 8px rgba(45,165,142,0.07)' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <Avatar sx={{ bgcolor: '#2da58e', width: 56, height: 56, mr: 2 }}>
+            <FitnessCenterIcon sx={{ color: '#fff', fontSize: 32 }} />
+          </Avatar>
+          <Box>
+            <Typography variant="h4" sx={{ fontWeight: 800, color: '#2da58e', mb: 0.5 }}>
+              {activity.name}
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <Chip label={activity.type} size="small" sx={{ bgcolor: '#2da58e', color: '#fff', fontWeight: 600 }} />
+              <Chip label={activity.unit} size="small" sx={{ bgcolor: '#e0f7f3', color: '#2da58e', fontWeight: 600 }} />
+              {activity.source && (
+                <Chip label={activity.source} size="small" sx={{ bgcolor: activity.source === 'Strava' ? '#fc520020' : '#2da58e20', color: activity.source === 'Strava' ? '#fc5200' : '#2da58e', borderColor: activity.source === 'Strava' ? '#fc5200' : '#2da58e', fontWeight: 500 }} variant="outlined" />
+              )}
+              {points > 0 && (
+                <Chip label={`Points: ${points}`} size="small" sx={{ bgcolor: '#e0f7f3', color: '#2da58e', fontWeight: 700 }} />
+              )}
+            </Box>
           </Box>
-        ) : error ? (
-          <Box sx={{ p: 4, bgcolor: '#f8fafc', borderRadius: 2, color: '#b91c1c', border: '1px solid #fee2e2' }}>
-            <Typography>{error}</Typography>
-          </Box>
-        ) : activity ? (
-          <Paper 
-            elevation={0} 
-            sx={{ 
-              border: '1px solid #e5e7eb',
-              borderRadius: 2,
-              overflow: 'hidden',
-              mb: 4
-            }}
-          >
-            {/* Header */}
-            <Box sx={{ p: 3, borderBottom: '1px solid #e5e7eb', bgcolor: '#fff' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography 
-                    variant="body2" 
-                    color="text.secondary"
-                  >
-                    {new Date(activity.date).toLocaleString('en-US', {
-                      hour: 'numeric',
-                      minute: 'numeric',
-                      hour12: true
-                    })} on {new Date(activity.date).toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric'
-                    })}
-                    {activity.location && ` • ${activity.location}`}
-                  </Typography>
-                </Box>
-                
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  {activity.source === 'Strava' && activity.url && (
-                    <Button
-                      variant="text"
-                      component="a"
-                      href={activity.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      startIcon={<OpenInNewIcon />}
-                      size="small"
-                      sx={{
-                        color: '#fc5200',
-                        fontWeight: 500,
-                      }}
-                    >
-                      View on Strava
-                    </Button>
-                  )}
-                  
-                  <IconButton 
-                    size="small"
-                    onClick={() => {}}
-                    sx={{
-                      color: '#666',
-                      '&:hover': { 
-                        color: '#333',
-                        bgcolor: 'rgba(0,0,0,0.04)'
-                      }
-                    }}
-                  >
-                    <ShareIcon fontSize="small" />
-                  </IconButton>
-                  
-                  <IconButton 
-                    size="small" 
-                    onClick={handleEdit}
-                    sx={{
-                      color: '#666',
-                      '&:hover': { 
-                        color: '#333',
-                        bgcolor: 'rgba(0,0,0,0.04)'
-                      }
-                    }}
-                  >
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                  
-                  <IconButton 
-                    size="small" 
-                    onClick={handleDelete} 
-                    disabled={isDeleting}
-                    sx={{
-                      color: '#666',
-                      '&:hover': { 
-                        color: '#ef4444',
-                        bgcolor: 'rgba(239,68,68,0.04)'
-                      }
-                    }}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Box>
-              </Box>
-              
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-                <Avatar 
-                  src={session?.user?.image || undefined}
-                  alt="User Profile"
-                  sx={{ width: 64, height: 64 }}
-                />
-                <Box>
-                  <Typography variant="h4" component="h1" fontWeight={600} sx={{ mb: 0.5 }}>
-                    {activity.name || `${activity.type.charAt(0).toUpperCase() + activity.type.slice(1)}`}
-                  </Typography>
-                  <Typography variant="body1" component="span" color="text.secondary">
-                    {activity.type.charAt(0).toUpperCase() + activity.type.slice(1)}
-                    {activity.source && (
-                      <Chip
-                        size="small"
-                        label={activity.source}
-                        sx={{
-                          ml: 1,
-                          height: 20,
-                          fontSize: '0.7rem',
-                          bgcolor: activity.source === 'Strava' ? '#fc520020' : '#2da58e20',
-                          color: activity.source === 'Strava' ? '#fc5200' : '#2da58e',
-                          borderColor: activity.source === 'Strava' ? '#fc5200' : '#2da58e',
-                          fontWeight: 500
-                        }}
-                        variant="outlined"
-                      />
-                    )}
-                  </Typography>
-                </Box>
-              </Box>
+        </Box>
+        <Divider sx={{ my: 2 }} />
+        <Grid container spacing={2}>
+          <Grid item xs={6}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <CalendarTodayIcon sx={{ color: '#2da58e' }} />
+              <Typography variant="body2" color="text.secondary">{new Date(activity.date).toLocaleString()}</Typography>
             </Box>
-            
-            {/* Stats */}
-            <Box sx={{ px: 3, py: 4, bgcolor: '#fff' }}>
-              <MuiGrid container spacing={4}>
-                {/* Primary stats */}
-                <MuiGrid item xs={12} md={4}>
-                  <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                    <Typography variant="h3" fontWeight="bold" sx={{ color: '#2d2d2d', mb: 0 }}>
-                      {activity.value < 1000 
-                        ? activity.value 
-                        : (activity.value / 1000).toFixed(2)}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {activity.value < 1000 ? activity.unit : 'km'}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Distance
-                    </Typography>
-                  </Box>
-                </MuiGrid>
-                
-                <MuiGrid item xs={12} md={4}>
-                  <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                    <Typography variant="h3" fontWeight="bold" sx={{ color: '#2d2d2d', mb: 0 }}>
-                      16:09
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      &nbsp;
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Moving Time
-                    </Typography>
-                  </Box>
-                </MuiGrid>
-                
-                <MuiGrid item xs={12} md={4}>
-                  <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                    <Typography variant="h3" fontWeight="bold" sx={{ color: '#2d2d2d', mb: 0 }}>
-                      {calculatePace(activity.value)}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      &nbsp;
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Pace
-                    </Typography>
-                  </Box>
-                </MuiGrid>
-              </MuiGrid>
-              
-              <Divider sx={{ my: 3 }} />
-              
-              {/* Secondary stats */}
-              <MuiGrid container spacing={3}>
-                <MuiGrid item xs={6} md={3}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Elevation
-                    </Typography>
-                    <Typography variant="body2" fontWeight={500}>
-                      3 m
-                    </Typography>
-                  </Box>
-                </MuiGrid>
-                
-                <MuiGrid item xs={6} md={3}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Elapsed Time
-                    </Typography>
-                    <Typography variant="body2" fontWeight={500}>
-                      16:09
-                    </Typography>
-                  </Box>
-                </MuiGrid>
-                
-                <MuiGrid item xs={6} md={3}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Calories
-                    </Typography>
-                    <Typography variant="body2" fontWeight={500}>
-                      —
-                    </Typography>
-                  </Box>
-                </MuiGrid>
-                
-                <MuiGrid item xs={6} md={3}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Steps
-                    </Typography>
-                    <Typography variant="body2" fontWeight={500}>
-                      1,670
-                    </Typography>
-                  </Box>
-                </MuiGrid>
-                
-                {activity.source === 'Strava' && (
-                  <MuiGrid item xs={6} md={3}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Source
-                      </Typography>
-                      <Typography variant="body2" fontWeight={500}>
-                        Strava iPhone App
-                      </Typography>
-                    </Box>
-                  </MuiGrid>
-                )}
-              </MuiGrid>
+          </Grid>
+          <Grid item xs={6}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <AccessTimeIcon sx={{ color: '#2da58e' }} />
+              <Typography variant="body2" color="text.secondary">Created: {new Date(activity.created_at).toLocaleString()}</Typography>
             </Box>
-            
-            {/* Notes */}
-            {activity.notes && (
-              <Box sx={{ p: 3, borderTop: '1px solid #e5e7eb', bgcolor: '#fff' }}>
-                <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>
-                  {activity.notes}
-                </Typography>
-              </Box>
-            )}
-            
-            {/* Map Placeholder */}
-            <Box 
-              sx={{ 
-                height: 300, 
-                bgcolor: '#f1f1f1', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                borderTop: '1px solid #e5e7eb'
-              }}
-            >
-              <Typography color="text.secondary">
-                Map data not available
-              </Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <UpdateIcon sx={{ color: '#2da58e' }} />
+              <Typography variant="body2" color="text.secondary">Updated: {new Date(activity.updatedAt).toLocaleString()}</Typography>
             </Box>
-            
-            {/* Segments/Splits Placeholder */}
-            <Box sx={{ p: 3, borderTop: '1px solid #e5e7eb' }}>
-              <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
-                Splits
-              </Typography>
-              
-              <Box sx={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
-                      <th style={{ padding: '8px 16px', textAlign: 'left', fontWeight: 600 }}>KM</th>
-                      <th style={{ padding: '8px 16px', textAlign: 'left', fontWeight: 600 }}>Pace</th>
-                      <th style={{ padding: '8px 16px', textAlign: 'left', fontWeight: 600 }}>Elev</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr style={{ borderBottom: '1px solid #f5f5f5' }}>
-                      <td style={{ padding: '8px 16px' }}>1</td>
-                      <td style={{ padding: '8px 16px' }}>13:33 /km</td>
-                      <td style={{ padding: '8px 16px' }}>-1 m</td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '8px 16px' }}>0.16</td>
-                      <td style={{ padding: '8px 16px' }}>16:08 /km</td>
-                      <td style={{ padding: '8px 16px' }}>2 m</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </Box>
+          </Grid>
+          <Grid item xs={6}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <NumbersIcon sx={{ color: '#2da58e' }} />
+              <Typography variant="body2" color="text.secondary">Strava ID: {activity.strava_id || '-'}</Typography>
             </Box>
-          </Paper>
-        ) : (
-          <Box sx={{ p: 4, bgcolor: '#f8fafc', borderRadius: 2, color: '#b91c1c', border: '1px solid #fee2e2' }}>
-            <Typography>Activity not found</Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <PlaceIcon sx={{ color: '#2da58e' }} />
+              <Typography variant="body2" color="text.secondary">Location: {activity.location || '-'}</Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={6}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <SourceIcon sx={{ color: '#2da58e' }} />
+              <Typography variant="body2" color="text.secondary">Source: {activity.source || '-'}</Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={6}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <LinkIcon sx={{ color: '#2da58e' }} />
+              {activity.url ? (
+                <Button
+                  href={activity.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  size="small"
+                  startIcon={<OpenInNewIcon />}
+                  sx={{ color: '#fc5200', fontWeight: 600, textTransform: 'none', px: 0 }}
+                >
+                  View on Strava
+                </Button>
+              ) : (
+                <Typography variant="body2" color="text.secondary">No URL</Typography>
+              )}
+            </Box>
+          </Grid>
+          <Grid item xs={6}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <FitnessCenterIcon sx={{ color: '#2da58e' }} />
+              <Typography variant="body2" color="text.secondary">Value: <b>{activity.value}</b> {activity.unit}</Typography>
+            </Box>
+          </Grid>
+        </Grid>
+        {activity.notes && (
+          <Box sx={{ mt: 3, display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+            <NotesIcon sx={{ color: '#2da58e', mt: 0.5 }} />
+            <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>{activity.notes}</Typography>
           </Box>
         )}
-      </Container>
-      
-      {activity && (
-        <ActivityEditDialog 
-          open={isEditDialogOpen} 
-          activity={activity} 
-          onClose={() => {
-            setIsEditDialogOpen(false);
-            // Refresh the data after editing
-            router.refresh();
-          }} 
-        />
-      )}
-    </MainLayout>
+      </Paper>
+      <Box sx={{ mt: 3, textAlign: 'right' }}>
+        <Button variant="outlined" sx={{ color: '#2da58e", borderColor: '#2da58e', fontWeight: 700, borderRadius: 2 }} onClick={() => router.back()}>
+          Back
+        </Button>
+      </Box>
+    </Box>
   );
 } 

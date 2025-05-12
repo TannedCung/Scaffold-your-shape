@@ -458,3 +458,17 @@ export function mapUserStatsDbToUserStats(db: UserStatsDb): UserStats {
     })),
   };
 }
+
+export interface ActivityPointConversion {
+  activity_type: string;
+  unit: string;
+  rate: number;
+}
+
+export interface ClubPointConversion extends ActivityPointConversion {
+  club_id: string;
+}
+
+export interface ChallengePointConversion extends ActivityPointConversion {
+  challenge_id: string;
+}
