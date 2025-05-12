@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Typography, Paper, Chip, Divider, Avatar, Button, CircularProgress, Grid, Tooltip } from '@mui/material';
 import { useRouter } from 'next/navigation';
-import { Activity } from '@/types';
+import { Activity, ActivityPointConversion } from '@/types';
 import { fetchGlobalConversionRates } from '@/services/activityPointService';
 import { calculateActivityPoints } from '@/utils/activityPoints';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
@@ -16,13 +16,14 @@ import SourceIcon from '@mui/icons-material/Source';
 import NumbersIcon from '@mui/icons-material/Numbers';
 import UpdateIcon from '@mui/icons-material/Update';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import { supabase } from '@/lib/supabase';
 
 export default function ActivityDetailClient({ id }: { id: string }) {
   const router = useRouter();
   const [activity, setActivity] = useState<Activity | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [conversionRates, setConversionRates] = useState<any[]>([]);
+  const [conversionRates, setConversionRates] = useState<ActivityPointConversion[]>([]);
 
   useEffect(() => {
     async function fetchData() {
@@ -30,7 +31,7 @@ export default function ActivityDetailClient({ id }: { id: string }) {
       setError(null);
       try {
         // Fetch activity from supabase
-        const { data, error } = await window.supabase
+        const { data, error } = await supabase
           .from('activities')
           .select('*')
           .eq('id', id)
@@ -39,8 +40,8 @@ export default function ActivityDetailClient({ id }: { id: string }) {
         setActivity(data as Activity);
         const rates = await fetchGlobalConversionRates();
         setConversionRates(rates);
-      } catch (err: any) {
-        setError(err.message || 'Failed to load activity');
+      } catch (err) {
+        setError((err as Error).message || 'Failed to load activity');
       } finally {
         setLoading(false);
       }
@@ -149,7 +150,7 @@ export default function ActivityDetailClient({ id }: { id: string }) {
         )}
       </Paper>
       <Box sx={{ mt: 3, textAlign: 'right' }}>
-        <Button variant="outlined" sx={{ color: '#2da58e", borderColor: '#2da58e', fontWeight: 700, borderRadius: 2 }} onClick={() => router.back()}>
+        <Button variant="outlined" sx={{ color: '#2da58e', borderColor: '#2da58e', fontWeight: 700, borderRadius: 2 }} onClick={() => router.back()}>
           Back
         </Button>
       </Box>
