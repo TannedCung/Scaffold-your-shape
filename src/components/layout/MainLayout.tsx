@@ -1,13 +1,15 @@
 'use client';
 
 import React, { useState, ReactNode } from 'react';
-import { Box, Toolbar, useMediaQuery, CssBaseline, Fab, Tooltip } from '@mui/material';
+import { Box, Toolbar, useMediaQuery, CssBaseline, Fab, Tooltip, AppBar } from '@mui/material';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import Footer from './Footer';
 import EnsureProfile from '@/contexts/EnsureProfile';
 import { Add as AddIcon } from '@mui/icons-material';
 import CreateActivityDialog from '@/components/activities/CreateActivityDialog';
+import Image from 'next/image';
+import Link from 'next/link';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -28,6 +30,14 @@ export default function MainLayout({ children }: MainLayoutProps) {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <CssBaseline />
+      <AppBar position="static" elevation={0} sx={{ bgcolor: '#f7faf9', color: '#2da58e', borderBottom: '1px solid #e0f7f3', boxShadow: 'none' }}>
+        <Toolbar sx={{ minHeight: 64 }}>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+            <Image src="/logo.png" alt="App Logo" width={40} height={40} style={{ marginRight: 12 }} />
+          </Link>
+          {/* You can add app name or nav here if needed */}
+        </Toolbar>
+      </AppBar>
       <Header 
         onMenuClick={handleDrawerToggle} 
         sidebarOpen={sidebarOpen}

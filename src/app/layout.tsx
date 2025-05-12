@@ -18,6 +18,9 @@ export const metadata: Metadata = {
   title: "Scaffold Your Shape - Track Your Fitness Journey",
   description: "Track your workouts, join fitness challenges and connect with other fitness enthusiasts",
   keywords: ["fitness tracker", "workout", "exercise", "challenge", "fitness community"],
+  icons: {
+    icon: '/logo.png',
+  },
 };
 
 export default function RootLayout({
@@ -27,6 +30,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/logo.png" type="image/png" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
