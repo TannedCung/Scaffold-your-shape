@@ -24,7 +24,7 @@ interface ClubCardProps {
 export default function ClubCard({ club }: ClubCardProps) {
   console.log('club:', club);
   return (
-    <Link href={`/club/${club.id}`} passHref legacyBehavior>
+    <Link href={`/club/${club.id}`}>
       <a style={{ textDecoration: 'none', color: 'inherit', flexGrow: 1 }}>
         <Card 
           sx={{ 
