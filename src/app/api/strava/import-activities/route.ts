@@ -4,6 +4,51 @@ import { authOptions } from '@/lib/auth';
 import { getStravaActivities } from '@/services/stravaService';
 import { supabase } from '@/lib/supabase';
 
+// Define StravaActivity type
+interface StravaActivity {
+  id: number;
+  type: string;
+  name: string;
+  start_date: string;
+  distance: number;
+  location_city?: string;
+  location_country?: string;
+  description?: string;
+  moving_time?: number;
+  elapsed_time?: number;
+  total_elevation_gain?: number;
+  sport_type?: string;
+  start_latlng?: number[];
+  end_latlng?: number[];
+  average_speed?: number;
+  max_speed?: number;
+  average_cadence?: number;
+  average_temp?: number;
+  average_watts?: number;
+  kilojoules?: number;
+  max_watts?: number;
+  elev_high?: number;
+  elev_low?: number;
+  workout_type?: number;
+  map?: {
+    id: string;
+    polyline: string;
+    summary_polyline: string;
+  };
+  segment_efforts?: Array<{
+    id: number;
+    name: string;
+    elapsed_time: number;
+    moving_time: number;
+    start_date: string;
+    start_date_local: string;
+    distance: number;
+    average_cadence?: number;
+    average_watts?: number;
+    segment: Record<string, unknown>;
+  }>;
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Get the current user session
@@ -39,17 +84,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Prepare activities for database insertion
-    const activitiesToInsert = await Promise.all(stravaActivities.map(async (activity: {
-      id: number;
-      type: string;
-      name: string;
-      start_date: string;
-      distance: number;
-      location_city?: string;
-      location_country?: string;
-      description?: string;
-      external_id?: string;
-    }) => ({
+    const activitiesToInsert = await Promise.all(stravaActivities.map(async (activity: StravaActivity) => ({
       user_id: session.user.id,
       strava_id: activity.id.toString(),
       type: await mapStravaType(activity.type),
@@ -61,6 +96,26 @@ export async function POST(request: NextRequest) {
       notes: `Imported from Strava. ${activity.description || ''}`.trim(),
       source: 'Strava',
       url: `https://www.strava.com/activities/${activity.id}`,
+      // Add the new fields
+      distance: activity.distance,
+      moving_time: activity.moving_time,
+      elapsed_time: activity.elapsed_time,
+      total_elevation_gain: activity.total_elevation_gain,
+      sport_type: activity.sport_type,
+      start_date: activity.start_date,
+      start_latlng: activity.start_latlng,
+      end_latlng: activity.end_latlng,
+      average_speed: activity.average_speed,
+      max_speed: activity.max_speed,
+      average_cadence: activity.average_cadence,
+      average_temp: activity.average_temp,
+      average_watts: activity.average_watts,
+      kilojoules: activity.kilojoules,
+      max_watts: activity.max_watts,
+      elev_high: activity.elev_high,
+      elev_low: activity.elev_low,
+      workout_type: activity.workout_type,
+      description: activity.description,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })));
@@ -86,10 +141,80 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Now process map and segmentation data for each activity
+    const insertedActivitiesMap = new Map(insertedActivities.map(activity => [activity.strava_id, activity.id]));
+
+    // Process map data
+    const mapsToInsert = stravaActivities
+      .filter(activity => activity.map && activity.map.id) // Only activities with map data
+      .map(activity => ({
+        id: activity.map!.id,
+        polyline: activity.map!.polyline,
+        activity_id: insertedActivitiesMap.get(activity.id.toString()),
+        summary_polyline: activity.map!.summary_polyline
+      }));
+
+    if (mapsToInsert.length > 0) {
+      await supabase
+        .from('maps')
+        .upsert(mapsToInsert, {
+          onConflict: 'id',
+          ignoreDuplicates: false
+        });
+    }
+
+    // Process segmentation data
+    const allSegments: Array<{
+      id: string;
+      activity_id: string;
+      name: string;
+      elapsed_time: number;
+      moving_time: number;
+      start_date: string;
+      start_date_local: string;
+      distance: number;
+      average_cadence?: number;
+      average_watts?: number;
+      segment: Record<string, unknown>;
+    }> = [];
+    
+    stravaActivities.forEach(activity => {
+      const activityId = insertedActivitiesMap.get(activity.id.toString());
+      
+      if (activity.segment_efforts && activity.segment_efforts.length > 0 && activityId) {
+        activity.segment_efforts.forEach(segment => {
+          allSegments.push({
+            id: segment.id.toString(),
+            activity_id: activityId,
+            name: segment.name,
+            elapsed_time: segment.elapsed_time,
+            moving_time: segment.moving_time,
+            start_date: segment.start_date,
+            start_date_local: segment.start_date_local,
+            distance: segment.distance,
+            average_cadence: segment.average_cadence,
+            average_watts: segment.average_watts,
+            segment: segment.segment
+          });
+        });
+      }
+    });
+
+    if (allSegments.length > 0) {
+      await supabase
+        .from('segmentations')
+        .upsert(allSegments, {
+          onConflict: 'id',
+          ignoreDuplicates: false
+        });
+    }
+
     return NextResponse.json({
       success: true,
       imported: activitiesToInsert.length,
       activities: insertedActivities,
+      maps: mapsToInsert.length,
+      segments: allSegments.length
     });
   } catch (error) {
     console.error('Error importing Strava activities:', error);

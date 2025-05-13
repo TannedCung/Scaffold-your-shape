@@ -1,0 +1,44 @@
+-- Add new fields to activities table for Strava integration
+ALTER TABLE activities
+ADD COLUMN IF NOT EXISTS distance DOUBLE PRECISION,
+ADD COLUMN IF NOT EXISTS moving_time INTEGER,
+ADD COLUMN IF NOT EXISTS elapsed_time INTEGER,
+ADD COLUMN IF NOT EXISTS total_elevation_gain INTEGER,
+ADD COLUMN IF NOT EXISTS sport_type TEXT,
+ADD COLUMN IF NOT EXISTS start_date TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS start_latlng DOUBLE PRECISION[],
+ADD COLUMN IF NOT EXISTS end_latlng DOUBLE PRECISION[],
+ADD COLUMN IF NOT EXISTS average_speed DOUBLE PRECISION,
+ADD COLUMN IF NOT EXISTS max_speed DOUBLE PRECISION,
+ADD COLUMN IF NOT EXISTS average_cadence DOUBLE PRECISION,
+ADD COLUMN IF NOT EXISTS average_temp DOUBLE PRECISION,
+ADD COLUMN IF NOT EXISTS average_watts DOUBLE PRECISION,
+ADD COLUMN IF NOT EXISTS kilojoules DOUBLE PRECISION,
+ADD COLUMN IF NOT EXISTS max_watts DOUBLE PRECISION,
+ADD COLUMN IF NOT EXISTS elev_high DOUBLE PRECISION,
+ADD COLUMN IF NOT EXISTS elev_low DOUBLE PRECISION,
+ADD COLUMN IF NOT EXISTS workout_type INTEGER,
+ADD COLUMN IF NOT EXISTS description TEXT;
+
+-- Create maps table
+CREATE TABLE IF NOT EXISTS maps (
+  id TEXT PRIMARY KEY,
+  polyline TEXT,
+  activity_id UUID REFERENCES activities(id) ON DELETE CASCADE,
+  summary_polyline TEXT
+);
+
+-- Create segmentations table
+CREATE TABLE IF NOT EXISTS segmentations (
+  id BIGINT PRIMARY KEY,
+  activity_id UUID REFERENCES activities(id) ON DELETE CASCADE,
+  name TEXT,
+  elapsed_time INTEGER,
+  moving_time INTEGER,
+  start_date TIMESTAMPTZ,
+  start_date_local TIMESTAMPTZ,
+  distance DOUBLE PRECISION,
+  average_cadence DOUBLE PRECISION,
+  average_watts DOUBLE PRECISION,
+  segment JSONB -- Store the segment object as JSON
+); 
