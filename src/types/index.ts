@@ -129,6 +129,26 @@ export interface ActivityDb {
   url?: string | null;
   created_at: string;
   updated_at: string;
+  // New Strava fields
+  distance?: number | null;
+  moving_time?: number | null;
+  elapsed_time?: number | null;
+  total_elevation_gain?: number | null;
+  sport_type?: string | null;
+  start_date?: string | null;
+  start_latlng?: number[] | null;
+  end_latlng?: number[] | null;
+  average_speed?: number | null;
+  max_speed?: number | null;
+  average_cadence?: number | null;
+  average_temp?: number | null;
+  average_watts?: number | null;
+  kilojoules?: number | null;
+  max_watts?: number | null;
+  elev_high?: number | null;
+  elev_low?: number | null;
+  workout_type?: number | null;
+  description?: string | null;
 }
 
 export interface Activity {
@@ -147,6 +167,28 @@ export interface Activity {
   created_at: string;
   updatedAt: string;
   timeAgo?: string; // UI-only, not stored in DB
+  // New Strava fields
+  distance?: number;
+  movingTime?: number;
+  elapsedTime?: number;
+  totalElevationGain?: number;
+  sportType?: string;
+  startDate?: string;
+  startLatlng?: number[];
+  endLatlng?: number[];
+  averageSpeed?: number;
+  maxSpeed?: number;
+  averageCadence?: number;
+  averageTemp?: number;
+  averageWatts?: number;
+  kilojoules?: number;
+  maxWatts?: number;
+  elevHigh?: number;
+  elevLow?: number;
+  workoutType?: number;
+  description?: string;
+  map?: Map;
+  segmentEfforts?: Segmentation[];
 }
 
 export function mapActivityDbToActivity(db: ActivityDb): Activity {
@@ -165,6 +207,26 @@ export function mapActivityDbToActivity(db: ActivityDb): Activity {
     url: db.url ?? undefined,
     created_at: db.created_at,
     updatedAt: db.updated_at,
+    // New Strava fields
+    distance: db.distance ?? undefined,
+    movingTime: db.moving_time ?? undefined,
+    elapsedTime: db.elapsed_time ?? undefined,
+    totalElevationGain: db.total_elevation_gain ?? undefined,
+    sportType: db.sport_type ?? undefined,
+    startDate: db.start_date ?? undefined,
+    startLatlng: db.start_latlng ?? undefined,
+    endLatlng: db.end_latlng ?? undefined,
+    averageSpeed: db.average_speed ?? undefined,
+    maxSpeed: db.max_speed ?? undefined,
+    averageCadence: db.average_cadence ?? undefined,
+    averageTemp: db.average_temp ?? undefined,
+    averageWatts: db.average_watts ?? undefined,
+    kilojoules: db.kilojoules ?? undefined,
+    maxWatts: db.max_watts ?? undefined,
+    elevHigh: db.elev_high ?? undefined,
+    elevLow: db.elev_low ?? undefined,
+    workoutType: db.workout_type ?? undefined,
+    description: db.description ?? undefined,
   };
 }
 
@@ -471,4 +533,73 @@ export interface ClubPointConversion extends ActivityPointConversion {
 
 export interface ChallengePointConversion extends ActivityPointConversion {
   challenge_id: string;
+}
+
+// New types for Strava Maps
+export interface MapDb {
+  id: string;
+  polyline: string;
+  activity_id: string;
+  summary_polyline: string;
+}
+
+export interface Map {
+  id: string;
+  polyline: string;
+  activityId: string;
+  summaryPolyline: string;
+}
+
+export function mapMapDbToMap(db: MapDb): Map {
+  return {
+    id: db.id,
+    polyline: db.polyline,
+    activityId: db.activity_id,
+    summaryPolyline: db.summary_polyline,
+  };
+}
+
+// New types for Strava Segmentations
+export interface SegmentationDb {
+  id: string;
+  activity_id: string;
+  name: string;
+  elapsed_time: number;
+  moving_time: number;
+  start_date: string;
+  start_date_local: string;
+  distance: number;
+  average_cadence: number;
+  average_watts: number;
+  segment: Record<string, unknown>; // JSON object
+}
+
+export interface Segmentation {
+  id: string;
+  activityId: string;
+  name: string;
+  elapsedTime: number;
+  movingTime: number;
+  startDate: string;
+  startDateLocal: string;
+  distance: number;
+  averageCadence: number;
+  averageWatts: number;
+  segment: Record<string, unknown>; // JSON object
+}
+
+export function mapSegmentationDbToSegmentation(db: SegmentationDb): Segmentation {
+  return {
+    id: db.id,
+    activityId: db.activity_id,
+    name: db.name,
+    elapsedTime: db.elapsed_time,
+    movingTime: db.moving_time,
+    startDate: db.start_date,
+    startDateLocal: db.start_date_local,
+    distance: db.distance,
+    averageCadence: db.average_cadence,
+    averageWatts: db.average_watts,
+    segment: db.segment,
+  };
 }
