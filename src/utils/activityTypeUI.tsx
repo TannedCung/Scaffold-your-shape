@@ -4,8 +4,9 @@ import DirectionsWalkIcon from '@mui/icons-material/DirectionsWalk';
 import PoolIcon from '@mui/icons-material/Pool';
 import DirectionsBikeIcon from '@mui/icons-material/DirectionsBike';
 import LandscapeIcon from '@mui/icons-material/Landscape';
+import { SvgIconProps } from '@mui/material/SvgIcon';
 
-export function getActivityIcon(type: string, props: any = {}) {
+export function getActivityIcon(type: string, props: SvgIconProps = {}) {
   switch (type) {
     case 'run':
       return <DirectionsRunIcon {...props} />;
