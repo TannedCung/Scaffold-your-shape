@@ -14,7 +14,10 @@ import {
   Slider,
   Stack,
   TextField,
-  MenuItem
+  MenuItem,
+  FormControl,
+  InputLabel,
+  FormHelperText
 } from '@mui/material';
 import { useStrava } from '@/hooks/useStrava';
 import { importActivitiesFromStrava } from '@/services/stravaClientService';
@@ -30,8 +33,10 @@ export default function StravaActivityImporter({ onImportComplete }: StravaActiv
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [limit, setLimit] = useState(30);
+  const [perPage, setPerPage] = useState(30);
   const [page, setPage] = useState(1);
+  const [beforeDate, setBeforeDate] = useState<string>('');
+  const [afterDate, setAfterDate] = useState<string>('');
 
   const handleOpen = () => {
     setOpen(true);
@@ -44,19 +49,34 @@ export default function StravaActivityImporter({ onImportComplete }: StravaActiv
     setOpen(false);
   };
 
+  // Convert date to Unix timestamp (seconds since epoch)
+  const dateToTimestamp = (dateStr: string): number | undefined => {
+    if (!dateStr) return undefined;
+    const date = new Date(dateStr);
+    return isNaN(date.getTime()) ? undefined : Math.floor(date.getTime() / 1000);
+  };
+
   const handleImport = async () => {
     setImporting(true);
     setError(null);
     setSuccess(null);
 
     try {
-      const data = await importActivitiesFromStrava({ limit, page });
+      const data = await importActivitiesFromStrava({ 
+        per_page: perPage, 
+        page, 
+        before: dateToTimestamp(beforeDate),
+        after: dateToTimestamp(afterDate)
+      });
 
       if (!data.success && data.error) {
         throw new Error(data.error);
       }
 
-      setSuccess(`Successfully imported ${data.imported} activities from Strava!`);
+      const message = `Successfully imported ${data.imported} activities from Strava!` + 
+                      (data.skipped ? ` (${data.skipped} duplicates skipped)` : '');
+      
+      setSuccess(message);
       if (onImportComplete) {
         onImportComplete(data.imported);
       }
@@ -132,11 +152,11 @@ export default function StravaActivityImporter({ onImportComplete }: StravaActiv
           <Stack spacing={3} sx={{ mt: 2 }}>
             <Box>
               <Typography variant="subtitle2" gutterBottom>
-                Number of activities to import
+                Number of activities per page
               </Typography>
               <Slider
-                value={limit}
-                onChange={(_, newValue) => setLimit(newValue as number)}
+                value={perPage}
+                onChange={(_, newValue) => setPerPage(newValue as number)}
                 step={5}
                 marks
                 min={5}
@@ -169,6 +189,32 @@ export default function StravaActivityImporter({ onImportComplete }: StravaActiv
                 </MenuItem>
               ))}
             </TextField>
+            
+            <FormControl fullWidth>
+              <TextField
+                label="After Date (Optional)"
+                type="date"
+                value={afterDate}
+                onChange={(e) => setAfterDate(e.target.value)}
+                disabled={importing}
+                InputLabelProps={{ shrink: true }}
+                fullWidth
+              />
+              <FormHelperText>Only import activities after this date</FormHelperText>
+            </FormControl>
+            
+            <FormControl fullWidth>
+              <TextField
+                label="Before Date (Optional)"
+                type="date"
+                value={beforeDate}
+                onChange={(e) => setBeforeDate(e.target.value)}
+                disabled={importing}
+                InputLabelProps={{ shrink: true }}
+                fullWidth
+              />
+              <FormHelperText>Only import activities before this date</FormHelperText>
+            </FormControl>
           </Stack>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>

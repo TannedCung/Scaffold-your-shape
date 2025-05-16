@@ -232,7 +232,9 @@ export async function getStravaActivities(profile: Profile, params: {
   after?: number;
 } = {}) {
   try {
+    console.log("getStravaActivities called with params:", params);
     const accessToken = await getValidStravaToken(profile);
+    console.log("Access token obtained");
 
     const queryParams = new URLSearchParams();
     
@@ -243,17 +245,24 @@ export async function getStravaActivities(profile: Profile, params: {
 
     const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
     
-    const response = await fetch(`${STRAVA_API_URL}/athlete/activities${queryString}`, {
+    const url = `${STRAVA_API_URL}/athlete/activities${queryString}`;
+    console.log("Requesting Strava API URL:", url);
+    
+    const response = await fetch(url, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
       },
     });
 
     if (!response.ok) {
-      throw new Error(`Error fetching activities: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error("Strava API error:", response.status, errorText);
+      throw new Error(`Error fetching activities: ${response.status} ${response.statusText} - ${errorText}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+    console.log(`Received ${data.length} activities from Strava API`);
+    return data;
   } catch (error) {
     console.error('Error fetching Strava activities:', error);
     throw error;
@@ -287,6 +296,15 @@ async function mapStravaType(stravaType: string): Promise<string> {
     'Walk': 'walk',
     'Hike': 'hike',
     'Ride': 'cycle',
+    'Swim': 'swim',
+    'WeightTraining': 'workout',
+    'Workout': 'workout',
+    'Yoga': 'workout',
+    'CrossFit': 'workout',
+  };
+
+  return typeMap[stravaType] || 'other';
+} 
     'Swim': 'swim',
     'WeightTraining': 'workout',
     'Workout': 'workout',

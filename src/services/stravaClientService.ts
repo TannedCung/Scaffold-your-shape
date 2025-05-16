@@ -43,20 +43,67 @@ export async function disconnectFromStrava() {
 /**
  * Import activities from Strava
  */
-export async function importActivitiesFromStrava(options: { limit?: number; page?: number } = {}) {
+export async function importActivitiesFromStrava(options: { 
+  per_page?: number; 
+  page?: number;
+  before?: number;
+  after?: number;
+} = {}) {
+  console.log('Importing activities from Strava with options:', options);
   try {
+    // Make sure we only send non-undefined values to avoid errors in parsing
+    const params: Record<string, number> = {
+      per_page: options.per_page || 30,
+      page: options.page || 1
+    };
+    
+    // Only add before/after if they are defined
+    if (options.before !== undefined) {
+      params.before = options.before;
+    }
+    
+    if (options.after !== undefined) {
+      params.after = options.after;
+    }
+    
+    console.log('Sending params to API:', params);
+    
     const response = await fetch('/api/strava/import-activities', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        limit: options.limit || 30,
-        page: options.page || 1,
-      }),
+      body: JSON.stringify(params),
     });
 
-    return await response.json();
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Error response from import API:', response.status, errorText);
+      throw new Error(`Import API error: ${response.status} ${response.statusText} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log('Import API response:', data);
+    return data;
+  } catch (error) {
+    console.error('Error importing activities from Strava:', error);
+    throw error;
+  }
+} 
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(params),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Error response from import API:', response.status, errorText);
+      throw new Error(`Import API error: ${response.status} ${response.statusText} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log('Import API response:', data);
+    return data;
   } catch (error) {
     console.error('Error importing activities from Strava:', error);
     throw error;

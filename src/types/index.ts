@@ -567,7 +567,6 @@ export interface SegmentationDb {
   elapsed_time: number;
   moving_time: number;
   start_date: string;
-  start_date_local: string;
   distance: number;
   average_cadence: number;
   average_watts: number;
@@ -596,7 +595,6 @@ export function mapSegmentationDbToSegmentation(db: SegmentationDb): Segmentatio
     elapsedTime: db.elapsed_time,
     movingTime: db.moving_time,
     startDate: db.start_date,
-    startDateLocal: db.start_date_local,
     distance: db.distance,
     averageCadence: db.average_cadence,
     averageWatts: db.average_watts,
