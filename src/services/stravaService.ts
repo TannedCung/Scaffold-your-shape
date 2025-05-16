@@ -304,13 +304,4 @@ async function mapStravaType(stravaType: string): Promise<string> {
   };
 
   return typeMap[stravaType] || 'other';
-} 
-    'Swim': 'swim',
-    'WeightTraining': 'workout',
-    'Workout': 'workout',
-    'Yoga': 'workout',
-    'CrossFit': 'workout',
-  };
-
-  return typeMap[stravaType] || 'other';
-} 
+}

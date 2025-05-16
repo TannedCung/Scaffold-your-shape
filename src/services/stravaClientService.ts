@@ -89,23 +89,4 @@ export async function importActivitiesFromStrava(options: {
     console.error('Error importing activities from Strava:', error);
     throw error;
   }
-} 
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(params),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Error response from import API:', response.status, errorText);
-      throw new Error(`Import API error: ${response.status} ${response.statusText} - ${errorText}`);
-    }
-
-    const data = await response.json();
-    console.log('Import API response:', data);
-    return data;
-  } catch (error) {
-    console.error('Error importing activities from Strava:', error);
-    throw error;
-  }
-} 
+}

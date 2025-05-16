@@ -3,7 +3,8 @@ import { getServerSession } from 'next-auth';
 import { getStravaActivities } from '@/services/stravaService';
 import { authOptions } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
-import { StravaActivity, StravaSegment } from '@/types/strava';
+import { StravaActivity, StravaSegment, ActivityInsert } from '@/types/strava';
+import { v4 as uuidv4 } from 'uuid';
 
 // Define StravaActivity type
 // interface StravaActivity {
@@ -202,6 +203,16 @@ export async function POST(request: NextRequest) {
         prefer_perceived_exertion: activity.prefer_perceived_exertion,
         segment_leaderboard_opt_out: activity.segment_leaderboard_opt_out,
         device_name: activity.device_name,
+        type: activity.type,
+        unit: 'meters',
+        date: activity.start_date,
+        value: safeNumber(activity.distance) || 0,
+        notes: activity.description || null,
+        source: 'Strava',
+        sport_type: activity.sport_type,
+        url: `https://www.strava.com/activities/${activity.id}`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       };
     });
 
@@ -254,21 +265,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert only new activities into database
-    let insertedActivities;
-    try {
-      console.log("Inserting new activities into database: ", newActivities);
-      const { data, error } = await supabase
-        .from('activities')
-        .insert(newActivities)
-        .select();
-        
-      if (error) throw error;
-      insertedActivities = data;
-      console.log(`Successfully inserted ${insertedActivities.length} activities`);
-    } catch (e) {
-      console.error("Error inserting activities:", e);
+    const { data: insertedActivities, error: insertError } = await supabase
+      .from('activities')
+      .insert(newActivities)
+      .select();
+
+    if (insertError) {
       return NextResponse.json(
-        { error: 'Failed to insert activities', details: e instanceof Error ? e.message : String(e) },
+        { error: 'Failed to import activities', details: insertError },
         { status: 500 }
       );
     }
@@ -421,140 +425,36 @@ async function mapStravaType(stravaType: string): Promise<string> {
   };
 
   return typeMap[stravaType] || 'other';
-} 
-          id: activity.map!.id,
-          polyline: activity.map!.polyline || '',
-          activity_id: insertedActivitiesMap.get(activity.id.toString()),
-          summary_polyline: activity.map!.summary_polyline || ''
-        }));
-
-      console.log(`Found ${mapsToInsert.length} maps to insert`);
-      
-      if (mapsToInsert.length > 0) {
-        const { error } = await supabase
-          .from('maps')
-          .upsert(mapsToInsert, {
-            onConflict: 'id',
-            ignoreDuplicates: false
-          });
-          
-        if (error) {
-          console.error("Error inserting maps:", error);
-          // Continue despite map errors
-        } else {
-          console.log(`Successfully inserted ${mapsToInsert.length} maps`);
-        }
-      }
-    } catch (e) {
-      console.error("Error processing map data:", e);
-      // Continue despite map errors
-    }
-
-    // Process segmentation data
-    console.log("Processing segment data for activities");
-    const allSegments: Array<{
-      id: string;
-      activity_id: string;
-      name: string;
-      elapsed_time: number;
-      moving_time: number;
-      start_date: string;
-      distance: number;
-      average_cadence?: number | null;
-      average_watts?: number | null;
-      segment: Record<string, unknown>;
-    }> = [];
-    
-    try {
-      stravaActivities.forEach((activity: StravaActivity) => {
-        const activityId = insertedActivitiesMap.get(activity.id.toString());
-        
-        if (activity.segment_efforts && activity.segment_efforts.length > 0 && activityId) {
-          activity.segment_efforts.forEach((segment: StravaSegment) => {
-            try {
-              allSegments.push({
-                id: segment.id.toString(),
-                activity_id: activityId,
-                name: segment.name,
-                elapsed_time: safeNumber(segment.elapsed_time) || 0,
-                moving_time: safeNumber(segment.moving_time) || 0,
-                start_date: segment.start_date,
-                distance: safeNumber(segment.distance) || 0,
-                average_cadence: safeNumber(segment.average_cadence),
-                average_watts: safeNumber(segment.average_watts),
-                segment: segment.segment
-              });
-            } catch (segErr) {
-              console.error("Error processing segment:", segErr, "Segment:", segment);
-              // Continue with other segments
-            }
-          });
-        }
-      });
-
-      console.log(`Found ${allSegments.length} segments to insert`);
-      
-      if (allSegments.length > 0) {
-        const { error } = await supabase
-          .from('segmentations')
-          .upsert(allSegments, {
-            onConflict: 'id',
-            ignoreDuplicates: false
-          });
-          
-        if (error) {
-          console.error("Error inserting segments:", error);
-          // Continue despite segment errors
-        } else {
-          console.log(`Successfully inserted ${allSegments.length} segments`);
-        }
-      }
-    } catch (e) {
-      console.error("Error processing segment data:", e);
-      // Continue despite segment errors
-    }
-
-    console.log("Import completed successfully");
-    return NextResponse.json({
-      success: true,
-      imported: newActivities.length,
-      skipped: activitiesToInsert.length - newActivities.length,
-      total: stravaActivities.length,
-      activities: insertedActivities,
-      maps: allSegments.length > 0 ? allSegments.length : 0,
-      segments: allSegments.length
-    });
-  } catch (error) {
-    console.error("FATAL ERROR importing Strava activities:", error);
-    if (error instanceof Error) {
-      console.error("Error message:", error.message);
-      console.error("Error stack:", error.stack);
-    }
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to import activities', 
-        details: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      },
-      { status: 500 }
-    );
-  }
 }
 
-// Map Strava activity types to our system's types
-async function mapStravaType(stravaType: string): Promise<string> {
-  const typeMap: Record<string, string> = {
-    'Run': 'run',
-    'Walk': 'walk',
-    'Hike': 'hike',
-    'Ride': 'cycle',
-    'Swim': 'swim',
-    'WeightTraining': 'workout',
-    'Workout': 'workout',
-    'Yoga': 'workout',
-    'CrossFit': 'workout',
-  };
+function normalizeActivityForInsert(input: Partial<ActivityInsert>): ActivityInsert {
+  // List all fields from ActivityInsert
+  const fields: (keyof ActivityInsert)[] = [
+    'achievement_count', 'activity_type', 'athlete_count', 'average_cadence', 'average_heartrate',
+    'average_speed', 'average_temp', 'average_watts', 'calories', 'comment_count', 'commute',
+    'created_at', 'date', 'description', 'device_name', 'device_watts', 'display_hide_heartrate_option',
+    'distance', 'elapsed_time', 'elev_high', 'elev_low', 'end_latlng', 'flagged', 'has_heartrate',
+    'has_kudoed', 'has_power_meter', 'heartrate_opt_out', 'kilojoules', 'kudos_count', 'location',
+    'manual', 'map', 'max_heartrate', 'max_speed', 'max_watts', 'moving_time', 'name', 'notes',
+    'perceived_exertion', 'photo_count', 'pr_count', 'prefer_perceived_exertion', 'private',
+    'segment_leaderboard_opt_out', 'source', 'sport_type', 'start_date', 'start_latlng', 'strava_gear_id',
+    'strava_id', 'suffer_score', 'timezone', 'total_elevation_gain', 'total_photo_count', 'trainer',
+    'type', 'unit', 'updated_at', 'upload_id', 'url', 'user_id', 'value', 'weighted_average_watts',
+    'workout_type'
+  ];
 
-  return typeMap[stravaType] || 'other';
+  const output: any = {};
+  for (const field of fields) {
+    output[field] = field in input ? input[field] ?? null : null;
+  }
+  // Required fields
+  output.id = input.id ?? uuidv4();
+  output.name = input.name ?? '';
+  output.type = input.type ?? '';
+  output.unit = input.unit ?? '';
+  output.date = input.date ?? '';
+  output.user_id = input.user_id ?? '';
+  output.value = input.value ?? 0;
+
+  return output as ActivityInsert;
 } 
