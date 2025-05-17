@@ -9,14 +9,14 @@ export interface StravaActivity {
   sport_type?: string;
   start_date: string;
   timezone: string;
-  start_latlng: any;
-  end_latlng: any;
+  start_latlng: number[];
+  end_latlng: number[];
   achievement_count: number;
   kudos_count: number;
   comment_count: number;
   athlete_count: number;
   photo_count: number;
-  map: any;
+  map: Record<string, unknown>;
   trainer: boolean;
   commute: boolean;
   manual: boolean;
@@ -42,9 +42,9 @@ export interface StravaActivity {
   segment_efforts?: StravaSegment[];
   device_name?: string;
   embed_token?: string;
-  splits_metric?: any;
-  splits_standard?: any;
-  laps?: any[];
+  splits_metric?: Record<string, unknown>;
+  splits_standard?: Record<string, unknown>;
+  laps?: Record<string, unknown>[];
   gear_id?: string;
   average_cadence?: number;
   average_temp?: number;
@@ -94,7 +94,7 @@ export interface StravaSegment {
   };
   kom_rank?: number;
   pr_rank?: number;
-  achievements?: any[];
+  achievements?: Record<string, unknown>[];
 }
 
 export type Activity = {
@@ -130,7 +130,7 @@ export type Activity = {
   kudos_count: number | null;
   location: string | null;
   manual: boolean | null;
-  map: any | null;
+  map: Record<string, unknown> | null;
   max_heartrate: number | null;
   max_speed: number | null;
   max_watts: number | null;

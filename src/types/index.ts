@@ -595,6 +595,7 @@ export function mapSegmentationDbToSegmentation(db: SegmentationDb): Segmentatio
     elapsedTime: db.elapsed_time,
     movingTime: db.moving_time,
     startDate: db.start_date,
+    startDateLocal: db.start_date,
     distance: db.distance,
     averageCadence: db.average_cadence,
     averageWatts: db.average_watts,
