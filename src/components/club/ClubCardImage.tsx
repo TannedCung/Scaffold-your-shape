@@ -19,7 +19,6 @@ export default function ClubCardImage({ imageUrl, alt }: ClubCardImageProps) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    console.log('imageUrl', imageUrl);
     let ignore = false;
     if (isR2Url(imageUrl)) {
       setLoading(true);

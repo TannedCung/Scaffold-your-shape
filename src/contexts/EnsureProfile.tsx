@@ -20,7 +20,6 @@ export default function EnsureProfile({ children }: { children: React.ReactNode 
       }
       
       try {
-        console.log('[EnsureProfile] Ensuring profile for user:', session.user.id);
         
         // Check if profile exists
         const { data, error } = await supabase
@@ -34,7 +33,6 @@ export default function EnsureProfile({ children }: { children: React.ReactNode 
         }
           
         if (!data) {
-          console.log('[EnsureProfile] Profile not found, creating new profile');
           
           // Insert new profile
           const { error: insertError } = await supabase.from('profiles').insert([
