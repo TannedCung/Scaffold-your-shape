@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   description: "Track your workouts, join fitness challenges and connect with other fitness enthusiasts",
   keywords: ["fitness tracker", "workout", "exercise", "challenge", "fitness community"],
   icons: {
-    icon: '/logo.png',
+    icon: '/logo.ico',
   },
 };
 

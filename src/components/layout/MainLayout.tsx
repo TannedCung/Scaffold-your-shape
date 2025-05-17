@@ -33,7 +33,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
       <AppBar position="static" elevation={0} sx={{ bgcolor: '#f7faf9', color: '#2da58e', borderBottom: '1px solid #e0f7f3', boxShadow: 'none' }}>
         <Toolbar sx={{ minHeight: 64 }}>
           <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-            <Image src="/logo.png" alt="App Logo" width={40} height={40} style={{ marginRight: 12 }} />
+            <Image src="/logo.ico" alt="App Logo" width={40} height={40} style={{ marginRight: 12 }} />
           </Link>
           {/* You can add app name or nav here if needed */}
         </Toolbar>
