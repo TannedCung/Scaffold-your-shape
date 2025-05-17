@@ -302,7 +302,7 @@ export async function getActivityStats(userId: string): Promise<{
       datesWithActivity.add(date);
     });
     
-    const sortedDates = Array.from(datesWithActivity).sort().reverse();
+    const sortedDates = Array.from(datesWithActivity).sort().reverse() as string[];
     
     if (sortedDates.length > 0) {
       recentStreak = 1;

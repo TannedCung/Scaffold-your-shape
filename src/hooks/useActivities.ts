@@ -46,7 +46,7 @@ export function useActivities(userId?: string) {
     loadActivities();
 
     // Set up real-time subscription
-    let subscription;
+    let subscription: ReturnType<typeof supabase.channel> | undefined;
     if (effectiveUserId) {
       subscription = supabase
         .channel('public:activities')
