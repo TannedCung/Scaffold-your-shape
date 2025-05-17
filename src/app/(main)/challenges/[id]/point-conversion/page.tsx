@@ -1,5 +1,6 @@
 import PointConversionSettings from '../PointConversionSettings.client';
 
-export default function ChallengePointConversionPage({ params }: { params: { id: string } }) {
-  return <PointConversionSettings challengeId={params.id} />;
+export default async function ChallengePointConversionPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return <PointConversionSettings challengeId={id} />;
 } 

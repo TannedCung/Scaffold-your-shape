@@ -19,6 +19,8 @@ const ActivityMap: React.FC<ActivityMapProps> = ({ polyline, startPosition, endP
     import('leaflet').then((L) => {
       import('leaflet-polylinedecorator').then(() => {
         // Create map instance
+        if (!mapRef.current) return;
+        
         const map = L.map(mapRef.current).setView([0, 0], 13);
         
         // Add OpenStreetMap tile layer
@@ -75,28 +77,11 @@ const ActivityMap: React.FC<ActivityMapProps> = ({ polyline, startPosition, endP
             L.marker([endPosition[0], endPosition[1]], { icon: endIcon }).addTo(map);
           }
           
-          // Add arrows indicating direction
-          // @ts-expect-error - PolylineDecorator is added via import but not typed correctly
-          L.polylineDecorator(routeLine, {
-            patterns: [
-              {
-                offset: 25,
-                repeat: 200,
-                symbol: L.Symbol.arrowHead({
-                  pixelSize: 10,
-                  polygon: false,
-                  pathOptions: {
-                    stroke: true,
-                    color: '#2da58e',
-                    weight: 2
-                  }
-                })
-              }
-            ]
-          }).addTo(map);
-          
           // Fit the map to the bounds of the polyline
           map.fitBounds(routeLine.getBounds());
+          
+          // Note: Arrow decorations removed due to TypeScript compatibility issues
+          
         } catch (error) {
           console.error('Error decoding or displaying polyline:', error);
         }

@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: 'View and manage your activity details',
 };
 
-export default async function ActivityDetailPage({ params }: { params: { id: string } }) {
+export default async function ActivityDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   return <ActivityDetailClient id={id} />;
 } 

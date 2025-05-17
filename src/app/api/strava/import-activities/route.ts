@@ -142,14 +142,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Create a safe number conversion function
-    const safeNumber = (value: any): number | null => {
+    const safeNumber = (value: unknown): number | null => {
       if (value === null || value === undefined) return null;
       const num = Number(value);
       return isNaN(num) ? null : num;
     };
 
     // Map Strava activity to our schema
-    const activitiesToInsert = stravaActivities.map((activity: StravaActivity) => {
+    const activitiesToInsert: ActivityInsert[] = stravaActivities.map((activity: StravaActivity) => {
+      const id = activity.id ? activity.id.toString() : uuidv4();
       return {
         strava_id: activity.id.toString(),
         name: activity.name,
@@ -223,19 +224,18 @@ export async function POST(request: NextRequest) {
     }
 
     // First check for existing activities to avoid duplicates
-    const stravaIds = activitiesToInsert.map((activity: any) => activity.id);
+    const stravaIds: string[] = activitiesToInsert.map((activity) => activity.id).filter(Boolean) as string[];
     console.log(`Checking for existing activities with ${stravaIds.length} Strava IDs`);
     
-    let existingActivities;
+    let existingActivities: { strava_id: string }[] = [];
     try {
       const { data, error } = await supabase
         .from('activities')
         .select('strava_id')
         .eq('user_id', session.user.id)
         .in('strava_id', stravaIds);
-        
       if (error) throw error;
-      existingActivities = data;
+      existingActivities = (data ?? []) as { strava_id: string }[];
       console.log(`Found ${existingActivities.length} existing activities`);
     } catch (e) {
       console.error("Error checking for existing activities:", e);
@@ -246,11 +246,11 @@ export async function POST(request: NextRequest) {
     }
     
     // Create a set of existing Strava IDs for quick lookup
-    const existingStravaIds = new Set(existingActivities?.map(a => a.strava_id) || []);
+    const existingStravaIds = new Set((existingActivities as { strava_id: string }[]).map(a => a.strava_id));
     
     // Filter out activities that already exist in the database
-    const newActivities = activitiesToInsert.filter(
-      (activity: any) => !existingStravaIds.has(activity.strava_id)
+    const newActivities: ActivityInsert[] = activitiesToInsert.filter(
+      (activity) => activity.strava_id && !existingStravaIds.has(activity.strava_id)
     );
     
     console.log(`${newActivities.length} new activities to insert, ${activitiesToInsert.length - newActivities.length} skipped as duplicates`);
@@ -443,7 +443,7 @@ function normalizeActivityForInsert(input: Partial<ActivityInsert>): ActivityIns
     'workout_type'
   ];
 
-  const output: any = {};
+  const output: Record<string, unknown> = {};
   for (const field of fields) {
     output[field] = field in input ? input[field] ?? null : null;
   }
