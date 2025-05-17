@@ -113,6 +113,167 @@ export function mapWorkoutLogDbToWorkoutLog(db: WorkoutLogDb): WorkoutLog {
 // Outdoor activity types
 export type ActivityType = 'run' | 'walk' | 'swim' | 'cycle' | 'hike' | 'other';
 
+// Comprehensive list of sport types from Strava
+export enum SportType {
+  // Running
+  Run = 'Run',
+  TrailRun = 'TrailRun',
+  Treadmill = 'Treadmill',
+  VirtualRun = 'VirtualRun',
+  Track = 'Track',
+  
+  // Cycling
+  Ride = 'Ride',
+  MountainBikeRide = 'MountainBikeRide',
+  GravelRide = 'GravelRide',
+  VirtualRide = 'VirtualRide',
+  EBikeRide = 'EBikeRide',
+  VeloMobile = 'VeloMobile',
+  
+  // Swimming
+  Swim = 'Swim',
+  OpenWaterSwim = 'OpenWaterSwim',
+  
+  // Walking/Hiking
+  Walk = 'Walk',
+  Hike = 'Hike',
+  
+  // Winter Sports
+  AlpineSki = 'AlpineSki',
+  BackcountrySki = 'BackcountrySki',
+  NordicSki = 'NordicSki',
+  Snowboard = 'Snowboard',
+  IceSkate = 'IceSkate',
+  Snowshoe = 'Snowshoe',
+  
+  // Water Sports
+  Kayaking = 'Kayaking',
+  Rowing = 'Rowing',
+  StandUpPaddling = 'StandUpPaddling',
+  Surfing = 'Surfing',
+  Windsurf = 'Windsurf',
+  Sail = 'Sail',
+  
+  // Gym/Fitness
+  WeightTraining = 'WeightTraining',
+  Workout = 'Workout',
+  Crossfit = 'Crossfit',
+  Elliptical = 'Elliptical',
+  StairStepper = 'StairStepper',
+  Pushup = 'Pushup',
+  Situp = 'Situp',
+  PullUp = 'PullUp',
+  ParallelBars = 'ParallelBars',
+  
+  // Other Sports
+  Yoga = 'Yoga',
+  RockClimbing = 'RockClimbing',
+  Golf = 'Golf',
+  Handcycle = 'Handcycle',
+  Wheelchair = 'Wheelchair',
+  
+  // Misc
+  InlineSkate = 'InlineSkate',
+  Skateboard = 'Skateboard',
+  RollerSki = 'RollerSki',
+  
+  // Default
+  Other = 'Other'
+}
+
+// Map sport types to their default units
+export const SportUnitMap: Record<SportType, string> = {
+  // Distance-based activities (kilometers)
+  [SportType.Run]: 'kilometers',
+  [SportType.TrailRun]: 'kilometers',
+  [SportType.Track]: 'kilometers',
+  [SportType.VirtualRun]: 'kilometers',
+  [SportType.Walk]: 'kilometers',
+  [SportType.Hike]: 'kilometers',
+  
+  // Distance-based activities (kilometers)
+  [SportType.Ride]: 'kilometers',
+  [SportType.MountainBikeRide]: 'kilometers',
+  [SportType.GravelRide]: 'kilometers',
+  [SportType.VirtualRide]: 'kilometers',
+  [SportType.EBikeRide]: 'kilometers',
+  [SportType.VeloMobile]: 'kilometers',
+  [SportType.Handcycle]: 'kilometers',
+  [SportType.Wheelchair]: 'kilometers',
+  
+  // Swimming (meters)
+  [SportType.Swim]: 'meters',
+  [SportType.OpenWaterSwim]: 'meters',
+  
+  // Winter sports (kilometers)
+  [SportType.AlpineSki]: 'kilometers',
+  [SportType.BackcountrySki]: 'kilometers',
+  [SportType.NordicSki]: 'kilometers',
+  [SportType.Snowboard]: 'kilometers',
+  [SportType.IceSkate]: 'kilometers',
+  [SportType.Snowshoe]: 'kilometers',
+  
+  // Water sports (kilometers or meters depending on the sport)
+  [SportType.Kayaking]: 'kilometers',
+  [SportType.Rowing]: 'meters',
+  [SportType.StandUpPaddling]: 'kilometers',
+  [SportType.Surfing]: 'minutes',
+  [SportType.Windsurf]: 'kilometers',
+  [SportType.Sail]: 'kilometers',
+  
+  // Gym/Fitness (reps or minutes)
+  [SportType.WeightTraining]: 'reps',
+  [SportType.Workout]: 'minutes',
+  [SportType.Crossfit]: 'minutes',
+  [SportType.Treadmill]: 'kilometers',
+  [SportType.Elliptical]: 'minutes',
+  [SportType.StairStepper]: 'minutes',
+  [SportType.Pushup]: 'reps',
+  [SportType.Situp]: 'reps',
+  [SportType.PullUp]: 'reps',
+  [SportType.ParallelBars]: 'reps',
+  
+  // Other sports (minutes or specific units)
+  [SportType.Yoga]: 'minutes',
+  [SportType.RockClimbing]: 'minutes',
+  [SportType.Golf]: 'minutes',
+  
+  // Misc (kilometers)
+  [SportType.InlineSkate]: 'kilometers',
+  [SportType.Skateboard]: 'kilometers',
+  [SportType.RollerSki]: 'kilometers',
+  
+  // Default
+  [SportType.Other]: 'minutes'
+};
+
+// Map Strava sport types to our internal activity types
+export function mapStravaTypeToActivityType(stravaType: string): ActivityType {
+  const typeMap: Record<string, ActivityType> = {
+    [SportType.Run]: 'run',
+    [SportType.TrailRun]: 'run',
+    [SportType.Track]: 'run',
+    [SportType.VirtualRun]: 'run',
+    [SportType.Treadmill]: 'run',
+    
+    [SportType.Walk]: 'walk',
+    
+    [SportType.Swim]: 'swim',
+    [SportType.OpenWaterSwim]: 'swim',
+    
+    [SportType.Ride]: 'cycle',
+    [SportType.MountainBikeRide]: 'cycle',
+    [SportType.GravelRide]: 'cycle',
+    [SportType.VirtualRide]: 'cycle',
+    [SportType.EBikeRide]: 'cycle',
+    [SportType.VeloMobile]: 'cycle',
+    
+    [SportType.Hike]: 'hike',
+  };
+  
+  return typeMap[stravaType as SportType] || 'other';
+}
+
 // DB shape for Activity (snake_case)
 export interface ActivityDb {
   id: string;
@@ -602,3 +763,169 @@ export function mapSegmentationDbToSegmentation(db: SegmentationDb): Segmentatio
     segment: db.segment,
   };
 }
+
+import { 
+  DirectionsRun as RunIcon,
+  FitnessCenter as WorkoutIcon,
+  Pool as SwimIcon,
+  DirectionsBike as BikeIcon,
+  DirectionsWalk as WalkIcon,
+  Landscape as HikeIcon,
+  Hiking as HikingIcon,
+  DownhillSkiing as SkiIcon,
+  Snowboarding as SnowboardIcon,
+  Surfing as SurfingIcon,
+  SportsGymnastics as YogaIcon,
+  Rowing as RowingIcon,
+  SportsKabaddi as CrossfitIcon,
+  FitnessCenter as WeightTrainingIcon,
+  Skateboarding as SkateboardIcon,
+  SportsGolf as GolfIcon,
+  SportsHandball as HandcycleIcon,
+  AccessibleForward as WheelchairIcon,
+  SportsScore as TrackIcon,
+  SportsEsports as VirtualIcon,
+  Kayaking as KayakingIcon,
+  Sailing as SailingIcon,
+  Waves as WaterSportIcon,
+  AcUnit as IceSkateIcon,
+  Snowshoeing as SnowshoeIcon,
+  SportsHockey as StickSportIcon,
+  AccessTime as OtherIcon,
+} from '@mui/icons-material';
+
+// Map sport types to their corresponding icons
+export const SportIconMap: Record<SportType, React.ElementType> = {
+  // Running
+  [SportType.Run]: RunIcon,
+  [SportType.TrailRun]: RunIcon,
+  [SportType.Treadmill]: RunIcon,
+  [SportType.VirtualRun]: VirtualIcon,
+  [SportType.Track]: TrackIcon,
+  
+  // Cycling
+  [SportType.Ride]: BikeIcon,
+  [SportType.MountainBikeRide]: BikeIcon,
+  [SportType.GravelRide]: BikeIcon,
+  [SportType.VirtualRide]: VirtualIcon,
+  [SportType.EBikeRide]: BikeIcon,
+  [SportType.VeloMobile]: BikeIcon,
+  
+  // Swimming
+  [SportType.Swim]: SwimIcon,
+  [SportType.OpenWaterSwim]: SwimIcon,
+  
+  // Walking/Hiking
+  [SportType.Walk]: WalkIcon,
+  [SportType.Hike]: HikingIcon,
+  
+  // Winter Sports
+  [SportType.AlpineSki]: SkiIcon,
+  [SportType.BackcountrySki]: SkiIcon,
+  [SportType.NordicSki]: SkiIcon,
+  [SportType.Snowboard]: SnowboardIcon,
+  [SportType.IceSkate]: IceSkateIcon,
+  [SportType.Snowshoe]: SnowshoeIcon,
+  
+  // Water Sports
+  [SportType.Kayaking]: KayakingIcon,
+  [SportType.Rowing]: RowingIcon,
+  [SportType.StandUpPaddling]: WaterSportIcon,
+  [SportType.Surfing]: SurfingIcon,
+  [SportType.Windsurf]: SailingIcon,
+  [SportType.Sail]: SailingIcon,
+  
+  // Gym/Fitness
+  [SportType.WeightTraining]: WeightTrainingIcon,
+  [SportType.Workout]: WorkoutIcon,
+  [SportType.Crossfit]: CrossfitIcon,
+  [SportType.Elliptical]: WorkoutIcon,
+  [SportType.StairStepper]: WorkoutIcon,
+  [SportType.Pushup]: WorkoutIcon,
+  [SportType.Situp]: WorkoutIcon,
+  [SportType.PullUp]: WorkoutIcon,
+  [SportType.ParallelBars]: WorkoutIcon,
+  
+  // Other Sports
+  [SportType.Yoga]: YogaIcon,
+  [SportType.RockClimbing]: HikingIcon,
+  [SportType.Golf]: GolfIcon,
+  [SportType.Handcycle]: HandcycleIcon,
+  [SportType.Wheelchair]: WheelchairIcon,
+  
+  // Misc
+  [SportType.InlineSkate]: SkateboardIcon,
+  [SportType.Skateboard]: SkateboardIcon,
+  [SportType.RollerSki]: SkiIcon,
+  
+  // Default
+  [SportType.Other]: OtherIcon
+};
+
+// Map sport types to their corresponding colors
+export const SportColorMap: Record<SportType, string> = {
+  // Running - shades of orange
+  [SportType.Run]: '#f59e0b',
+  [SportType.TrailRun]: '#d97706',
+  [SportType.Treadmill]: '#f59e0b',
+  [SportType.VirtualRun]: '#fbbf24',
+  [SportType.Track]: '#f59e0b',
+  
+  // Cycling - shades of green
+  [SportType.Ride]: '#10b981',
+  [SportType.MountainBikeRide]: '#059669',
+  [SportType.GravelRide]: '#10b981',
+  [SportType.VirtualRide]: '#34d399',
+  [SportType.EBikeRide]: '#10b981',
+  [SportType.VeloMobile]: '#10b981',
+  
+  // Swimming - shades of blue
+  [SportType.Swim]: '#3b82f6',
+  [SportType.OpenWaterSwim]: '#2563eb',
+  
+  // Walking/Hiking - shades of purple
+  [SportType.Walk]: '#8b5cf6',
+  [SportType.Hike]: '#7c3aed',
+  
+  // Winter Sports - shades of cyan
+  [SportType.AlpineSki]: '#06b6d4',
+  [SportType.BackcountrySki]: '#0891b2',
+  [SportType.NordicSki]: '#06b6d4',
+  [SportType.Snowboard]: '#0e7490',
+  [SportType.IceSkate]: '#67e8f9',
+  [SportType.Snowshoe]: '#06b6d4',
+  
+  // Water Sports - shades of blue
+  [SportType.Kayaking]: '#60a5fa',
+  [SportType.Rowing]: '#3b82f6',
+  [SportType.StandUpPaddling]: '#60a5fa',
+  [SportType.Surfing]: '#2563eb',
+  [SportType.Windsurf]: '#3b82f6',
+  [SportType.Sail]: '#1d4ed8',
+  
+  // Gym/Fitness - shades of teal
+  [SportType.WeightTraining]: '#2da58e',
+  [SportType.Workout]: '#2da58e',
+  [SportType.Crossfit]: '#0d9488',
+  [SportType.Elliptical]: '#14b8a6',
+  [SportType.StairStepper]: '#14b8a6',
+  [SportType.Pushup]: '#2da58e',
+  [SportType.Situp]: '#2da58e',
+  [SportType.PullUp]: '#2da58e',
+  [SportType.ParallelBars]: '#2da58e',
+  
+  // Other Sports - varied colors
+  [SportType.Yoga]: '#8b5cf6',
+  [SportType.RockClimbing]: '#7c3aed',
+  [SportType.Golf]: '#65a30d',
+  [SportType.Handcycle]: '#10b981',
+  [SportType.Wheelchair]: '#10b981',
+  
+  // Misc - shades of gray/neutral
+  [SportType.InlineSkate]: '#6b7280',
+  [SportType.Skateboard]: '#4b5563',
+  [SportType.RollerSki]: '#6b7280',
+  
+  // Default
+  [SportType.Other]: '#6b7280'
+};

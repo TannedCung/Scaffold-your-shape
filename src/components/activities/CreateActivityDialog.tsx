@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Dialog, 
   DialogTitle, 
@@ -17,12 +17,16 @@ import {
   Alert,
   CircularProgress,
   Tabs,
-  Tab
+  Tab,
+  FormControl,
+  InputLabel,
+  Select
 } from '@mui/material';
 import { createActivity } from '@/services/activityService';
 import CloseIcon from '@mui/icons-material/Close';
 import { useUser } from '@/hooks/useUser';
 import { useSession } from 'next-auth/react';
+import { SportType, SportUnitMap, SportIconMap } from '@/types';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -50,16 +54,7 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
-const activityTypes = [
-  { value: 'run', label: 'Run' },
-  { value: 'walk', label: 'Walk' },
-  { value: 'swim', label: 'Swim' },
-  { value: 'cycle', label: 'Cycle' },
-  { value: 'hike', label: 'Hike' },
-  { value: 'workout', label: 'Workout' },
-  { value: 'other', label: 'Other' },
-];
-
+// Define unit options
 const unitOptions = [
   { value: 'reps', label: 'Repetitions' },
   { value: 'meters', label: 'Meters' },
@@ -70,17 +65,27 @@ const unitOptions = [
   { value: 'calories', label: 'Calories' },
 ];
 
+// Helper function to format activity type names
+const formatActivityType = (type: string): string => {
+  return type.replace(/([A-Z])/g, ' $1').trim(); // Add spaces before capital letters
+};
+
 export default function CreateActivityDialog({ open, onClose }: { open: boolean, onClose: () => void }) {
   const { data: session, status: sessionStatus } = useSession();
   const { user, loading: userLoading } = useUser();
   const [tabValue, setTabValue] = useState(0);
   
   // Basic activity fields
-  const [type, setType] = useState('workout');
+  const [type, setType] = useState<SportType>(SportType.Run);
   const [name, setName] = useState('');
   const [value, setValue] = useState('');
-  const [unit, setUnit] = useState('reps');
+  const [unit, setUnit] = useState(SportUnitMap[SportType.Run]);
   const [date, setDate] = useState(new Date().toISOString().substring(0, 16));
+  
+  // Update unit when activity type changes
+  useEffect(() => {
+    setUnit(SportUnitMap[type as SportType] || 'kilometers');
+  }, [type]);
   
   // Advanced fields (optional)
   const [description, setDescription] = useState('');
@@ -99,10 +104,10 @@ export default function CreateActivityDialog({ open, onClose }: { open: boolean,
   };
 
   const resetForm = () => {
-    setType('workout');
+    setType(SportType.Run);
     setName('');
     setValue('');
-    setUnit('reps');
+    setUnit(SportUnitMap[SportType.Run]);
     setDate(new Date().toISOString().substring(0, 16));
     setDescription('');
     setLocation('');
@@ -230,20 +235,31 @@ export default function CreateActivityDialog({ open, onClose }: { open: boolean,
         
         <TabPanel value={tabValue} index={0}>
           <Stack spacing={2}>
-            <TextField
-              select
-              label="Activity Type"
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-              fullWidth
-              required
-            >
-              {activityTypes.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </TextField>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel id="activity-type-label">Activity Type</InputLabel>
+              <Select
+                labelId="activity-type-label"
+                id="activity-type"
+                value={type}
+                label="Activity Type"
+                onChange={(e) => {
+                  setType(e.target.value as SportType);
+                  setUnit(SportUnitMap[e.target.value as SportType]);
+                }}
+              >
+                {Object.values(SportType).map((type) => {
+                  const IconComponent = SportIconMap[type];
+                  return (
+                    <MenuItem key={type} value={type}>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <IconComponent sx={{ mr: 1, color: 'text.secondary' }} />
+                        {formatActivityType(type)}
+                      </Box>
+                    </MenuItem>
+                  );
+                })}
+              </Select>
+            </FormControl>
             
             <TextField
               label="Name (optional)"

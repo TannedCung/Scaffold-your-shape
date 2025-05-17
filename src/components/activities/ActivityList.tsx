@@ -29,18 +29,13 @@ import {
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
-import DirectionsWalkIcon from '@mui/icons-material/DirectionsWalk';
-import PoolIcon from '@mui/icons-material/Pool';
-import DirectionsBikeIcon from '@mui/icons-material/DirectionsBike';
-import LandscapeIcon from '@mui/icons-material/Landscape';
-import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { motion } from 'framer-motion';
 import ActivityEditDialog from './ActivityEditDialog';
 import { deleteActivity } from '@/services/activityService';
 import type { Activity } from '@/types';
+import { SportIconMap, SportColorMap, SportType } from '@/types';
 import { useRouter } from 'next/navigation';
 
 const MotionCard = motion(Card);
@@ -124,41 +119,33 @@ export default function ActivityList({
   };
 
   const getActivityIcon = (type: string) => {
-    switch (type.toLowerCase()) {
-      case 'run':
-        return <DirectionsRunIcon sx={{ color: '#f59e0b' }} />;
-      case 'walk':
-        return <DirectionsWalkIcon sx={{ color: '#8b5cf6' }} />;
-      case 'swim':
-        return <PoolIcon sx={{ color: '#3b82f6' }} />;
-      case 'cycle':
-        return <DirectionsBikeIcon sx={{ color: '#10b981' }} />;
-      case 'hike':
-        return <LandscapeIcon sx={{ color: '#ef4444' }} />;
-      case 'workout':
-        return <FitnessCenterIcon sx={{ color: '#2da58e' }} />;
-      default:
-        return <FitnessCenterIcon sx={{ color: '#6b7280' }} />;
+    // Try to match with SportType enum
+    const sportType = Object.values(SportType).find(
+      (sport) => sport.toLowerCase() === type.toLowerCase()
+    );
+    
+    if (sportType && SportIconMap[sportType]) {
+      const Icon = SportIconMap[sportType];
+      return <Icon sx={{ color: SportColorMap[sportType] }} />;
     }
+    
+    // Fallback to default icon
+    const DefaultIcon = SportIconMap[SportType.Other];
+    return <DefaultIcon sx={{ color: SportColorMap[SportType.Other] }} />;
   };
 
   const getActivityColor = (type: string) => {
-    switch (type.toLowerCase()) {
-      case 'run':
-        return '#f59e0b';
-      case 'walk':
-        return '#8b5cf6';
-      case 'swim':
-        return '#3b82f6';
-      case 'cycle':
-        return '#10b981';
-      case 'hike':
-        return '#ef4444';
-      case 'workout':
-        return '#2da58e';
-      default:
-        return '#6b7280';
+    // Try to match with SportType enum
+    const sportType = Object.values(SportType).find(
+      (sport) => sport.toLowerCase() === type.toLowerCase()
+    );
+    
+    if (sportType && SportColorMap[sportType]) {
+      return SportColorMap[sportType];
     }
+    
+    // Fallback to default color
+    return SportColorMap[SportType.Other];
   };
 
   const formatDate = (dateString: string) => {

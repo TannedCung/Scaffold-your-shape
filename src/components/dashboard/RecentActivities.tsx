@@ -20,13 +20,6 @@ import {
   Chip
 } from '@mui/material';
 import { 
-  DirectionsRun as RunIcon,
-  FitnessCenter as WorkoutIcon,
-  Pool as SwimIcon,
-  DirectionsBike as BikeIcon,
-  DirectionsWalk as WalkIcon,
-  Landscape as HikeIcon,
-  AccessTime as TimeIcon,
   Add as AddIcon,
   OpenInNew as OpenInNewIcon
 } from '@mui/icons-material';
@@ -35,6 +28,7 @@ import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import CreateActivityDialog from '@/components/activities/CreateActivityDialog';
 import { useSession } from 'next-auth/react';
+import { SportIconMap, SportColorMap, SportType } from '@/types';
 
 // Create motion components
 const MotionCard = motion(Card);
@@ -59,43 +53,35 @@ export default function RecentActivities({ userId, limit = 5 }: RecentActivities
   const isAuthLoading = status === 'loading';
 
   const getActivityIcon = (type: string) => {
-    switch (type.toLowerCase()) {
-      case 'workout':
-        return <WorkoutIcon />;
-      case 'run':
-        return <RunIcon />;
-      case 'swim':
-        return <SwimIcon />;
-      case 'bike':
-      case 'cycle':
-        return <BikeIcon />;
-      case 'walk':
-        return <WalkIcon />;
-      case 'hike':
-        return <HikeIcon />;
-      default:
-        return <TimeIcon />;
+    // Try to map the string type to SportType enum
+    const sportType = Object.values(SportType).find(
+      sport => sport.toLowerCase() === type.toLowerCase()
+    ) as SportType;
+    
+    // If found in our enum, use the SportIconMap
+    if (sportType && SportIconMap[sportType]) {
+      const IconComponent = SportIconMap[sportType];
+      return <IconComponent />;
     }
+    
+    // Fallback to default icon
+    const DefaultIcon = SportIconMap[SportType.Other];
+    return <DefaultIcon />;
   };
 
   const getActivityColor = (type: string) => {
-    switch (type.toLowerCase()) {
-      case 'workout':
-        return '#2da58e'; // primary teal
-      case 'run':
-        return '#f59e0b'; // amber
-      case 'swim':
-        return '#3b82f6'; // blue
-      case 'bike':
-      case 'cycle':
-        return '#10b981'; // green
-      case 'walk':
-        return '#8b5cf6'; // purple
-      case 'hike':
-        return '#ef4444'; // red
-      default:
-        return '#6b7280'; // gray
+    // Try to map the string type to SportType enum
+    const sportType = Object.values(SportType).find(
+      sport => sport.toLowerCase() === type.toLowerCase()
+    ) as SportType;
+    
+    // If found in our enum, use the SportColorMap
+    if (sportType && SportColorMap[sportType]) {
+      return SportColorMap[sportType];
     }
+    
+    // Fallback to default color
+    return SportColorMap[SportType.Other];
   };
   
   // Animation variants

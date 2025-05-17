@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { StravaActivity, StravaSegment, ActivityInsert } from '@/types/strava';
 import { v4 as uuidv4 } from 'uuid';
+import { mapStravaTypeToActivityType, SportUnitMap, SportType } from '@/types';
 
 // Define StravaActivity type
 // interface StravaActivity {
@@ -151,6 +152,23 @@ export async function POST(request: NextRequest) {
     // Map Strava activity to our schema
     const activitiesToInsert: ActivityInsert[] = stravaActivities.map((activity: StravaActivity) => {
       const id = activity.id ? activity.id.toString() : uuidv4();
+      
+      // Get the appropriate unit based on sport type
+      const sportType = activity.type as SportType;
+      const unit = SportUnitMap[sportType] || 'kilometers';
+      
+      // Calculate value based on the unit
+      let value: number;
+      if (unit === 'kilometers' && activity.distance) {
+        value = activity.distance / 1000; // Convert meters to kilometers
+      } else if (unit === 'meters' && activity.distance) {
+        value = activity.distance;
+      } else if (unit === 'minutes' && activity.moving_time) {
+        value = activity.moving_time / 60; // Convert seconds to minutes
+      } else {
+        value = activity.distance ? activity.distance / 1000 : 0; // Default to kilometers if available
+      }
+      
       return {
         strava_id: activity.id.toString(),
         name: activity.name,
@@ -159,7 +177,11 @@ export async function POST(request: NextRequest) {
         elapsed_time: safeNumber(activity.elapsed_time),
         total_elevation_gain: safeNumber(activity.total_elevation_gain),
         activity_type: activity.type,
+        type: mapStravaTypeToActivityType(activity.type),
+        unit: unit,
+        value: value,
         start_date: activity.start_date,
+        date: activity.start_date,
         timezone: activity.timezone,
         start_latlng: activity.start_latlng,
         end_latlng: activity.end_latlng,
@@ -204,10 +226,6 @@ export async function POST(request: NextRequest) {
         prefer_perceived_exertion: activity.prefer_perceived_exertion,
         segment_leaderboard_opt_out: activity.segment_leaderboard_opt_out,
         device_name: activity.device_name,
-        type: activity.type,
-        unit: 'meters',
-        date: activity.start_date,
-        value: safeNumber(activity.distance) || 0,
         notes: activity.description || null,
         source: 'Strava',
         sport_type: activity.sport_type,
@@ -412,19 +430,7 @@ export async function POST(request: NextRequest) {
 
 // Map Strava activity types to our system's types
 async function mapStravaType(stravaType: string): Promise<string> {
-  const typeMap: Record<string, string> = {
-    'Run': 'run',
-    'Walk': 'walk',
-    'Hike': 'hike',
-    'Ride': 'cycle',
-    'Swim': 'swim',
-    'WeightTraining': 'workout',
-    'Workout': 'workout',
-    'Yoga': 'workout',
-    'CrossFit': 'workout',
-  };
-
-  return typeMap[stravaType] || 'other';
+  return mapStravaTypeToActivityType(stravaType);
 }
 
 function normalizeActivityForInsert(input: Partial<ActivityInsert>): ActivityInsert {

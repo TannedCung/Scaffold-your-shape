@@ -17,11 +17,14 @@ import {
   Alert,
   CircularProgress,
   Tabs,
-  Tab
+  Tab,
+  ListItemIcon,
+  ListItemText
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { updateActivity } from '@/services/activityService';
 import { useUser } from '@/hooks/useUser';
+import { SportType, SportIconMap, SportColorMap } from '@/types';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -49,14 +52,36 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
+// Use SportType enum for activity type options
 const activityTypes = [
-  { value: 'run', label: 'Run' },
-  { value: 'walk', label: 'Walk' },
-  { value: 'swim', label: 'Swim' },
-  { value: 'cycle', label: 'Cycle' },
-  { value: 'hike', label: 'Hike' },
-  { value: 'workout', label: 'Workout' },
-  { value: 'other', label: 'Other' },
+  // Running
+  { value: SportType.Run, label: 'Run' },
+  { value: SportType.TrailRun, label: 'Trail Run' },
+  { value: SportType.Treadmill, label: 'Treadmill' },
+  
+  // Cycling
+  { value: SportType.Ride, label: 'Ride' },
+  { value: SportType.MountainBikeRide, label: 'Mountain Bike' },
+  
+  // Swimming
+  { value: SportType.Swim, label: 'Swim' },
+  
+  // Walking/Hiking
+  { value: SportType.Walk, label: 'Walk' },
+  { value: SportType.Hike, label: 'Hike' },
+  
+  // Gym/Fitness
+  { value: SportType.WeightTraining, label: 'Weight Training' },
+  { value: SportType.Workout, label: 'Workout' },
+  { value: SportType.Crossfit, label: 'Crossfit' },
+  { value: SportType.Pushup, label: 'Pushup' },
+  { value: SportType.Situp, label: 'Situp' },
+  { value: SportType.PullUp, label: 'Pull Up' },
+  { value: SportType.ParallelBars, label: 'Parallel Bars' },
+  
+  // Other
+  { value: SportType.Yoga, label: 'Yoga' },
+  { value: SportType.Other, label: 'Other' },
 ];
 
 const unitOptions = [
@@ -94,7 +119,11 @@ export default function ActivityEditDialog({ open, activity, onClose }: { open: 
 
   useEffect(() => {
     if (activity) {
-      setType(activity.type || 'workout');
+      // Map the activity type to SportType if possible
+      const sportType = Object.values(SportType).find(
+        (sport) => sport.toLowerCase() === activity.type.toLowerCase()
+      );
+      setType(sportType || SportType.Other);
       setName(activity.name || '');
       setValue(activity.value?.toString() || '');
       setUnit(activity.unit || 'reps');
@@ -225,11 +254,19 @@ export default function ActivityEditDialog({ open, activity, onClose }: { open: 
               fullWidth
               required
             >
-              {activityTypes.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
+              {activityTypes.map((option) => {
+                const Icon = SportIconMap[option.value as SportType];
+                const color = SportColorMap[option.value as SportType];
+                
+                return (
+                  <MenuItem key={option.value} value={option.value}>
+                    <ListItemIcon>
+                      <Icon sx={{ color }} />
+                    </ListItemIcon>
+                    <ListItemText>{option.label}</ListItemText>
+                  </MenuItem>
+                );
+              })}
             </TextField>
             
             <TextField
