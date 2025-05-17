@@ -100,7 +100,7 @@ export default function ActivitiesPage() {
           <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
             <CircularProgress />
           </Box>
-        ) : !isAuthenticated && sessionStatus !== 'loading' ? (
+        ) : !isAuthenticated && !loading ? (
           <Alert severity="info" sx={{ mb: 3 }}>
             Please log in to view and manage your activities.
           </Alert>
@@ -109,7 +109,7 @@ export default function ActivitiesPage() {
             <Card sx={{ mb: 3 }}>
               <CardContent>
                 <Grid container spacing={2} alignItems="center">
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <TextField
                       fullWidth
                       placeholder="Search activities..."
@@ -125,7 +125,7 @@ export default function ActivitiesPage() {
                       size="small"
                     />
                   </Grid>
-                  <Grid item xs={6} md={3}>
+                  <Grid size={{ xs: 6, md: 3 }}>
                     <Button 
                       fullWidth 
                       startIcon={<FilterListIcon />} 
@@ -135,7 +135,7 @@ export default function ActivitiesPage() {
                       Filter
                     </Button>
                   </Grid>
-                  <Grid item xs={6} md={3}>
+                  <Grid size={{ xs: 6, md: 3 }}>
                     <TextField
                       select
                       fullWidth
@@ -160,7 +160,7 @@ export default function ActivitiesPage() {
                   <Box sx={{ mt: 2 }}>
                     <Divider sx={{ my: 2 }} />
                     <Grid container spacing={2}>
-                      <Grid item xs={12} md={4}>
+                      <Grid size={{ xs: 12, md: 4 }}>
                         <TextField
                           select
                           fullWidth

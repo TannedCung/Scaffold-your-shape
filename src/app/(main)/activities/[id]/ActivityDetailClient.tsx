@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Paper, Chip, Divider, Avatar, Button, CircularProgress, Grid, Tooltip, Card, CardContent, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { Box, Typography, Paper, Chip, Divider, Avatar, Button, CircularProgress, Tooltip, Card, CardContent, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { Grid } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { Activity, ActivityPointConversion, Segmentation } from '@/types';
 import { fetchGlobalConversionRates } from '@/services/activityPointService';
@@ -155,14 +156,14 @@ export default function ActivityDetailClient({ id }: { id: string }) {
           
           <Grid container spacing={3}>
             {/* Main stats */}
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Card sx={{ bgcolor: '#f0f9f7', boxShadow: 'none', height: '100%' }}>
                 <CardContent>
                   <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Activity Details</Typography>
                   
                   <Grid container spacing={2}>
                     {/* Standout value */}
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                         {getActivityIcon(activity.type, { sx: { color: getActivityColor(activity.type), fontSize: 40 } })}
                         <Typography variant="h3" sx={{ color: getActivityColor(activity.type), fontWeight: 900, letterSpacing: 1 }}>
@@ -172,7 +173,7 @@ export default function ActivityDetailClient({ id }: { id: string }) {
                     </Grid>
                     
                     {/* Date/Time */}
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <CalendarTodayIcon sx={{ color: '#2da58e' }} />
                         <Typography variant="body2" color="text.secondary">
@@ -183,7 +184,7 @@ export default function ActivityDetailClient({ id }: { id: string }) {
                     
                     {/* Location */}
                     {activity.location && (
-                      <Grid item xs={12}>
+                      <Grid size={{ xs: 12 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <PlaceIcon sx={{ color: '#2da58e' }} />
                           <Typography variant="body2" color="text.secondary">Location: {activity.location}</Typography>
@@ -193,7 +194,7 @@ export default function ActivityDetailClient({ id }: { id: string }) {
                     
                     {/* Duration */}
                     {activity.elapsedTime && (
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <AccessTimeIcon sx={{ color: '#2da58e' }} />
                           <Typography variant="body2" color="text.secondary">
@@ -205,7 +206,7 @@ export default function ActivityDetailClient({ id }: { id: string }) {
                     
                     {/* Moving Time */}
                     {activity.movingTime && (
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <AccessTimeIcon sx={{ color: '#2da58e' }} />
                           <Typography variant="body2" color="text.secondary">
@@ -217,7 +218,7 @@ export default function ActivityDetailClient({ id }: { id: string }) {
                     
                     {/* Distance */}
                     {activity.distance && (
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <FitnessCenterIcon sx={{ color: '#2da58e' }} />
                           <Typography variant="body2" color="text.secondary">
@@ -229,7 +230,7 @@ export default function ActivityDetailClient({ id }: { id: string }) {
                     
                     {/* Elevation Gain */}
                     {activity.totalElevationGain && (
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <TerrainIcon sx={{ color: '#2da58e' }} />
                           <Typography variant="body2" color="text.secondary">
@@ -241,7 +242,7 @@ export default function ActivityDetailClient({ id }: { id: string }) {
                     
                     {/* Average Speed */}
                     {activity.averageSpeed && (
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <SpeedIcon sx={{ color: '#2da58e' }} />
                           <Typography variant="body2" color="text.secondary">
@@ -253,7 +254,7 @@ export default function ActivityDetailClient({ id }: { id: string }) {
                     
                     {/* Max Speed */}
                     {activity.maxSpeed && (
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <SpeedIcon sx={{ color: '#2da58e' }} />
                           <Typography variant="body2" color="text.secondary">
@@ -265,7 +266,7 @@ export default function ActivityDetailClient({ id }: { id: string }) {
                     
                     {/* Average Cadence */}
                     {activity.averageCadence && (
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <NumbersIcon sx={{ color: '#2da58e' }} />
                           <Typography variant="body2" color="text.secondary">
@@ -277,7 +278,7 @@ export default function ActivityDetailClient({ id }: { id: string }) {
                     
                     {/* Average Temperature */}
                     {activity.averageTemp && (
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <ThermostatIcon sx={{ color: '#2da58e' }} />
                           <Typography variant="body2" color="text.secondary">
@@ -289,7 +290,7 @@ export default function ActivityDetailClient({ id }: { id: string }) {
                     
                     {/* Average Watts */}
                     {activity.averageWatts && (
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <ElectricBoltIcon sx={{ color: '#2da58e' }} />
                           <Typography variant="body2" color="text.secondary">
@@ -301,7 +302,7 @@ export default function ActivityDetailClient({ id }: { id: string }) {
                     
                     {/* Max Watts */}
                     {activity.maxWatts && (
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <ElectricBoltIcon sx={{ color: '#2da58e' }} />
                           <Typography variant="body2" color="text.secondary">
@@ -313,7 +314,7 @@ export default function ActivityDetailClient({ id }: { id: string }) {
                     
                     {/* Kilojoules */}
                     {activity.kilojoules && (
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <ElectricBoltIcon sx={{ color: '#2da58e' }} />
                           <Typography variant="body2" color="text.secondary">
@@ -325,7 +326,7 @@ export default function ActivityDetailClient({ id }: { id: string }) {
                     
                     {/* Strava Link */}
                     {activity.url && (
-                      <Grid item xs={12}>
+                      <Grid size={{ xs: 12 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <LinkIcon sx={{ color: '#2da58e' }} />
                           <Button
@@ -347,7 +348,7 @@ export default function ActivityDetailClient({ id }: { id: string }) {
             </Grid>
             
             {/* Additional Stats & Metadata */}
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Card sx={{ bgcolor: '#f0f9f7', boxShadow: 'none', height: '100%' }}>
                 <CardContent>
                   <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Additional Information</Typography>
@@ -355,7 +356,7 @@ export default function ActivityDetailClient({ id }: { id: string }) {
                   <Grid container spacing={2}>
                     {/* Strava ID */}
                     {activity.strava_id && (
-                      <Grid item xs={12}>
+                      <Grid size={{ xs: 12 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <NumbersIcon sx={{ color: '#2da58e' }} />
                           <Typography variant="body2" color="text.secondary">Strava ID: {activity.strava_id}</Typography>
@@ -364,7 +365,7 @@ export default function ActivityDetailClient({ id }: { id: string }) {
                     )}
                     
                     {/* Source */}
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <SourceIcon sx={{ color: '#2da58e' }} />
                         <Typography variant="body2" color="text.secondary">Source: {activity.source || 'Manual'}</Typography>
@@ -373,7 +374,7 @@ export default function ActivityDetailClient({ id }: { id: string }) {
                     
                     {/* Sport Type */}
                     {activity.sportType && (
-                      <Grid item xs={12}>
+                      <Grid size={{ xs: 12 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <FitnessCenterIcon sx={{ color: '#2da58e' }} />
                           <Typography variant="body2" color="text.secondary">Sport Type: {activity.sportType}</Typography>
@@ -382,7 +383,7 @@ export default function ActivityDetailClient({ id }: { id: string }) {
                     )}
                     
                     {/* Created At */}
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <AccessTimeIcon sx={{ color: '#2da58e' }} />
                         <Typography variant="body2" color="text.secondary">
@@ -392,7 +393,7 @@ export default function ActivityDetailClient({ id }: { id: string }) {
                     </Grid>
                     
                     {/* Updated At */}
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <UpdateIcon sx={{ color: '#2da58e' }} />
                         <Typography variant="body2" color="text.secondary">
@@ -403,7 +404,7 @@ export default function ActivityDetailClient({ id }: { id: string }) {
                     
                     {/* High/Low Elevation */}
                     {(activity.elevHigh || activity.elevLow) && (
-                      <Grid item xs={12}>
+                      <Grid size={{ xs: 12 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <TerrainIcon sx={{ color: '#2da58e' }} />
                           <Typography variant="body2" color="text.secondary">

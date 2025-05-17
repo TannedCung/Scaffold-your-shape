@@ -205,7 +205,7 @@ export default function ActivityList({
       
       <Grid container spacing={2}>
         {activities.map(activity => (
-          <Grid item xs={12} key={activity.id}>
+          <Grid size={{ xs: 12 }} key={activity.id}>
             <MotionCard
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
