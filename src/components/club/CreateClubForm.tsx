@@ -67,9 +67,9 @@ export default function CreateClubForm({ onSuccess }: CreateClubFormProps) {
       const { error } = await clubApi.create({
         name,
         description,
-        is_private: isPrivate,
-        background_image_url: backgroundImageUrl,
-        creator_id: userId
+        isPrivate,
+        backgroundImageUrl,
+        creatorId: userId
       });
 
       if (error) throw new Error(error);

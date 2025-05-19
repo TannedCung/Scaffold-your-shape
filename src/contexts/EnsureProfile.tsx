@@ -29,7 +29,7 @@ export default function EnsureProfile({ children }: { children: React.ReactNode 
             id: session.user.id,
             email: session.user.email || '',
             name: session.user.name || '',
-            avatar_url: session.user.image || null,
+            avatar_url: session.user.image || undefined,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           });

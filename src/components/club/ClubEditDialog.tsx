@@ -31,7 +31,7 @@ export default function ClubEditDialog({ open, club, onClose }: { open: boolean,
       const { error } = await clubApi.update(club.id, { 
         name, 
         description, 
-        is_private: isPrivate 
+        isPrivate: isPrivate 
       });
       if (error) throw new Error(error);
       setSuccess(true);

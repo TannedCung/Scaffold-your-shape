@@ -27,7 +27,11 @@ export async function fetchClubConversionRates(clubId: string): Promise<ClubPoin
       throw new Error(error);
     }
 
-    return data || [];
+    // Ensure each conversion has a club_id
+    return (data || []).map(conversion => ({
+      ...conversion,
+      club_id: clubId
+    }));
   } catch (error) {
     console.error('Error fetching club conversion rates:', error);
     return [];
@@ -43,7 +47,11 @@ export async function fetchChallengeConversionRates(challengeId: string): Promis
       throw new Error(error);
     }
 
-    return data || [];
+    // Ensure each conversion has a challenge_id
+    return (data || []).map(conversion => ({
+      ...conversion,
+      challenge_id: challengeId
+    }));
   } catch (error) {
     console.error('Error fetching challenge conversion rates:', error);
     return [];

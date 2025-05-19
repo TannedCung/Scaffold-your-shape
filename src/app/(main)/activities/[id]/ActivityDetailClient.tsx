@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Box, Typography, Paper, Chip, Divider, Avatar, Button, CircularProgress, Tooltip, Card, CardContent, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { Grid } from '@mui/material';
 import { useRouter } from 'next/navigation';
-import { Activity, ActivityPointConversion, Segmentation } from '@/types';
+import { ActivityWithDetails, ActivityPointConversion } from '@/types';
 import { fetchGlobalConversionRates } from '@/services/activityPointService';
 import { calculateActivityPoints } from '@/utils/activityPoints';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
@@ -74,7 +74,7 @@ function formatSpeed(speed: number): string {
 
 export default function ActivityDetailClient({ id }: { id: string }) {
   const router = useRouter();
-  const [activity, setActivity] = useState<any>(null);
+  const [activity, setActivity] = useState<ActivityWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [conversionRates, setConversionRates] = useState<ActivityPointConversion[]>([]);
@@ -82,15 +82,19 @@ export default function ActivityDetailClient({ id }: { id: string }) {
   useEffect(() => {
     const fetchActivity = async () => {
       try {
-        const { data, error } = await activityApi.get(id);
+        const { data, error } = await activityApi.getById(id);
         
         if (error) {
           throw new Error(error);
         }
 
-        setActivity(data);
-        const rates = await fetchGlobalConversionRates();
-        setConversionRates(rates);
+        if (data) {
+          setActivity(data);
+          const rates = await fetchGlobalConversionRates();
+          setConversionRates(rates);
+        } else {
+          setError('Activity not found');
+        }
       } catch (error) {
         setError(error instanceof Error ? error.message : 'Failed to load activity');
       } finally {

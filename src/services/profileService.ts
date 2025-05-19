@@ -1,6 +1,8 @@
 import { Profile } from '@/types';
 import { profileApi } from '@/lib/api';
 
+export type { Profile };
+
 export async function fetchProfile(userId: string): Promise<Profile | null> {
   try {
     const { data, error } = await profileApi.get();

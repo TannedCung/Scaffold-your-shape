@@ -17,13 +17,18 @@ export default function RecentActivities() {
   useEffect(() => {
     const fetchRecentActivities = async () => {
       try {
-        const { data, error } = await activityApi.getRecent();
+        const { data, error } = await activityApi.getAll();
         
         if (error) {
           throw new Error(error);
         }
 
-        setActivities(data || []);
+        // Sort activities by date in descending order and take the most recent ones
+        const sortedActivities = (data || [])
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+          .slice(0, 5); // Show only the 5 most recent activities
+
+        setActivities(sortedActivities);
       } catch (error) {
         setError(error instanceof Error ? error.message : 'Failed to load recent activities');
       } finally {
