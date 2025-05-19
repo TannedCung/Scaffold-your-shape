@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { challengeApi } from '@/lib/api';
 import { Box, Button, TextField, Stack, Typography } from '@mui/material';
 
 interface CreateChallengeFormProps {
@@ -17,14 +17,17 @@ export default function CreateChallengeForm({ onSuccess }: CreateChallengeFormPr
     setLoading(true);
     setError(null);
     setSuccess(false);
-    const { error } = await supabase.from('challenges').insert([{ title, description }]);
-    setLoading(false);
-    if (error) setError(error.message);
-    else {
+    try {
+      const { error } = await challengeApi.create({ title, description });
+      if (error) throw new Error(error);
       setSuccess(true);
       setTitle('');
       setDescription('');
       if (onSuccess) onSuccess();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create challenge');
+    } finally {
+      setLoading(false);
     }
   };
 

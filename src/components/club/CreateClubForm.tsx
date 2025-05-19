@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { clubApi } from '@/lib/api';
 import { Box, Button, TextField, Stack, Typography, Switch, FormControlLabel, Input, CircularProgress } from '@mui/material';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
@@ -52,53 +52,40 @@ export default function CreateClubForm({ onSuccess }: CreateClubFormProps) {
     setLoading(true);
     setError(null);
     setSuccess(false);
-    let backgroundImageUrl: string | null = null;
-    if (imageFile) {
-      setUploading(true);
-      backgroundImageUrl = await uploadImageToR2(imageFile);
-      setUploading(false);
-      if (!backgroundImageUrl) {
-        setLoading(false);
-        setError('Failed to upload background image.');
-        return;
+    try {
+      let backgroundImageUrl: string | null = null;
+      if (imageFile) {
+        setUploading(true);
+        backgroundImageUrl = await uploadImageToR2(imageFile);
+        setUploading(false);
+        if (!backgroundImageUrl) {
+          throw new Error('Failed to upload background image.');
+        }
       }
+
+      const userId = session?.user?.id;
+      const { error } = await clubApi.create({
+        name,
+        description,
+        is_private: isPrivate,
+        background_image_url: backgroundImageUrl,
+        creator_id: userId
+      });
+
+      if (error) throw new Error(error);
+
+      setSuccess(true);
+      setName('');
+      setDescription('');
+      setIsPrivate(false);
+      setImageFile(null);
+      setImagePreview(null);
+      if (onSuccess) onSuccess();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create club');
+    } finally {
+      setLoading(false);
     }
-    const userId = session?.user?.id;
-    let clubId = null;
-    if (userId) {
-      // Insert club and get its ID
-      const { data: clubData, error: clubError } = await supabase.from('clubs').insert([
-        { name, description, is_private: isPrivate, background_image_url: backgroundImageUrl, creator_id: userId }
-      ]).select();
-      if (clubError || !clubData || !clubData[0]) {
-        setLoading(false);
-        setError(clubError?.message || 'Failed to create club.');
-        return;
-      }
-      clubId = clubData[0].id;
-      // Add creator as admin member
-      await supabase.from('club_members').insert([
-        { club_id: clubId, user_id: userId, role: 'admin' }
-      ]);
-    } else {
-      // Fallback: insert club without creator_id
-      const { error } = await supabase.from('clubs').insert([
-        { name, description, is_private: isPrivate, background_image_url: backgroundImageUrl }
-      ]);
-      if (error) {
-        setLoading(false);
-        setError(error.message);
-        return;
-      }
-    }
-    setLoading(false);
-    setSuccess(true);
-    setName('');
-    setDescription('');
-    setIsPrivate(false);
-    setImageFile(null);
-    setImagePreview(null);
-    if (onSuccess) onSuccess();
   };
 
   return (

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { activityApi } from '@/lib/api';
 import { Box, Button, TextField, Stack, Typography, MenuItem } from '@mui/material';
 
 const activityTypes = [
@@ -28,12 +28,18 @@ export default function CreateActivityForm() {
     setLoading(true);
     setError(null);
     setSuccess(false);
-    const { error } = await supabase.from('activities').insert([
-      { type, distance: distance ? Number(distance) : null, duration: duration ? Number(duration) : null, date, location, notes }
-    ]);
-    setLoading(false);
-    if (error) setError(error.message);
-    else {
+    try {
+      const { error } = await activityApi.create({
+        type,
+        distance: distance ? Number(distance) : undefined,
+        movingTime: duration ? Number(duration) : undefined,
+        date,
+        location,
+        notes
+      });
+      
+      if (error) throw new Error(error);
+      
       setSuccess(true);
       setType('run');
       setDistance('');
@@ -41,6 +47,10 @@ export default function CreateActivityForm() {
       setDate('');
       setLocation('');
       setNotes('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create activity');
+    } finally {
+      setLoading(false);
     }
   };
 

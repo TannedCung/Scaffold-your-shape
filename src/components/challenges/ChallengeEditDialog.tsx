@@ -1,9 +1,8 @@
 "use client";
 import type { Challenge } from '@/types';
-
+import { challengeApi } from '@/lib/api';
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Stack, Typography } from '@mui/material';
-import { supabase } from '@/lib/supabase';
 
 export default function ChallengeEditDialog({ open, challenge, onClose }: { open: boolean, challenge: Challenge | null, onClose: () => void }) {
   const [title, setTitle] = useState('');
@@ -26,11 +25,16 @@ export default function ChallengeEditDialog({ open, challenge, onClose }: { open
     setLoading(true);
     setError(null);
     setSuccess(false);
-    const { error } = await supabase.from('challenges').update({ title, description }).eq('id', challenge.id);
-    setLoading(false);
-    if (error) setError(error.message);
-    else setSuccess(true);
-    onClose();
+    try {
+      const { error } = await challengeApi.update(challenge.id, { title, description });
+      if (error) throw new Error(error);
+      setSuccess(true);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update challenge');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

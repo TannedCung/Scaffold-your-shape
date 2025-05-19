@@ -1,6 +1,6 @@
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { profileApi } from '@/lib/api';
 import { Box, CircularProgress, Typography } from '@mui/material';
 
 export default function EnsureProfile({ children }: { children: React.ReactNode }) {
@@ -10,44 +10,32 @@ export default function EnsureProfile({ children }: { children: React.ReactNode 
   
   useEffect(() => {
     async function ensureProfile() {
-      // Skip if authentication status is still loading
       if (status === 'loading') return;
       
-      // Skip if user is not authenticated
       if (status !== 'authenticated' || !session?.user?.id) {
         setIsLoading(false);
         return;
       }
       
       try {
+        const { data, error } = await profileApi.get();
         
-        // Check if profile exists
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', session.user.id)
-          .maybeSingle();
-          
         if (error) {
-          throw error;
+          throw new Error(error);
         }
-          
+        
         if (!data) {
-          
-          // Insert new profile
-          const { error: insertError } = await supabase.from('profiles').insert([
-            {
-              id: session.user.id,
-              email: session.user.email || '',
-              name: session.user.name || '',
-              avatar_url: session.user.image || null,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            },
-          ]);
+          const { error: insertError } = await profileApi.update({
+            id: session.user.id,
+            email: session.user.email || '',
+            name: session.user.name || '',
+            avatar_url: session.user.image || null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
           
           if (insertError) {
-            throw insertError;
+            throw new Error(insertError);
           }
           
           console.log('[EnsureProfile] Profile created successfully');
@@ -64,26 +52,22 @@ export default function EnsureProfile({ children }: { children: React.ReactNode 
     
     ensureProfile();
   }, [session, status]);
-
-  if (isLoading && status === 'loading') {
+  
+  if (isLoading) {
     return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', pt: 4 }}>
-        <CircularProgress sx={{ mb: 2 }} />
-        <Typography variant="body2" color="text.secondary">Loading your profile...</Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress />
       </Box>
     );
   }
   
   if (error) {
     return (
-      <Box sx={{ p: 4, textAlign: 'center' }}>
-        <Typography color="error">Error loading profile: {error}</Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-          Try refreshing the page. If the problem persists, please contact support.
-        </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <Typography color="error">{error}</Typography>
       </Box>
     );
   }
-
+  
   return <>{children}</>;
 }

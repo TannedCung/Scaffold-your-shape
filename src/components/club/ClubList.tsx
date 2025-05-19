@@ -1,72 +1,104 @@
 "use client";
 
-import React, { useState } from 'react';
-import { useClubs } from '@/hooks/useClubs';
-import { Box, Typography, IconButton, Stack, Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
+import { useEffect, useState } from 'react';
+import { Box, Typography, Paper, CircularProgress, IconButton } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import ClubEditDialog from './ClubEditDialog';
-import CreateClubForm from './CreateClubForm';
-import { supabase } from '@/lib/supabase';
-import type { Club } from '@/types';
+import { Club } from '@/types';
+import { clubApi } from '@/lib/api';
 
 export default function ClubList() {
-  const { clubs, loading, error } = useClubs();
-  const [editClub, setEditClub] = useState<Club | null>(null);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState(false);
-  const [createOpen, setCreateOpen] = useState(false);
+  const [clubs, setClubs] = useState<Club[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleDelete = async () => {
-    if (!deleteId) return;
-    setDeleting(true);
-    await supabase.from('clubs').delete().eq('id', deleteId);
-    setDeleting(false);
-    setDeleteId(null);
-    // Reload after delete
-    if (typeof window !== 'undefined') {
-      window.location.reload();
+  useEffect(() => {
+    const fetchClubs = async () => {
+      try {
+        const { data, error } = await clubApi.getAll();
+        
+        if (error) {
+          throw new Error(error);
+        }
+
+        setClubs(data || []);
+      } catch (error) {
+        setError(error instanceof Error ? error.message : 'Failed to load clubs');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchClubs();
+  }, []);
+
+  const handleDelete = async (deleteId: string) => {
+    try {
+      const { error } = await clubApi.delete(deleteId);
+      
+      if (error) {
+        throw new Error(error);
+      }
+
+      setClubs(clubs.filter(club => club.id !== deleteId));
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to delete club');
     }
   };
 
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 3, color: 'error.main' }}>
+        <Typography>{error}</Typography>
+      </Box>
+    );
+  }
+
+  if (clubs.length === 0) {
+    return (
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography color="text.secondary">No clubs found</Typography>
+      </Box>
+    );
+  }
 
   return (
-    <Box>
-      {loading && <Typography>Loading...</Typography>}
-      {error && <Typography color="error">{error}</Typography>}
-      <Stack spacing={2}>
-        {clubs.map(club => (
-          <Box key={club.id} sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 2, bgcolor: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {clubs.map((club) => (
+        <Paper
+          key={club.id}
+          elevation={0}
+          sx={{
+            p: 2,
+            bgcolor: '#f7faf9',
+            borderRadius: 2,
+          }}
+        >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box>
-              <Typography variant="subtitle1" fontWeight={600}>{club.name}</Typography>
-              <Typography variant="body2" color="text.secondary">{club.description}</Typography>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                {club.name}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {club.description}
+              </Typography>
             </Box>
-            <Box>
-              <IconButton onClick={() => setEditClub(club)}><EditIcon sx={{ color: '#2da58e' }} /></IconButton>
-              <IconButton onClick={() => setDeleteId(club.id)}><DeleteIcon sx={{ color: '#ef4444' }} /></IconButton>
-            </Box>
+            <IconButton
+              onClick={() => handleDelete(club.id)}
+              sx={{ color: 'error.main' }}
+            >
+              <DeleteIcon />
+            </IconButton>
           </Box>
-        ))}
-      </Stack>
-      <ClubEditDialog open={!!editClub} club={editClub} onClose={() => setEditClub(null)} />
-      {createOpen && (
-        <Dialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="xs" fullWidth>
-          <DialogTitle sx={{ bgcolor: '#2da58e', color: '#fff' }}>Create Club</DialogTitle>
-          <DialogContent>
-            <CreateClubForm onSuccess={() => { setCreateOpen(false); window.location.reload(); }} />
-          </DialogContent>
-        </Dialog>
-      )}
-      <Dialog open={!!deleteId} onClose={() => setDeleteId(null)}>
-        <DialogTitle>Delete Club?</DialogTitle>
-        <DialogContent>
-          <Typography>Are you sure you want to delete this club?</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteId(null)} disabled={deleting}>Cancel</Button>
-          <Button onClick={handleDelete} color="error" disabled={deleting}>{deleting ? 'Deleting...' : 'Delete'}</Button>
-        </DialogActions>
-      </Dialog>
+        </Paper>
+      ))}
     </Box>
   );
 }

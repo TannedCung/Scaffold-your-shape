@@ -1,60 +1,104 @@
 "use client";
 
-import React, { useState } from 'react';
-import { useChallenges } from '@/hooks/useChallenges';
-import { Box, Typography, IconButton, Stack, Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
+import { useEffect, useState } from 'react';
+import { Box, Typography, Paper, CircularProgress, IconButton } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import ChallengeEditDialog from './ChallengeEditDialog';
-import { supabase } from '@/lib/supabase';
-import type { Challenge } from '@/types';
+import { Challenge } from '@/types';
+import { challengeApi } from '@/lib/api';
 
 export default function ChallengeList() {
-  const { challenges, loading, error } = useChallenges();
-  const [editChallenge, setEditChallenge] = useState<Challenge | null>(null);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleDelete = async () => {
-    if (!deleteId) return;
-    setDeleting(true);
-    await supabase.from('challenges').delete().eq('id', deleteId);
-    setDeleting(false);
-    setDeleteId(null);
+  useEffect(() => {
+    const fetchChallenges = async () => {
+      try {
+        const { data, error } = await challengeApi.getAll();
+        
+        if (error) {
+          throw new Error(error);
+        }
+
+        setChallenges(data || []);
+      } catch (error) {
+        setError(error instanceof Error ? error.message : 'Failed to load challenges');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchChallenges();
+  }, []);
+
+  const handleDelete = async (deleteId: string) => {
+    try {
+      const { error } = await challengeApi.delete(deleteId);
+      
+      if (error) {
+        throw new Error(error);
+      }
+
+      setChallenges(challenges.filter(challenge => challenge.id !== deleteId));
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to delete challenge');
+    }
   };
 
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 3, color: 'error.main' }}>
+        <Typography>{error}</Typography>
+      </Box>
+    );
+  }
+
+  if (challenges.length === 0) {
+    return (
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography color="text.secondary">No challenges found</Typography>
+      </Box>
+    );
+  }
+
   return (
-    <Box>
-      <Typography variant="h6" sx={{ color: '#2da58e', mb: 2 }}>Challenges</Typography>
-      {loading && <Typography>Loading...</Typography>}
-      {error && <Typography color="error">{error}</Typography>}
-      <Stack spacing={2}>
-        {challenges.map(challenge => (
-          <Box key={challenge.id} sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 2, bgcolor: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {challenges.map((challenge) => (
+        <Paper
+          key={challenge.id}
+          elevation={0}
+          sx={{
+            p: 2,
+            bgcolor: '#f7faf9',
+            borderRadius: 2,
+          }}
+        >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box>
-              <Typography variant="subtitle1" fontWeight={600}>{challenge.title}</Typography>
-              <Typography variant="body2" color="text.secondary">{challenge.description}</Typography>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                {challenge.title}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {challenge.description}
+              </Typography>
             </Box>
-            <Box>
-              <IconButton onClick={() => setEditChallenge(challenge)}><EditIcon sx={{ color: '#2da58e' }} /></IconButton>
-              <IconButton onClick={() => setDeleteId(challenge.id)}><DeleteIcon sx={{ color: '#ef4444' }} /></IconButton>
-            </Box>
+            <IconButton
+              onClick={() => handleDelete(challenge.id)}
+              sx={{ color: 'error.main' }}
+            >
+              <DeleteIcon />
+            </IconButton>
           </Box>
-        ))}
-      </Stack>
-      <ChallengeEditDialog open={!!editChallenge} challenge={editChallenge} onClose={() => setEditChallenge(null)} />
-      {deleteId && (
-        <Dialog open={!!deleteId} onClose={() => setDeleteId(null)}>
-          <DialogTitle>Delete Challenge?</DialogTitle>
-          <DialogContent>
-            <Typography>Are you sure you want to delete this challenge?</Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setDeleteId(null)} disabled={deleting}>Cancel</Button>
-            <Button onClick={handleDelete} color="error" disabled={deleting}>{deleting ? 'Deleting...' : 'Delete'}</Button>
-          </DialogActions>
-        </Dialog>
-      )}
+        </Paper>
+      ))}
     </Box>
   );
 }

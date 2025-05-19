@@ -21,11 +21,11 @@ import SpeedIcon from '@mui/icons-material/Speed';
 import ThermostatIcon from '@mui/icons-material/Thermostat';
 import ElectricBoltIcon from '@mui/icons-material/ElectricBolt';
 import TerrainIcon from '@mui/icons-material/Terrain';
-import { supabase } from '@/lib/supabase';
 import MainLayout from '@/components/layout/MainLayout';
 import { getActivityIcon, getActivityColor } from '@/utils/activityTypeUI';
 import { fetchActivityById } from '@/services/activityService';
 import dynamic from 'next/dynamic';
+import { activityApi } from '@/lib/api';
 
 // Dynamically import the map component to avoid SSR issues
 const MapComponent = dynamic(() => import('@/components/maps/ActivityMap'), { 
@@ -74,31 +74,46 @@ function formatSpeed(speed: number): string {
 
 export default function ActivityDetailClient({ id }: { id: string }) {
   const router = useRouter();
-  const [activity, setActivity] = useState<Activity | null>(null);
+  const [activity, setActivity] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [conversionRates, setConversionRates] = useState<ActivityPointConversion[]>([]);
 
   useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
-      setError(null);
+    const fetchActivity = async () => {
       try {
-        // Fetch activity with map and segmentation data
-        const activityData = await fetchActivityById(id);
-        if (!activityData) throw new Error('Activity not found');
+        const { data, error } = await activityApi.get(id);
         
-        setActivity(activityData);
+        if (error) {
+          throw new Error(error);
+        }
+
+        setActivity(data);
         const rates = await fetchGlobalConversionRates();
         setConversionRates(rates);
-      } catch (err) {
-        setError((err as Error).message || 'Failed to load activity');
+      } catch (error) {
+        setError(error instanceof Error ? error.message : 'Failed to load activity');
       } finally {
         setLoading(false);
       }
-    }
-    if (id) fetchData();
+    };
+
+    fetchActivity();
   }, [id]);
+
+  const handleDelete = async () => {
+    try {
+      const { error } = await activityApi.delete(id);
+      
+      if (error) {
+        throw new Error(error);
+      }
+
+      router.push('/activities');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to delete activity');
+    }
+  };
 
   if (loading) return <MainLayout><Box sx={{ p: 6, textAlign: 'center' }}><CircularProgress /></Box></MainLayout>;
   if (error || !activity) return <MainLayout><Box sx={{ p: 6, color: 'error.main', textAlign: 'center' }}>{error || 'Activity not found'}</Box></MainLayout>;

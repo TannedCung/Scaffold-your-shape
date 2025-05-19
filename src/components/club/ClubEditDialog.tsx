@@ -1,9 +1,8 @@
 "use client";
 import type { Club } from '@/types';
-
+import { clubApi } from '@/lib/api';
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Stack, Typography, Switch, FormControlLabel } from '@mui/material';
-import { supabase } from '@/lib/supabase';
 
 export default function ClubEditDialog({ open, club, onClose }: { open: boolean, club: Club | null, onClose: () => void }) {
   const [name, setName] = useState('');
@@ -28,11 +27,20 @@ export default function ClubEditDialog({ open, club, onClose }: { open: boolean,
     setLoading(true);
     setError(null);
     setSuccess(false);
-    const { error } = await supabase.from('clubs').update({ name, description, is_private: isPrivate }).eq('id', club.id);
-    setLoading(false);
-    if (error) setError(error.message);
-    else setSuccess(true);
-    onClose();
+    try {
+      const { error } = await clubApi.update(club.id, { 
+        name, 
+        description, 
+        is_private: isPrivate 
+      });
+      if (error) throw new Error(error);
+      setSuccess(true);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update club');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

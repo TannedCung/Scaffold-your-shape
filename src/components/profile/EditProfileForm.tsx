@@ -1,8 +1,7 @@
 "use client";
 import type { Profile } from '@/types';
-
+import { profileApi } from '@/lib/api';
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 import { 
   Box, 
   Button, 
@@ -69,17 +68,14 @@ export default function EditProfileForm({ profile, open = false, onClose, onSave
     setSuccess(false);
     
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ 
-          name, 
-          bio, 
-          avatar_url: avatarUrl,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', profile.id);
+      const { error } = await profileApi.update({ 
+        name, 
+        bio, 
+        avatar_url: avatarUrl,
+        updated_at: new Date().toISOString()
+      });
       
-      if (error) throw error;
+      if (error) throw new Error(error);
       
       setSuccess(true);
       if (onSave) onSave();
