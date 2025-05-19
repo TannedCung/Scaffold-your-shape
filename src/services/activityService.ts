@@ -5,7 +5,8 @@ import {
   MapDb, 
   mapMapDbToMap, 
   SegmentationDb, 
-  mapSegmentationDbToSegmentation 
+  mapSegmentationDbToSegmentation,
+  ActivityWithDetails
 } from '@/types';
 import { activityApi } from '@/lib/api';
 
@@ -19,17 +20,18 @@ export async function fetchActivities(userId?: string): Promise<Activity[]> {
     }
 
     return (data || []).map(item => {
-      const activity = mapActivityDbToActivity(item as ActivityDb);
+      const activity = mapActivityDbToActivity(item as unknown as ActivityDb);
+      const details = item as ActivityWithDetails;
       
       // Handle map data if present
-      if (item.maps && item.maps.length > 0) {
-        activity.map = mapMapDbToMap(item.maps[0] as MapDb);
+      if (details.maps && details.maps.length > 0) {
+        activity.map = mapMapDbToMap(details.maps[0] as unknown as MapDb);
       }
       
       // Handle segmentation data if present
-      if (item.segmentations && item.segmentations.length > 0) {
-        activity.segmentEfforts = item.segmentations.map((seg: SegmentationDb) => 
-          mapSegmentationDbToSegmentation(seg)
+      if (details.segmentations && details.segmentations.length > 0) {
+        activity.segmentEfforts = details.segmentations.map((seg) => 
+          mapSegmentationDbToSegmentation(seg as unknown as SegmentationDb)
         );
       }
       
@@ -50,7 +52,26 @@ export async function fetchActivityById(id: string): Promise<Activity | null> {
       throw new Error(error);
     }
 
-    return data || null;
+    if (!data) {
+      return null;
+    }
+
+    const activity = mapActivityDbToActivity(data as unknown as ActivityDb);
+    const details = data as ActivityWithDetails;
+    
+    // Handle map data if present
+    if (details.maps && details.maps.length > 0) {
+      activity.map = mapMapDbToMap(details.maps[0] as unknown as MapDb);
+    }
+    
+    // Handle segmentation data if present
+    if (details.segmentations && details.segmentations.length > 0) {
+      activity.segmentEfforts = details.segmentations.map((seg) => 
+        mapSegmentationDbToSegmentation(seg as unknown as SegmentationDb)
+      );
+    }
+
+    return activity;
   } catch (error) {
     console.error('Error fetching activity:', error);
     return null;
@@ -69,6 +90,10 @@ export async function createActivity(activity: Omit<Activity, 'id' | 'created_at
       throw new Error(error);
     }
 
+    if (!data) {
+      throw new Error('No data returned from create activity');
+    }
+
     return data;
   } catch (error) {
     console.error('Error creating activity:', error);
@@ -83,6 +108,10 @@ export async function updateActivity(activity: Activity & { notes?: string, loca
     
     if (error) {
       throw new Error(error);
+    }
+
+    if (!data) {
+      throw new Error('No data returned from update activity');
     }
 
     return data;
@@ -131,6 +160,10 @@ export async function getActivityStats(userId: string): Promise<{
     
     if (error) {
       throw new Error(error);
+    }
+
+    if (!data) {
+      throw new Error('No data returned from get activity stats');
     }
 
     return data;

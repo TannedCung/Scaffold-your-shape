@@ -929,3 +929,8 @@ export const SportColorMap: Record<SportType, string> = {
   // Default
   [SportType.Other]: '#6b7280'
 };
+
+export interface ActivityWithDetails extends Activity {
+  maps?: Map[];
+  segmentations?: Segmentation[];
+}
