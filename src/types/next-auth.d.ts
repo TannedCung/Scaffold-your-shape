@@ -1,5 +1,6 @@
 // Removed unused NextAuth import
 import { DefaultSession } from "next-auth"
+import type { Profile } from './index'
 
 declare module "next-auth" {
   /**
@@ -8,6 +9,7 @@ declare module "next-auth" {
   interface Session {
     user: {
       id: string
+      profile?: Profile
     } & DefaultSession["user"]
   }
 
@@ -16,5 +18,13 @@ declare module "next-auth" {
    */
   interface User {
     id: string
+    profile?: Profile
+  }
+}
+
+declare module 'next-auth/jwt' {
+  interface JWT {
+    id: string
+    profile?: Profile
   }
 }
