@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { supabase } from '@/lib/supabase';
 import { authOptions } from '@/lib/auth';
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     
@@ -11,36 +11,17 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
+    const { data: activities, error } = await supabase
+      .from('activities')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .order('date', { ascending: false });
 
-    if (id) {
-      // Get single activity
-      const { data: activity, error } = await supabase
-        .from('activities')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
-      }
-
-      return NextResponse.json(activity);
-    } else {
-      // Get all activities for user
-      const { data: activities, error } = await supabase
-        .from('activities')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
-      }
-
-      return NextResponse.json(activities);
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    return NextResponse.json(activities);
   } catch (error) {
     return NextResponse.json(
       { error: 'Internal Server Error' },

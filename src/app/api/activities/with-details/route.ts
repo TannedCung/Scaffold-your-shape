@@ -13,7 +13,11 @@ export async function GET() {
 
     const { data: activities, error } = await supabase
       .from('activities')
-      .select('*, maps(*), segmentations(*)')
+      .select(`
+        *,
+        maps (*),
+        segmentations (*)
+      `)
       .eq('user_id', session.user.id)
       .order('date', { ascending: false });
 
