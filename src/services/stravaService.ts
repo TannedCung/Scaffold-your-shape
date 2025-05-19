@@ -1,7 +1,7 @@
 'use server';
 
-import { supabase } from '@/lib/supabase';
 import { Profile } from '@/types';
+import { profileApi } from '@/lib/api';
 
 // Strava API endpoints
 const STRAVA_AUTH_URL = 'https://www.strava.com/oauth/authorize';
@@ -80,15 +80,12 @@ export async function refreshStravaToken(userId: string, refreshToken: string) {
     const tokenData = await response.json();
 
     // Update the tokens in the database
-    await supabase
-      .from('profiles')
-      .update({
-        strava_access_token: tokenData.access_token,
-        strava_refresh_token: tokenData.refresh_token,
-        strava_token_expires_at: tokenData.expires_at,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', userId);
+    await profileApi.update({
+      strava_access_token: tokenData.access_token,
+      strava_refresh_token: tokenData.refresh_token,
+      strava_token_expires_at: tokenData.expires_at,
+      updated_at: new Date().toISOString(),
+    });
 
     return tokenData;
   } catch (error) {
@@ -105,12 +102,10 @@ export async function getValidStravaToken(profile: Profile) {
     throw new Error('User not connected to Strava');
   }
 
-  // Check if token is expired (with 60 seconds buffer)
   const now = Math.floor(Date.now() / 1000);
   const isExpired = !profile.strava_token_expires_at || profile.strava_token_expires_at < now + 60;
 
   if (isExpired) {
-    // Refresh the token
     const newTokens = await refreshStravaToken(profile.id, profile.strava_refresh_token);
     return newTokens.access_token;
   }
@@ -123,22 +118,17 @@ export async function getValidStravaToken(profile: Profile) {
  */
 export async function connectProfileToStrava(userId: string, stravaCode: string) {
   try {
-    // Exchange the code for tokens
     const tokenData = await exchangeStravaCode(stravaCode);
 
-    // Update the user profile with Strava information
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        strava_id: tokenData.athlete.id.toString(),
-        strava_access_token: tokenData.access_token,
-        strava_refresh_token: tokenData.refresh_token,
-        strava_token_expires_at: tokenData.expires_at,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', userId);
+    const { error } = await profileApi.update({
+      strava_id: tokenData.athlete.id.toString(),
+      strava_access_token: tokenData.access_token,
+      strava_refresh_token: tokenData.refresh_token,
+      strava_token_expires_at: tokenData.expires_at,
+      updated_at: new Date().toISOString(),
+    });
 
-    if (error) throw error;
+    if (error) throw new Error(error);
 
     return { success: true };
   } catch (error) {
@@ -152,17 +142,11 @@ export async function connectProfileToStrava(userId: string, stravaCode: string)
  */
 export async function disconnectProfileFromStrava(userId: string) {
   try {
-    // Get the current profile to get the access token
-    const { data: profile, error: fetchError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    const { data: profile, error: fetchError } = await profileApi.get();
 
-    if (fetchError) throw fetchError;
+    if (fetchError) throw new Error(fetchError);
 
-    // Deauthorize the app from Strava if we have an access token
-    if (profile.strava_access_token) {
+    if (profile?.strava_access_token) {
       try {
         await fetch(`${STRAVA_API_URL}/oauth/deauthorize`, {
           method: 'POST',
@@ -172,24 +156,19 @@ export async function disconnectProfileFromStrava(userId: string) {
           },
         });
       } catch (deauthError) {
-        // Continue even if deauthorization fails
         console.error('Error deauthorizing from Strava:', deauthError);
       }
     }
 
-    // Remove Strava information from the profile
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({
-        strava_id: null,
-        strava_access_token: null,
-        strava_refresh_token: null,
-        strava_token_expires_at: null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', userId);
+    const { error: updateError } = await profileApi.update({
+      strava_id: null,
+      strava_access_token: null,
+      strava_refresh_token: null,
+      strava_token_expires_at: null,
+      updated_at: new Date().toISOString(),
+    });
 
-    if (updateError) throw updateError;
+    if (updateError) throw new Error(updateError);
 
     return { success: true };
   } catch (error) {
@@ -274,15 +253,11 @@ export async function getStravaActivities(profile: Profile, params: {
  */
 export async function isConnectedToStrava(userId: string): Promise<boolean> {
   try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('strava_id, strava_access_token, strava_refresh_token')
-      .eq('id', userId)
-      .single();
+    const { data, error } = await profileApi.get();
 
-    if (error) throw error;
+    if (error) throw new Error(error);
 
-    return !!(data.strava_id && data.strava_refresh_token);
+    return !!(data?.strava_id && data?.strava_refresh_token);
   } catch (error) {
     console.error('Error checking Strava connection:', error);
     return false;

@@ -1,54 +1,93 @@
-import { supabase } from '@/lib/supabase';
 import { ActivityPointConversion, ClubPointConversion, ChallengePointConversion } from '@/types';
 import { DEFAULT_ACTIVITY_POINT_CONVERSION } from '@/constants/defaultActivityPointConversion';
+import { activityPointApi } from '@/lib/api';
 
 // Fetch global conversion rates, fallback to default if not set
 export async function fetchGlobalConversionRates(): Promise<ActivityPointConversion[]> {
-  const { data, error } = await supabase.from('activity_point_conversion').select('*');
-  if (error || !data || data.length === 0) return DEFAULT_ACTIVITY_POINT_CONVERSION;
-  return data as ActivityPointConversion[];
+  try {
+    const { data, error } = await activityPointApi.getConversions();
+    
+    if (error) {
+      throw new Error(error);
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching conversion rates:', error);
+    return [];
+  }
 }
 
 // Fetch club-specific conversion rates
 export async function fetchClubConversionRates(clubId: string): Promise<ClubPointConversion[]> {
-  const { data, error } = await supabase
-    .from('club_point_conversion')
-    .select('*')
-    .eq('club_id', clubId);
-  if (error) throw error;
-  return data as ClubPointConversion[];
+  try {
+    const { data, error } = await activityPointApi.getClubConversions(clubId);
+    
+    if (error) {
+      throw new Error(error);
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching club conversion rates:', error);
+    return [];
+  }
 }
 
 // Fetch challenge-specific conversion rates
 export async function fetchChallengeConversionRates(challengeId: string): Promise<ChallengePointConversion[]> {
-  const { data, error } = await supabase
-    .from('challenge_point_conversion')
-    .select('*')
-    .eq('challenge_id', challengeId);
-  if (error) throw error;
-  return data as ChallengePointConversion[];
+  try {
+    const { data, error } = await activityPointApi.getChallengeConversions(challengeId);
+    
+    if (error) {
+      throw new Error(error);
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching challenge conversion rates:', error);
+    return [];
+  }
 }
 
 // Upsert global conversion rates
 export async function upsertGlobalConversionRates(rates: ActivityPointConversion[]): Promise<void> {
-  const { error } = await supabase.from('activity_point_conversion').upsert(rates, { onConflict: 'activity_type,unit' });
-  if (error) throw error;
+  try {
+    const { error } = await activityPointApi.upsertConversions(rates);
+    
+    if (error) {
+      throw new Error(error);
+    }
+  } catch (error) {
+    console.error('Error upserting global conversion rates:', error);
+    throw error;
+  }
 }
 
 // Upsert club conversion rates
 export async function upsertClubConversionRates(clubId: string, rates: ClubPointConversion[]): Promise<void> {
-  const { error } = await supabase.from('club_point_conversion').upsert(
-    rates.map(r => ({ ...r, club_id: clubId })),
-    { onConflict: 'club_id,activity_type,unit' }
-  );
-  if (error) throw error;
+  try {
+    const { error } = await activityPointApi.upsertClubConversions(clubId, rates);
+    
+    if (error) {
+      throw new Error(error);
+    }
+  } catch (error) {
+    console.error('Error upserting club conversion rates:', error);
+    throw error;
+  }
 }
 
 // Upsert challenge conversion rates
 export async function upsertChallengeConversionRates(challengeId: string, rates: ChallengePointConversion[]): Promise<void> {
-  const { error } = await supabase.from('challenge_point_conversion').upsert(
-    rates.map(r => ({ ...r, challenge_id: challengeId })),
-    { onConflict: 'challenge_id,activity_type,unit' }
-  );
-  if (error) throw error;
+  try {
+    const { error } = await activityPointApi.upsertChallengeConversions(challengeId, rates);
+    
+    if (error) {
+      throw new Error(error);
+    }
+  } catch (error) {
+    console.error('Error upserting challenge conversion rates:', error);
+    throw error;
+  }
 } 

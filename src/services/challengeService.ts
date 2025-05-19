@@ -1,11 +1,17 @@
-import { supabase } from '@/lib/supabase';
 import { mapChallengeDbToChallenge, ChallengeDb, Challenge } from '@/types';
+import { challengeApi } from '@/lib/api';
 
 export async function fetchChallenges(): Promise<Challenge[]> {
-  const { data, error } = await supabase
-    .from('challenges')
-    .select('*')
-    .order('created_at', { ascending: false });
-  if (error) throw error;
-  return (data as ChallengeDb[] | null)?.map(mapChallengeDbToChallenge) || [];
+  try {
+    const { data, error } = await challengeApi.getAll();
+    
+    if (error) {
+      throw new Error(error);
+    }
+
+    return (data || []).map(mapChallengeDbToChallenge);
+  } catch (error) {
+    console.error('Error fetching challenges:', error);
+    return [];
+  }
 }
