@@ -2,6 +2,7 @@
 
 import { Profile } from '@/types';
 import { profileApi } from '@/lib/api';
+import { getSession } from 'next-auth/react';
 
 // Strava API endpoints
 const STRAVA_AUTH_URL = 'https://www.strava.com/oauth/authorize';
@@ -116,17 +117,19 @@ export async function getValidStravaToken(profile: Profile) {
 /**
  * Connect a user's profile to Strava
  */
-export async function connectProfileToStrava(userId: string, stravaCode: string) {
+export async function connectProfileToStrava(cookie: string, stravaCode: string) {
   try {
     const tokenData = await exchangeStravaCode(stravaCode);
-
+    console.log("Token data:", tokenData);
     const { error } = await profileApi.update({
       strava_id: tokenData.athlete.id.toString(),
       strava_access_token: tokenData.access_token,
       strava_refresh_token: tokenData.refresh_token,
       strava_token_expires_at: tokenData.expires_at,
       updated_at: new Date().toISOString(),
-    });
+    }, cookie);
+
+
 
     if (error) throw new Error(error);
 
@@ -140,9 +143,9 @@ export async function connectProfileToStrava(userId: string, stravaCode: string)
 /**
  * Disconnect a user's profile from Strava
  */
-export async function disconnectProfileFromStrava(userId: string) {
+export async function disconnectProfileFromStrava(cookie: string) {
   try {
-    const { data: profile, error: fetchError } = await profileApi.get();
+    const { data: profile, error: fetchError } = await profileApi.get(cookie);
 
     if (fetchError) throw new Error(fetchError);
 
@@ -159,14 +162,13 @@ export async function disconnectProfileFromStrava(userId: string) {
         console.error('Error deauthorizing from Strava:', deauthError);
       }
     }
-
     const { error: updateError } = await profileApi.update({
-      strava_id: null,
-      strava_access_token: null,
-      strava_refresh_token: null,
-      strava_token_expires_at: null,
+      strava_id: undefined,
+      strava_access_token: undefined,
+      strava_refresh_token: undefined,
+      strava_token_expires_at: undefined,
       updated_at: new Date().toISOString(),
-    });
+    }, cookie);
 
     if (updateError) throw new Error(updateError);
 

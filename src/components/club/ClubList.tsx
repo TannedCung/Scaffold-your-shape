@@ -20,7 +20,16 @@ export default function ClubList() {
           throw new Error(error);
         }
 
-        setClubs(data || []);
+        // Transform ClubDb to Club by adding required fields
+        const transformedClubs = (data || []).map(club => ({
+          ...club,
+          creatorId: club.creator_id || '',
+          memberCount: 0, // Default value, update if available
+          isPrivate: false, // Default value, update if available 
+          updatedAt: new Date().toISOString() // Default value, update if available
+        }));
+
+        setClubs(transformedClubs);
       } catch (error) {
         setError(error instanceof Error ? error.message : 'Failed to load clubs');
       } finally {

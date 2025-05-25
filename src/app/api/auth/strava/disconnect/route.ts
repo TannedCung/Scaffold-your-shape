@@ -13,9 +13,16 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
-
     // Disconnect the profile from Strava
-    const result = await disconnectProfileFromStrava(session.user.id);
+    const cookie = request.headers.get('cookie');
+    if (!cookie) {
+      return NextResponse.json(
+        { success: false, error: 'No cookie provided' },
+        { status: 400 }
+      );
+    }
+    
+    const result = await disconnectProfileFromStrava(cookie);
     
     if (result.success) {
       return NextResponse.json({ success: true });

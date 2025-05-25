@@ -25,9 +25,13 @@ export async function GET(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.redirect(new URL('/sign-in?callbackUrl=/profile', request.url));
     }
-
     // Connect the profile to Strava
-    const result = await connectProfileToStrava(session.user.id, code);
+    const cookie = request.headers.get('cookie');
+    if (!cookie) {
+      return NextResponse.redirect(new URL('/profile?strava_error=no_cookie', request.url));
+    }
+
+    const result = await connectProfileToStrava(cookie, code);
     
     if (result.success) {
       return NextResponse.redirect(new URL('/profile?strava_connected=true', request.url));

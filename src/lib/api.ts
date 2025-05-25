@@ -7,37 +7,71 @@ interface ApiResponse<T> {
 
 export async function fetchApi<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  extra?: { cookie?: string; token?: string }
 ): Promise<ApiResponse<T>> {
+  // If running on the server, use an absolute URL
+  let url = endpoint;
+  if (typeof window === 'undefined') {
+    const base =
+      process.env.NEXTAUTH_URL ||
+      process.env.NEXT_PUBLIC_BASE_URL ||
+      'http://localhost:3005';
+    url = endpoint.startsWith('http') ? endpoint : `${base}${endpoint}`;
+  }
+
+  // Ensure headers is always a plain object
+  const baseHeaders: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  const mergedHeaders: Record<string, string> = Object.assign(
+    {},
+    baseHeaders,
+    typeof options.headers === 'object' && options.headers !== null && !Array.isArray(options.headers) ? options.headers : {},
+    extra?.cookie ? { cookie: extra.cookie } : {},
+    extra?.token ? { Authorization: `Bearer ${extra.token}` } : {}
+  );
+
+  console.log('fetchApi url:', url);
+  console.log('fetchApi headers:', mergedHeaders);
+  console.log('fetchApi options:', options);
+  console.log('fetchApi extra:', extra);
+
   try {
-    const response = await fetch(endpoint, {
+    const response = await fetch(url, {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
+      headers: mergedHeaders,
+      credentials: 'include',
     });
 
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch (jsonError) {
+      console.error('Error parsing JSON:', jsonError);
+      return { error: 'Invalid server response' };
+    }
 
     if (!response.ok) {
+      console.error('API error:', data);
       return { error: data.error || 'An error occurred' };
     }
 
     return { data };
   } catch (error) {
+    console.error('fetchApi network error:', error);
     return { error: 'Network error' };
   }
 }
 
 // Profile API functions
 export const profileApi = {
-  get: () => fetchApi<Profile>('/api/profiles'),
-  update: (data: Partial<Profile>) => 
+  get: (cookie?: string) => fetchApi<Profile>('/api/profiles', {}, { cookie }),
+  update: (data: Partial<Profile>, cookie?: string) => 
     fetchApi<Profile>('/api/profiles', {
       method: 'PUT',
       body: JSON.stringify(data),
-    }),
+    }, { cookie }),
 };
 
 // Activity API functions
