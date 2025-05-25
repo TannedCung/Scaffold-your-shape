@@ -5,6 +5,7 @@ import { Box, Typography, Paper, CircularProgress, IconButton } from '@mui/mater
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Challenge } from '@/types';
 import { challengeApi } from '@/lib/api';
+import { mapChallengeDbToChallenge } from '@/types';
 
 export default function ChallengeList() {
   const [challenges, setChallenges] = useState<Challenge[]>([]);
@@ -20,7 +21,7 @@ export default function ChallengeList() {
           throw new Error(error);
         }
 
-        setChallenges(data || []);
+        setChallenges((data || []).map(mapChallengeDbToChallenge));
       } catch (error) {
         setError(error instanceof Error ? error.message : 'Failed to load challenges');
       } finally {

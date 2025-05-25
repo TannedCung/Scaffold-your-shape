@@ -1,4 +1,4 @@
-import { Profile, Activity, ActivityPointConversion, Club, Challenge, ActivityWithDetails } from '@/types';
+import { Profile, Activity, ActivityPointConversion, Club, Challenge, ActivityWithDetails, ChallengeDb, ClubDb } from '@/types';
 
 interface ApiResponse<T> {
   data?: T;
@@ -88,7 +88,7 @@ export const activityPointApi = {
 
 // Club API functions
 export const clubApi = {
-  getAll: () => fetchApi<Club[]>('/api/clubs'),
+  getAll: () => fetchApi<ClubDb[]>('/api/clubs'),
   getById: (id: string) => fetchApi<Club>(`/api/clubs/${id}`),
   create: (data: Partial<Club>) => 
     fetchApi<Club>('/api/clubs', {
@@ -108,7 +108,7 @@ export const clubApi = {
 
 // Challenge API functions
 export const challengeApi = {
-  getAll: () => fetchApi<Challenge[]>('/api/challenges'),
+  getAll: () => fetchApi<ChallengeDb[]>('/api/challenges'),
   getById: (id: string) => fetchApi<Challenge>(`/api/challenges/${id}`),
   create: (data: Partial<Challenge>) => 
     fetchApi<Challenge>('/api/challenges', {
