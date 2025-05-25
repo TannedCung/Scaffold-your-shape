@@ -129,8 +129,6 @@ export async function connectProfileToStrava(cookie: string, stravaCode: string)
       updated_at: new Date().toISOString(),
     }, cookie);
 
-
-
     if (error) throw new Error(error);
 
     return { success: true };
