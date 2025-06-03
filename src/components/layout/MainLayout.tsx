@@ -8,6 +8,7 @@ import Footer from './Footer';
 import EnsureProfile from '@/contexts/EnsureProfile';
 import { Add as AddIcon } from '@mui/icons-material';
 import CreateActivityDialog from '@/components/activities/CreateActivityDialog';
+import ChatPopup from '@/components/common/ChatPopup';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -82,7 +83,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
           sx={{ 
             position: 'fixed', 
             bottom: 20, 
-            right: 20, 
+            left: 20, 
             display: { xs: 'flex', sm: 'none' },
             bgcolor: '#2da58e',
             '&:hover': { bgcolor: '#1a8a73' },
@@ -98,6 +99,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
         open={isCreateDialogOpen} 
         onClose={() => setIsCreateDialogOpen(false)} 
       />
+      
+      {/* AI ChatBot - Available across all pages */}
+      <ChatPopup />
     </Box>
   );
 }
