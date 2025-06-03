@@ -149,7 +149,7 @@ const ChatPopup: React.FC = () => {
   ];
 
   const contactInfo = {
-    email: 'support@scaffoldyourshape.com',
+    email: 'tannedcung@scaffoldyourshape.com',
     phone: '+1 (555) 123-4567',
     faqUrl: '/faq' // Example FAQ link
   };
