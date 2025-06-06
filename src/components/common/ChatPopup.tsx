@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSession } from 'next-auth/react';
 import {
   Box,
   Fab,
@@ -49,13 +50,79 @@ interface Service {
 }
 
 const ChatPopup: React.FC = () => {
+  const { data: session } = useSession();
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState('');
   const [chatMessages, setChatMessages] = useState<Message[]>([]); // Placeholder for chat history
   const [isLoading, setIsLoading] = useState(false);
+  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  // Utility function to clean streaming content
+  const cleanStreamingContent = (rawContent: string): string => {
+    if (!rawContent) return '';
+    
+    let cleaned = rawContent;
+    
+    // Only remove specific streaming artifacts, preserve emojis, \n, apostrophes
+    cleaned = cleaned
+      // Remove SSE prefixes
+      .replace(/^data:\s*/gi, '')
+      .replace(/^event:\s*/gi, '')
+      
+      // Remove specific technical metadata patterns
+      .replace(/"finish_reason":\s*(null|"[^"]*")/gi, '')
+      .replace(/"metadata":\s*\{[^}]*\}/gi, '')
+      .replace(/"llm_provider":\s*"[^"]*"/gi, '')
+      .replace(/"confidence":\s*[\d.]+/gi, '')
+      .replace(/"intent":\s*"[^"]*"/gi, '')
+      .replace(/"extracted_info":\s*\{[^}]*\}/gi, '')
+      
+      // Remove OpenAI streaming format artifacts
+      .replace(/"choices":\s*\[[^\]]*\]/gi, '')
+      .replace(/"delta":\s*\{\}/gi, '')
+      .replace(/"index":\s*\d+/gi, '')
+      .replace(/"created":\s*\d+/gi, '')
+      .replace(/"model":\s*"[^"]*"/gi, '')
+      .replace(/"object":\s*"[^"]*"/gi, '')
+      .replace(/"id":\s*"[^"]*"/gi, '')
+      
+      // Remove instruction tokens
+      .replace(/^\[INST\]|\[\/INST\]/g, '')
+      .replace(/^<\|.*?\|>/g, '')
+      .replace(/^<s>|<\/s>/g, '')
+      
+      // Remove system prefixes
+      .replace(/^(Assistant|AI|Bot|System):\s*/gi, '')
+      .replace(/^Response:\s*/gi, '')
+      
+      // Clean up leftover JSON commas and brackets
+      .replace(/,\s*}/g, '}')
+      .replace(/{\s*,/g, '{')
+      .replace(/,\s*,/g, ',')
+      .replace(/^\s*[{}]+\s*$/g, '')
+      .trim();
+    
+    // Remove surrounding quotes if entire content is quoted
+    if (/^".*"$/.test(cleaned) && cleaned.length > 2) {
+      const inner = cleaned.slice(1, -1);
+      // Only remove quotes if there are no unescaped quotes inside
+      if (!inner.includes('"') || inner.replace(/\\"/g, '').indexOf('"') === -1) {
+        cleaned = inner.replace(/\\"/g, '"');
+      }
+    }
+    
+    // Remove only standalone technical terms
+    const standaloneTechnical = /^(null|undefined|stop|finish_reason|metadata)$/i;
+    if (standaloneTechnical.test(cleaned.trim())) {
+      return '';
+    }
+    
+    // Return cleaned content (preserves emojis, \n, apostrophes, etc.)
+    return cleaned;
+  };
 
   const handleToggle = () => {
     setOpen(!open);
@@ -65,7 +132,7 @@ const ChatPopup: React.FC = () => {
         setChatMessages([
           {
             id: 'welcome',
-            text: 'Hello! How can we help you with Scaffold Your Shape today?',
+            text: 'Hello! I\'m Pili, your AI fitness assistant. How can I help you with your fitness journey today?',
             sender: 'bot',
             timestamp: new Date(),
           },
@@ -88,44 +155,158 @@ const ChatPopup: React.FC = () => {
     setMessage('');
     setIsLoading(true);
 
-    // API call to send message using environment variable
+    // Create a placeholder bot message for streaming
+    const botMessageId = new Date().toISOString() + '-bot';
+    const initialBotMessage: Message = {
+      id: botMessageId,
+      text: '',
+      sender: 'bot',
+      timestamp: new Date(),
+    };
+    setChatMessages((prevMessages) => [...prevMessages, initialBotMessage]);
+    setStreamingMessageId(botMessageId);
+
     try {
-      const chatbotEndpoint = process.env.NEXT_PUBLIC_CHATBOT_API_ENDPOINT || '/api/chat/send-message';
-      const response = await fetch(chatbotEndpoint, {
+      // Use proxy API route to communicate with Pili chatbot
+      const response = await fetch('/api/chat/pili', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          message: userMessage, 
-          userId: 'current_user_id' // This should be replaced with actual user ID from auth
-        }),
+        headers: { 
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({ message: userMessage }),
+        credentials: 'include', // Important for session auth
       });
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      // Check if response is streaming
+      const contentType = response.headers.get('content-type');
       
-      const responseData = await response.json();
-      if (responseData.reply) {
-        const botReply: Message = {
-          id: new Date().toISOString() + '-bot',
-          text: responseData.reply,
-          sender: 'bot',
-          timestamp: new Date(),
-        };
-        setChatMessages((prevMessages) => [...prevMessages, botReply]);
+      if (contentType?.includes('text/event-stream')) {
+        // Handle streaming response with Server-Sent Events
+        console.log('Handling streaming response from Pili proxy');
+        
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        let accumulatedText = '';
+        
+        if (reader) {
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              
+              if (done) {
+                console.log('Streaming completed');
+                break;
+              }
+              
+              const chunk = decoder.decode(value);
+              const lines = chunk.split('\n');
+              
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  try {
+                    const data = JSON.parse(line.substring(6));
+                    
+                    if (data.type === 'chunk' && data.content) {
+                      // Clean the content using our utility function
+                      const cleanContent = cleanStreamingContent(data.content);
+                      
+                      // Debug logging to track content filtering
+                      if (data.content !== cleanContent) {
+                        console.log('Content filtered:', { 
+                          original: data.content, 
+                          cleaned: cleanContent 
+                        });
+                      }
+                      
+                      // Only add if content is meaningful
+                      if (cleanContent) {
+                        // Add spacing if we're appending to existing text and the content doesn't start with punctuation
+                        if (accumulatedText && 
+                            !cleanContent.match(/^[.,!?;:\s]/) && 
+                            !accumulatedText.match(/[\s-]$/)) {
+                          accumulatedText += ' ';
+                        }
+                        
+                        accumulatedText += cleanContent;
+                        
+                        // Update the bot message with accumulated text
+                        setChatMessages((prevMessages) => 
+                          prevMessages.map((msg) => 
+                            msg.id === botMessageId 
+                              ? { ...msg, text: accumulatedText }
+                              : msg
+                          )
+                        );
+                      } else {
+                        // Log when content is completely filtered out
+                        console.log('Content completely filtered out:', data.content);
+                      }
+                    } else if (data.type === 'done') {
+                      console.log('Streaming finished, final text:', accumulatedText);
+                      break;
+                    }
+                  } catch (parseError) {
+                    console.error('Error parsing SSE data:', parseError);
+                  }
+                }
+              }
+            }
+          } finally {
+            reader.releaseLock();
+          }
+        }
+        
+        // If no text was accumulated, show an error
+        if (!accumulatedText.trim()) {
+          setChatMessages((prevMessages) => 
+            prevMessages.map((msg) => 
+              msg.id === botMessageId 
+                ? { ...msg, text: 'I\'m having trouble generating a response. Please try again.' }
+                : msg
+            )
+          );
+        }
+      } else {
+        // Handle regular JSON response (fallback)
+        const responseData = await response.json();
+        console.log('Pili proxy JSON response:', responseData);
+        
+        if (responseData.reply) {
+          // Update the placeholder bot message with the response
+          setChatMessages((prevMessages) => 
+            prevMessages.map((msg) => 
+              msg.id === botMessageId 
+                ? { ...msg, text: responseData.reply }
+                : msg
+            )
+          );
+        } else if (responseData.error) {
+          throw new Error(responseData.error);
+        } else {
+          throw new Error('No reply received from AI assistant');
+        }
       }
     } catch (error) {
-      console.error('Failed to send message:', error);
-      // Add a bot message indicating failure
-      const errorReply: Message = {
-        id: new Date().toISOString() + '-error',
-        text: 'Sorry, I encountered an error. Please try again later or contact our support team.',
-        sender: 'bot',
-        timestamp: new Date(),
-      };
-      setChatMessages((prevMessages) => [...prevMessages, errorReply]);
+      console.error('Failed to send message to Pili:', error);
+      
+      // Update the placeholder bot message with error text
+      setChatMessages((prevMessages) => 
+        prevMessages.map((msg) => 
+          msg.id === botMessageId 
+            ? { 
+                ...msg, 
+                text: 'Sorry, I\'m having trouble connecting to my brain right now. Please try again in a moment or contact our support team if the issue persists.' 
+              }
+            : msg
+        )
+      );
     } finally {
       setIsLoading(false);
+      setStreamingMessageId(null);
     }
   };
 
@@ -288,12 +469,46 @@ const ChatPopup: React.FC = () => {
                     color: msg.sender === 'user' ? '#fff' : theme.palette.text.primary,
                     borderRadius: msg.sender === 'user' ? '15px 15px 5px 15px' : '15px 15px 15px 5px',
                     maxWidth: '80%',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.07)'
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.07)',
+                    position: 'relative',
                   }}
                 >
-                  <Typography variant="body2">{msg.text}</Typography>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      whiteSpace: 'pre-wrap', // Preserve newlines and wrap text
+                      wordBreak: 'break-word' // Handle long words
+                    }}
+                  >
+                    {msg.text}
+                  </Typography>
+                  
+                  {/* Streaming indicator for bot messages */}
+                  {msg.sender === 'bot' && streamingMessageId === msg.id && (
+                    <Box 
+                      sx={{ 
+                        position: 'absolute',
+                        top: 8,
+                        right: 8,
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        bgcolor: '#2da58e',
+                        animation: 'streamingPulse 1s infinite ease-in-out',
+                        '@keyframes streamingPulse': {
+                          '0%': { opacity: 0.3, transform: 'scale(1)' },
+                          '50%': { opacity: 1, transform: 'scale(1.2)' },
+                          '100%': { opacity: 0.3, transform: 'scale(1)' }
+                        }
+                      }}
+                    />
+                  )}
+                  
                   <Typography variant="caption" sx={{ display: 'block', textAlign: msg.sender === 'user' ? 'right' : 'left', fontSize: '0.65rem', opacity: 0.7, mt: 0.5 }}>
                     {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {msg.sender === 'bot' && streamingMessageId === msg.id && (
+                      <span style={{ marginLeft: '4px', fontStyle: 'italic' }}>• streaming</span>
+                    )}
                   </Typography>
                 </Paper>
               </Box>
@@ -312,40 +527,58 @@ const ChatPopup: React.FC = () => {
                     boxShadow: '0 1px 2px rgba(0,0,0,0.07)'
                   }}
                 >
-                  <Typography variant="body2" sx={{ fontStyle: 'italic', opacity: 0.7 }}>
-                    AI is thinking...
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ display: 'flex', gap: 0.5 }}>
+                      <Box 
+                        sx={{ 
+                          width: 6, 
+                          height: 6, 
+                          borderRadius: '50%', 
+                          bgcolor: '#2da58e',
+                          animation: 'typing 1.4s infinite ease-in-out',
+                          animationDelay: '0s',
+                          '@keyframes typing': {
+                            '0%, 80%, 100%': { opacity: 0.3 },
+                            '40%': { opacity: 1 }
+                          }
+                        }} 
+                      />
+                      <Box 
+                        sx={{ 
+                          width: 6, 
+                          height: 6, 
+                          borderRadius: '50%', 
+                          bgcolor: '#2da58e',
+                          animation: 'typing 1.4s infinite ease-in-out',
+                          animationDelay: '0.2s',
+                          '@keyframes typing': {
+                            '0%, 80%, 100%': { opacity: 0.3 },
+                            '40%': { opacity: 1 }
+                          }
+                        }} 
+                      />
+                      <Box 
+                        sx={{ 
+                          width: 6, 
+                          height: 6, 
+                          borderRadius: '50%', 
+                          bgcolor: '#2da58e',
+                          animation: 'typing 1.4s infinite ease-in-out',
+                          animationDelay: '0.4s',
+                          '@keyframes typing': {
+                            '0%, 80%, 100%': { opacity: 0.3 },
+                            '40%': { opacity: 1 }
+                          }
+                        }} 
+                      />
+                    </Box>
+                    <Typography variant="body2" sx={{ fontStyle: 'italic', opacity: 0.7 }}>
+                      Pili is thinking...
+                    </Typography>
+                  </Box>
                 </Paper>
               </Box>
             )}
-          </Box>
-
-          {/* Services Section - Initially collapsed or integrated subtly */}
-          {/* Could be a button that reveals this, or part of initial messages */}
-          <Box sx={{ p: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
-            <Typography variant="subtitle2" gutterBottom sx={{ color: theme.palette.text.secondary, display: 'flex', alignItems: 'center'}}>
-              <InfoIcon sx={{ mr: 1, fontSize: '1.1rem' }} /> Our Services
-            </Typography>
-            <List dense disablePadding>
-              {services.map(service => (
-                <ListItem key={service.name} sx={{ p: 0, mb: 0.5 }}>
-                  <ListItemIcon sx={{ minWidth: 32 }}>{service.icon}</ListItemIcon>
-                  <ListItemText primary={service.name} secondary={service.description} primaryTypographyProps={{fontSize: '0.875rem'}} secondaryTypographyProps={{fontSize: '0.75rem'}}/>
-                </ListItem>
-              ))}
-            </List>
-          </Box>
-
-          {/* Contact Info Section */}
-          <Box sx={{ p: 2, borderTop: `1px solid ${theme.palette.divider}`, borderBottom: `1px solid ${theme.palette.divider}` }}>
-            <Typography variant="subtitle2" gutterBottom sx={{ color: theme.palette.text.secondary, display: 'flex', alignItems: 'center'}}>
-              <ContactMailIcon sx={{ mr: 1, fontSize: '1.1rem' }} /> Contact Us
-            </Typography>
-            <Typography variant="body2" component="div" sx={{ fontSize: '0.8rem' }}>
-              Email: <a href={`mailto:${contactInfo.email}`} style={{ color: theme.palette.primary.main, textDecoration: 'none' }}>{contactInfo.email}</a><br/>
-              {/* Phone: {contactInfo.phone} <br/> */}
-              <a href={contactInfo.faqUrl} target="_blank" rel="noopener noreferrer" style={{ color: theme.palette.primary.main, textDecoration: 'none' }}>View FAQs</a>
-            </Typography>
           </Box>
         </DialogContent>
 
