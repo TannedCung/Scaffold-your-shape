@@ -168,7 +168,7 @@ const ChatPopup: React.FC = () => {
 
     try {
       // Use proxy API route to communicate with Pili chatbot
-      const response = await fetch('/api/chat/pili', {
+      const response = await fetch('/api/assistant/pili', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json' 
