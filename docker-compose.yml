@@ -1,12 +1,82 @@
-version: "3.8"
+networks:
+  pili-network:
+    driver: bridge
 
 services:
+  # Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-proxy
+    ports:
+      - "3008:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      # - web
+      - pili-api
+    restart: unless-stopped
+    networks:
+      - pili-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/nginx-health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Main web application
   web:
     build: .
-    ports:
-      - "3008:3006"
+    container_name: scaffold-web
+    expose:
+      - "3006"
     env_file:
       - .env.prod
     environment:
       - NODE_ENV=production
+      - PORT=3006
     restart: unless-stopped
+    networks:
+      - pili-network
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:3006/api/health"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+
+  # Pili AI Chatbot service
+  pili-api:
+    image: tannedcung/scaffold-your-shape:pili-20250606
+    container_name: pili-chatbot
+    expose:
+      - "8991"
+    env_file:
+      - ./.env.pili
+    environment:
+      # LangChain configuration
+      - LANGCHAIN_API_KEY=${LANGCHAIN_API_KEY:-your_langchain_api_key_here}
+      - LANGCHAIN_PROJECT=pili-exercise-chatbot
+      
+      # External service URLs
+      - EXERCISE_SERVICE_URL=http://192.168.1.10:8888/v1
+      
+      # LLM Configuration
+      - LLM_PROVIDER=vllm
+      - LOCAL_LLM_BASE_URL=http://192.168.1.10:8888/v1
+      - LOCAL_LLM_MODEL=Qwen/Qwen3-32B-AWQ
+      
+      # Health monitoring
+      - HEALTH_CHECK_INTERVAL=30
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./.env:/app/.env:ro
+    restart: unless-stopped
+    networks:
+      - pili-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8991/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
