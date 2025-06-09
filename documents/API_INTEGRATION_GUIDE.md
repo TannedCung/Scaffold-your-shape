@@ -260,28 +260,93 @@ Content-Type: application/json
 }
 ```
 
-### Chat (AI Assistant)
+### Chat (AI Assistant - Pili)
 
-#### Send Message to AI Assistant
+#### Send Message to Pili AI Assistant
 ```http
-POST /api/chat/send-message
+POST /api/assistant/pili
 Authorization: Session recommended (but not required)
 Content-Type: application/json
 
 {
-  "message": "How do I create a workout plan?",
-  "userId": "user_id" // Optional
+  "message": "Hi there, help me create a workout schedule for the next 3 days"
 }
 ```
 
-**Response:**
+**Response (JSON - Fallback):**
 ```json
 {
-  "reply": "I can help you create a workout plan! You can use our workout features to create personalized plans, track activities, and monitor progress. Would you like to know more about any specific feature?",
+  "reply": "I'd be happy to help you create a 3-day workout schedule! To design the best plan for you, I'd like to know a few things: What's your current fitness level? Do you have any specific goals (strength, cardio, weight loss)? What equipment do you have access to? And how much time can you dedicate per workout?",
   "timestamp": "2024-01-15T10:30:00.000Z",
   "status": "success"
 }
 ```
+
+**Response (Streaming - Default):**
+```
+Content-Type: text/event-stream
+
+data: {"type":"chunk","content":"I'd be happy to","timestamp":"2024-01-15T10:30:00.000Z"}
+
+data: {"type":"chunk","content":" help you create","timestamp":"2024-01-15T10:30:01.000Z"}
+
+data: {"type":"chunk","content":" a 3-day workout schedule!","timestamp":"2024-01-15T10:30:02.000Z"}
+
+data: {"type":"done","timestamp":"2024-01-15T10:30:05.000Z"}
+```
+
+**Streaming Response Format:**
+- **Content-Type**: `text/event-stream` (Server-Sent Events)
+- **Chunk Data**: Each chunk contains `type: "chunk"`, `content: "partial text"`, and `timestamp`
+- **End Signal**: Final message has `type: "done"` to indicate streaming completion
+- **Real-time Updates**: Text accumulates as chunks arrive for live typing effect
+
+**JavaScript Example (Streaming):**
+```javascript
+const response = await fetch('/api/chat/pili', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ message: 'Create a workout plan' }),
+  credentials: 'include'
+});
+
+if (response.headers.get('content-type')?.includes('text/event-stream')) {
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let accumulatedText = '';
+  
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    
+    const chunk = decoder.decode(value);
+    const lines = chunk.split('\n');
+    
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        const data = JSON.parse(line.substring(6));
+        
+        if (data.type === 'chunk' && data.content) {
+          accumulatedText += data.content;
+          updateMessage(accumulatedText); // Update UI in real-time
+        } else if (data.type === 'done') {
+          console.log('Streaming completed');
+          break;
+        }
+      }
+    }
+  }
+}
+```
+
+**Note:** This endpoint proxies requests to the Pili AI chatbot running at `0.0.0.0:8991`. The user session is automatically passed to provide personalized responses. If no session is available, requests are made as 'anonymous' user. Streaming is enabled by default for real-time response generation.
+
+**Content Filtering:** The API automatically filters streaming responses to remove common artifacts, formatting tokens, and metadata, ensuring only clean, readable message content is displayed to users. This includes removing:
+- Data prefixes (`data:`, `event:`)
+- Instruction tokens (`[INST]`, `[/INST]`, `<|...|>`)
+- System prefixes (`Assistant:`, `AI:`, `Response:`)
+- JSON artifacts and control characters
+- Empty or whitespace-only chunks
 
 ## Error Handling
 
