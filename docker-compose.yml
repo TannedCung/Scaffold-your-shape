@@ -46,27 +46,12 @@ services:
 
   # Pili AI Chatbot service
   pili-api:
-    image: tannedcung/scaffold-your-shape:pili-20250606
+    image: tannedcung/scaffold-your-shape:pili-20250616
     container_name: pili-chatbot
     expose:
       - "8991"
     env_file:
       - ./.env.pili
-    environment:
-      # LangChain configuration
-      - LANGCHAIN_API_KEY=${LANGCHAIN_API_KEY:-your_langchain_api_key_here}
-      - LANGCHAIN_PROJECT=pili-exercise-chatbot
-      
-      # External service URLs
-      - EXERCISE_SERVICE_URL=http://192.168.1.10:8888/v1
-      
-      # LLM Configuration
-      - LLM_PROVIDER=vllm
-      - LOCAL_LLM_BASE_URL=http://192.168.1.10:8888/v1
-      - LOCAL_LLM_MODEL=Qwen/Qwen3-32B-AWQ
-      
-      # Health monitoring
-      - HEALTH_CHECK_INTERVAL=30
     volumes:
       - ./logs:/app/logs
       - ./data:/app/data
