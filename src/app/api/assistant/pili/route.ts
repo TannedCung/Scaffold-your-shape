@@ -77,14 +77,15 @@ export async function POST(request: NextRequest) {
               const chunk = decoder.decode(value);
               console.log('Streaming chunk from Pili:', chunk);
               
-              // Filter and clean the content
+              // Filter and clean the content - be very conservative
               let cleanedContent = chunk;
               
-              // Remove common formatting artifacts
+              // Only remove specific formatting artifacts, preserve all content spaces
               cleanedContent = cleanedContent
                 .replace(/^data:\s*/g, '') // Remove 'data:' prefix if present
-                .replace(/\n\n$/g, '') // Remove trailing newlines
-                .trim();
+                .replace(/\n\n$/g, ''); // Remove trailing double newlines only
+              
+              // Don't trim here - spaces might be part of the actual content!
               
               // Handle special cases
               if (cleanedContent === '[DONE]') {
@@ -132,22 +133,21 @@ export async function POST(request: NextRequest) {
                 
                 cleanedContent = extractedContent || '';
                 
-                // Clean up the extracted content
+                // Clean up the extracted content - preserve spaces
                 if (cleanedContent) {
                   cleanedContent = cleanedContent
-                    .replace(/^"([^"]*)"$/, '$1') // Remove surrounding quotes
+                    .replace(/^"([^"]*)"$/, '$1') // Remove surrounding quotes only
                     .replace(/\\n/g, '\n') // Convert escaped newlines to actual newlines
-                    .replace(/\\"/g, '"') // Convert escaped quotes
-                    .trim();
+                    .replace(/\\"/g, '"'); // Convert escaped quotes
+                    // Don't trim - preserve leading/trailing spaces that might be meaningful
                 }
                 
               } catch {
-                // If not JSON, use the cleaned text as-is
-                // Only remove dangerous control characters, preserve \n, emojis, apostrophes
+                // If not JSON, treat as plain text content - preserve all spaces and characters
+                // Only remove actual control characters that could break the response
                 cleanedContent = cleanedContent
-                  .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove control chars but keep \n (\x0A)
-                  .replace(/^[^a-zA-Z0-9\s\u00A0-\uFFFF]*/, '') // Preserve unicode (emojis) and normal chars
-                  .trim();
+                  .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove only dangerous control chars, keep \n (\x0A)
+                  // Don't remove any other characters - preserve spaces, punctuation, unicode, etc.
               }
               
               // Only send non-empty, meaningful content
@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
                   !cleanedContent.includes('metadata') &&
                   !cleanedContent.includes('llm_provider')) {
                 
-                console.log('Sending cleaned content:', cleanedContent);
+                console.log('Sending cleaned content:|', cleanedContent);
                 
                 // Format as Server-Sent Events
                 const sseData = JSON.stringify({ 

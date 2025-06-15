@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import {
   Box,
@@ -56,73 +56,118 @@ const ChatPopup: React.FC = () => {
   const [chatMessages, setChatMessages] = useState<Message[]>([]); // Placeholder for chat history
   const [isLoading, setIsLoading] = useState(false);
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
+  
+  // Message history for keyboard navigation
+  const [messageHistory, setMessageHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  
+  const textFieldRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // Utility function to clean streaming content
+  // Auto-scroll to bottom when new messages arrive
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [chatMessages, scrollToBottom]);
+
+  // Enhanced utility function to clean streaming content while preserving unicode and emojis
   const cleanStreamingContent = (rawContent: string): string => {
     if (!rawContent) return '';
     
-    let cleaned = rawContent;
-    
-    // Only remove specific streaming artifacts, preserve emojis, \n, apostrophes
-    cleaned = cleaned
-      // Remove SSE prefixes
-      .replace(/^data:\s*/gi, '')
-      .replace(/^event:\s*/gi, '')
-      
-      // Remove specific technical metadata patterns
-      .replace(/"finish_reason":\s*(null|"[^"]*")/gi, '')
-      .replace(/"metadata":\s*\{[^}]*\}/gi, '')
-      .replace(/"llm_provider":\s*"[^"]*"/gi, '')
-      .replace(/"confidence":\s*[\d.]+/gi, '')
-      .replace(/"intent":\s*"[^"]*"/gi, '')
-      .replace(/"extracted_info":\s*\{[^}]*\}/gi, '')
-      
-      // Remove OpenAI streaming format artifacts
-      .replace(/"choices":\s*\[[^\]]*\]/gi, '')
-      .replace(/"delta":\s*\{\}/gi, '')
-      .replace(/"index":\s*\d+/gi, '')
-      .replace(/"created":\s*\d+/gi, '')
-      .replace(/"model":\s*"[^"]*"/gi, '')
-      .replace(/"object":\s*"[^"]*"/gi, '')
-      .replace(/"id":\s*"[^"]*"/gi, '')
-      
-      // Remove instruction tokens
-      .replace(/^\[INST\]|\[\/INST\]/g, '')
-      .replace(/^<\|.*?\|>/g, '')
-      .replace(/^<s>|<\/s>/g, '')
-      
-      // Remove system prefixes
-      .replace(/^(Assistant|AI|Bot|System):\s*/gi, '')
-      .replace(/^Response:\s*/gi, '')
-      
-      // Clean up leftover JSON commas and brackets
-      .replace(/,\s*}/g, '}')
-      .replace(/{\s*,/g, '{')
-      .replace(/,\s*,/g, ',')
-      .replace(/^\s*[{}]+\s*$/g, '')
-      .trim();
-    
-    // Remove surrounding quotes if entire content is quoted
-    if (/^".*"$/.test(cleaned) && cleaned.length > 2) {
-      const inner = cleaned.slice(1, -1);
-      // Only remove quotes if there are no unescaped quotes inside
-      if (!inner.includes('"') || inner.replace(/\\"/g, '').indexOf('"') === -1) {
-        cleaned = inner.replace(/\\"/g, '"');
-      }
+    // Don't process single characters or very short content - likely actual content
+    if (rawContent.length <= 2) {
+      return rawContent;
     }
     
-    // Remove only standalone technical terms
-    const standaloneTechnical = /^(null|undefined|stop|finish_reason|metadata)$/i;
-    if (standaloneTechnical.test(cleaned.trim())) {
+    // Don't process if it's clearly actual content (no JSON structure indicators)
+    if (!rawContent.includes('"') && !rawContent.includes('{') && !rawContent.includes('}')) {
+      return rawContent;
+    }
+    
+    let cleaned = rawContent;
+    
+    // Only remove very specific OpenAI streaming JSON patterns
+    // These patterns are only applied if they match exactly
+    
+    // Remove complete OpenAI streaming wrapper (only if it's the complete pattern)
+    if (cleaned.match(/^\{"choices":\[\{"delta":\{"content":".*"\}\}\]\}$/)) {
+      cleaned = cleaned.replace(/^\{"choices":\[\{"delta":\{"content":"/, '');
+      cleaned = cleaned.replace(/"\}\}\]\}$/, '');
+    }
+    
+    // Remove finish_reason patterns (only complete patterns)
+    cleaned = cleaned.replace(/^\{"choices":\[\{"delta":\{\},"finish_reason":"stop"\}\]\}$/, '');
+    cleaned = cleaned.replace(/^\{"finish_reason":"stop"\}$/, '');
+    cleaned = cleaned.replace(/^"finish_reason":"stop"$/, '');
+    
+    // Handle escape sequences (preserve actual content)
+    try {
+      cleaned = cleaned
+        .replace(/\\"/g, '"')
+        .replace(/\\n/g, '\n')
+        .replace(/\\t/g, '\t')
+        .replace(/\\r/g, '\r')
+        .replace(/\\\\/g, '\\');
+      
+      // Unicode sequences
+      cleaned = cleaned.replace(/\\u([0-9A-Fa-f]{4})/g, (match, hex) => {
+        return String.fromCharCode(parseInt(hex, 16));
+      });
+    } catch (error) {
+      console.warn('Unicode decoding error:', error);
+    }
+    
+    // Only remove if it's EXACTLY a technical term (nothing else)
+    if (/^(null|undefined|stop|\[DONE\]|\{\}|\[\])$/.test(cleaned.trim())) {
       return '';
     }
     
-    // Return cleaned content (preserves emojis, \n, apostrophes, etc.)
+    // Remove wrapping quotes ONLY if the entire string is wrapped and contains no internal quotes
+    if (cleaned.length > 2 && cleaned.startsWith('"') && cleaned.endsWith('"')) {
+      const inner = cleaned.slice(1, -1);
+      if (!inner.includes('"')) {
+        cleaned = inner;
+      }
+    }
+    
     return cleaned;
   };
+
+  // Handle keyboard navigation for message history
+  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      if (messageHistory.length > 0) {
+        const newIndex = historyIndex + 1;
+        if (newIndex < messageHistory.length) {
+          setHistoryIndex(newIndex);
+          setMessage(messageHistory[messageHistory.length - 1 - newIndex]);
+        }
+      }
+    } else if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      if (historyIndex > 0) {
+        const newIndex = historyIndex - 1;
+        setHistoryIndex(newIndex);
+        setMessage(messageHistory[messageHistory.length - 1 - newIndex]);
+      } else if (historyIndex === 0) {
+        setHistoryIndex(-1);
+        setMessage('');
+      }
+    } else if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      handleSendMessage();
+    } else if (event.key === 'Escape') {
+      setHistoryIndex(-1);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messageHistory, historyIndex]);
 
   const handleToggle = () => {
     setOpen(!open);
@@ -132,26 +177,38 @@ const ChatPopup: React.FC = () => {
         setChatMessages([
           {
             id: 'welcome',
-            text: 'Hello! I\'m Pili, your AI fitness assistant. How can I help you with your fitness journey today?',
+            text: 'Hello! I\'m Pili, your AI fitness assistant 🏋️‍♀️ How can I help you with your fitness journey today? 💪',
             sender: 'bot',
             timestamp: new Date(),
           },
         ]);
       }
+      // Focus the input field when chat opens
+      setTimeout(() => {
+        textFieldRef.current?.focus();
+      }, 100);
     }
   };
 
   const handleSendMessage = async () => {
     if (message.trim() === '' || isLoading) return;
 
+    const userMessage = message.trim();
+    
+    // Add to message history for keyboard navigation
+    setMessageHistory(prev => {
+      const newHistory = [userMessage, ...prev.slice(0, 49)]; // Keep last 50 messages
+      return newHistory;
+    });
+    setHistoryIndex(-1);
+
     const newMessage: Message = {
       id: new Date().toISOString(),
-      text: message,
+      text: userMessage,
       sender: 'user',
       timestamp: new Date(),
     };
     setChatMessages((prevMessages) => [...prevMessages, newMessage]);
-    const userMessage = message;
     setMessage('');
     setIsLoading(true);
 
@@ -171,9 +228,13 @@ const ChatPopup: React.FC = () => {
       const response = await fetch('/api/assistant/pili', {
         method: 'POST',
         headers: { 
-          'Content-Type': 'application/json' 
+          'Content-Type': 'application/json',
+          'Accept': 'text/event-stream',
         },
-        body: JSON.stringify({ message: userMessage }),
+        body: JSON.stringify({ 
+          message: userMessage,
+          stream: true // Request streaming response
+        }),
         credentials: 'include', // Important for session auth
       });
       
@@ -184,12 +245,12 @@ const ChatPopup: React.FC = () => {
       // Check if response is streaming
       const contentType = response.headers.get('content-type');
       
-      if (contentType?.includes('text/event-stream')) {
-        // Handle streaming response with Server-Sent Events
-        console.log('Handling streaming response from Pili proxy');
+      if (contentType?.includes('text/event-stream') || contentType?.includes('text/plain')) {
+        // Handle OpenAI streaming response format
+        console.log('Handling OpenAI streaming response from Pili proxy');
         
         const reader = response.body?.getReader();
-        const decoder = new TextDecoder();
+        const decoder = new TextDecoder('utf-8'); // Explicitly specify UTF-8 for unicode support
         let accumulatedText = '';
         
         if (reader) {
@@ -202,55 +263,56 @@ const ChatPopup: React.FC = () => {
                 break;
               }
               
-              const chunk = decoder.decode(value);
+              const chunk = decoder.decode(value, { stream: true }); // Enable streaming mode for proper unicode handling
               const lines = chunk.split('\n');
               
               for (const line of lines) {
-                if (line.startsWith('data: ')) {
+                const trimmedLine = line.trim();
+                
+                if (trimmedLine === 'data: [DONE]') {
+                  console.log('Streaming finished with [DONE] marker');
+                  break;
+                }
+                
+                if (trimmedLine.startsWith('data: ')) {
                   try {
-                    const data = JSON.parse(line.substring(6));
+                    const jsonData = trimmedLine.substring(6).trim();
+                    if (jsonData === '[DONE]') break;
                     
-                    if (data.type === 'chunk' && data.content) {
-                      // Clean the content using our utility function
-                      const cleanContent = cleanStreamingContent(data.content);
-                      
-                      // Debug logging to track content filtering
-                      if (data.content !== cleanContent) {
-                        console.log('Content filtered:', { 
-                          original: data.content, 
-                          cleaned: cleanContent 
-                        });
+                    const data = JSON.parse(jsonData);
+                    
+                    // Handle different OpenAI response formats
+                    let content = '';
+                    
+                    if (data.choices && data.choices[0]) {
+                      const choice = data.choices[0];
+                      if (choice.delta && choice.delta.content) {
+                        content = choice.delta.content;
+                      } else if (choice.text) {
+                        content = choice.text;
                       }
+                    } else if (data.content) {
+                      content = data.content;
+                    } else if (typeof data === 'string') {
+                      content = data;
+                    }
+                    
+                    if (content) {
+                      // NEVER clean individual streaming chunks - just accumulate them raw
+                      // This preserves all spaces, characters, and content as-is during streaming
+                      accumulatedText += content;
                       
-                      // Only add if content is meaningful
-                      if (cleanContent) {
-                        // Add spacing if we're appending to existing text and the content doesn't start with punctuation
-                        if (accumulatedText && 
-                            !cleanContent.match(/^[.,!?;:\s]/) && 
-                            !accumulatedText.match(/[\s-]$/)) {
-                          accumulatedText += ' ';
-                        }
-                        
-                        accumulatedText += cleanContent;
-                        
-                        // Update the bot message with accumulated text
-                        setChatMessages((prevMessages) => 
-                          prevMessages.map((msg) => 
-                            msg.id === botMessageId 
-                              ? { ...msg, text: accumulatedText }
-                              : msg
-                          )
-                        );
-                      } else {
-                        // Log when content is completely filtered out
-                        console.log('Content completely filtered out:', data.content);
-                      }
-                    } else if (data.type === 'done') {
-                      console.log('Streaming finished, final text:', accumulatedText);
-                      break;
+                      // Update the bot message with accumulated text
+                      setChatMessages((prevMessages) => 
+                        prevMessages.map((msg) => 
+                          msg.id === botMessageId 
+                            ? { ...msg, text: accumulatedText }
+                            : msg
+                        )
+                      );
                     }
                   } catch (parseError) {
-                    console.error('Error parsing SSE data:', parseError);
+                    console.error('Error parsing SSE data:', parseError, 'Line:', trimmedLine);
                   }
                 }
               }
@@ -260,12 +322,32 @@ const ChatPopup: React.FC = () => {
           }
         }
         
+        // After streaming is complete, clean the final accumulated text if it contains JSON artifacts
+        if (accumulatedText && (accumulatedText.includes('{"') || accumulatedText.includes('"finish_reason"'))) {
+          const finalCleanedText = cleanStreamingContent(accumulatedText);
+          if (finalCleanedText !== accumulatedText) {
+            console.log('Final cleanup applied:', { 
+              original: accumulatedText, 
+              cleaned: finalCleanedText 
+            });
+            
+            // Update with final cleaned text
+            setChatMessages((prevMessages) => 
+              prevMessages.map((msg) => 
+                msg.id === botMessageId 
+                  ? { ...msg, text: finalCleanedText }
+                  : msg
+              )
+            );
+          }
+        }
+        
         // If no text was accumulated, show an error
         if (!accumulatedText.trim()) {
           setChatMessages((prevMessages) => 
             prevMessages.map((msg) => 
               msg.id === botMessageId 
-                ? { ...msg, text: 'I\'m having trouble generating a response. Please try again.' }
+                ? { ...msg, text: 'I\'m having trouble generating a response. Please try again. 🤔' }
                 : msg
             )
           );
@@ -299,7 +381,7 @@ const ChatPopup: React.FC = () => {
           msg.id === botMessageId 
             ? { 
                 ...msg, 
-                text: 'Sorry, I\'m having trouble connecting to my brain right now. Please try again in a moment or contact our support team if the issue persists.' 
+                text: 'Sorry, I\'m having trouble connecting to my brain right now. Please try again in a moment or contact our support team if the issue persists. 😅' 
               }
             : msg
         )
@@ -307,6 +389,10 @@ const ChatPopup: React.FC = () => {
     } finally {
       setIsLoading(false);
       setStreamingMessageId(null);
+      // Refocus the input field after sending
+      setTimeout(() => {
+        textFieldRef.current?.focus();
+      }, 100);
     }
   };
 
@@ -443,7 +529,7 @@ const ChatPopup: React.FC = () => {
             <SmartToyIcon />
           </Avatar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 600 }}>
-            Pili
+            Pili 🤖
           </Typography>
           <IconButton onClick={handleToggle} sx={{ color: '#fff' }}>
             <CloseIcon />
@@ -477,7 +563,10 @@ const ChatPopup: React.FC = () => {
                     variant="body2" 
                     sx={{ 
                       whiteSpace: 'pre-wrap', // Preserve newlines and wrap text
-                      wordBreak: 'break-word' // Handle long words
+                      wordBreak: 'break-word', // Handle long words
+                      fontFamily: 'inherit', // Use system font that supports unicode
+                      fontSize: '0.875rem',
+                      lineHeight: 1.4,
                     }}
                   >
                     {msg.text}
@@ -573,35 +662,46 @@ const ChatPopup: React.FC = () => {
                       />
                     </Box>
                     <Typography variant="body2" sx={{ fontStyle: 'italic', opacity: 0.7 }}>
-                      Pili is thinking...
+                      Pili is thinking... 🤔
                     </Typography>
                   </Box>
                 </Paper>
               </Box>
             )}
+            <div ref={messagesEndRef} />
           </Box>
         </DialogContent>
 
         <DialogActions sx={{ p: 1.5, bgcolor: '#e0f0ed' }}>
           <TextField 
+            inputRef={textFieldRef}
             fullWidth
             variant="outlined"
             size="small"
-            placeholder="Type your message..."
+            placeholder="Type your message... (Enter to send, Shift+Enter for new line, ↑↓ for history)"
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            disabled={isLoading}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSendMessage();
-              }
+            onChange={(e) => {
+              setMessage(e.target.value);
+              setHistoryIndex(-1); // Reset history navigation when typing
             }}
+            disabled={isLoading}
+            onKeyDown={handleKeyDown}
+            multiline
+            maxRows={4}
             sx={{
               bgcolor: '#fff',
               borderRadius: theme.shape.borderRadius,
               '& .MuiOutlinedInput-root': {
                 borderRadius: theme.shape.borderRadius,
+                fontFamily: 'inherit', // Ensure unicode support
+              },
+              '& .MuiInputBase-input': {
+                fontFamily: 'inherit', // Ensure unicode support
+              }
+            }}
+            inputProps={{
+              style: {
+                unicodeBidi: 'plaintext', // Better unicode text handling
               }
             }}
           />
