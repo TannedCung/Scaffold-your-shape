@@ -61,7 +61,7 @@ services:
       - pili-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8991/api/health"]
-      interval: 30s
+      interval: 600s
       timeout: 10s
       retries: 3
       start_period: 40s
