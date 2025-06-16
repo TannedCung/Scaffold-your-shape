@@ -109,7 +109,7 @@ Key environment variables for the chatbot:
 LLM_PROVIDER=vllm
 
 # vLLM Configuration
-LOCAL_LLM_BASE_URL=http://192.168.1.10:8888/v1
+LOCAL_LLM_BASE_URL=http://<host>:<port>/v1
 LOCAL_LLM_MODEL=Qwen/Qwen3-32B-AWQ
 
 # LangChain Integration
@@ -117,7 +117,7 @@ LANGCHAIN_API_KEY=your_langchain_api_key_here
 LANGCHAIN_PROJECT=pili-exercise-chatbot
 
 # External Services
-EXERCISE_SERVICE_URL=http://192.168.1.10:8888/v1
+EXERCISE_SERVICE_URL=http://<host>:<port>/v1
 ```
 
 ## Development vs Production

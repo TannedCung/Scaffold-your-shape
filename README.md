@@ -28,8 +28,8 @@ A comprehensive fitness tracking application that allows users to track various 
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/your-username/scaffold-your-shape.git
-cd scaffold-your-shape
+git clone https://github.com/TannedCung/Scaffold-your-shape.git
+cd Scaffold-your-shape
 ```
 
 ### Supabase Schema Migration
