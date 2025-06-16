@@ -72,11 +72,9 @@ out/
 
 # Nuxt.js build / generate output
 .nuxt
-dist
 
 # Gatsby files
 .cache/
-public
 
 # Storybook build outputs
 .out
@@ -137,14 +135,12 @@ coverage/
 .nyc_output
 
 # Development and debugging
-.cache/
 .temp/
 debug/
 *.debug
 *.map
 
-# Documentation and README files
-*.md
+# Documentation and README files (keep essential config files)
 README*
 CHANGELOG*
 LICENSE*
@@ -160,7 +156,7 @@ documentation/
 .editorconfig
 .gitattributes
 .gitmodules
-tsconfig.json
+# tsconfig.json
 jest.config.*
 cypress.json
 .circleci/
@@ -191,9 +187,6 @@ deployment/
 scripts/deploy*
 
 # Package managers
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
 .pnp.*
 .yarn/
 
