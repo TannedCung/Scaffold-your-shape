@@ -140,56 +140,6 @@ const ChatPopup: React.FC = () => {
   };
 
   // Handle keyboard navigation for message history
-  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'ArrowUp') {
-      event.preventDefault();
-      if (messageHistory.length > 0) {
-        const newIndex = historyIndex + 1;
-        if (newIndex < messageHistory.length) {
-          setHistoryIndex(newIndex);
-          setMessage(messageHistory[messageHistory.length - 1 - newIndex]);
-        }
-      }
-    } else if (event.key === 'ArrowDown') {
-      event.preventDefault();
-      if (historyIndex > 0) {
-        const newIndex = historyIndex - 1;
-        setHistoryIndex(newIndex);
-        setMessage(messageHistory[messageHistory.length - 1 - newIndex]);
-      } else if (historyIndex === 0) {
-        setHistoryIndex(-1);
-        setMessage('');
-      }
-    } else if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      handleSendMessage();
-    } else if (event.key === 'Escape') {
-      setHistoryIndex(-1);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messageHistory, historyIndex]);
-
-  const handleToggle = () => {
-    setOpen(!open);
-    if (!open) {
-      // Initialize with a welcome message if chat is empty
-      if (chatMessages.length === 0) {
-        setChatMessages([
-          {
-            id: 'welcome',
-            text: 'Hello! I\'m Pili, your AI fitness assistant 🏋️‍♀️ How can I help you with your fitness journey today? 💪',
-            sender: 'bot',
-            timestamp: new Date(),
-          },
-        ]);
-      }
-      // Focus the input field when chat opens
-      setTimeout(() => {
-        textFieldRef.current?.focus();
-      }, 100);
-    }
-  };
-
   const handleSendMessage = async () => {
     if (message.trim() === '' || isLoading) return;
 
@@ -390,6 +340,55 @@ const ChatPopup: React.FC = () => {
       setIsLoading(false);
       setStreamingMessageId(null);
       // Refocus the input field after sending
+      setTimeout(() => {
+        textFieldRef.current?.focus();
+      }, 100);
+    }
+  };
+
+  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      if (messageHistory.length > 0) {
+        const newIndex = historyIndex + 1;
+        if (newIndex < messageHistory.length) {
+          setHistoryIndex(newIndex);
+          setMessage(messageHistory[messageHistory.length - 1 - newIndex]);
+        }
+      }
+    } else if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      if (historyIndex > 0) {
+        const newIndex = historyIndex - 1;
+        setHistoryIndex(newIndex);
+        setMessage(messageHistory[messageHistory.length - 1 - newIndex]);
+      } else if (historyIndex === 0) {
+        setHistoryIndex(-1);
+        setMessage('');
+      }
+    } else if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      handleSendMessage();
+    } else if (event.key === 'Escape') {
+      setHistoryIndex(-1);
+    }
+  }, [messageHistory, historyIndex, handleSendMessage]);
+
+  const handleToggle = () => {
+    setOpen(!open);
+    if (!open) {
+      // Initialize with a welcome message if chat is empty
+      if (chatMessages.length === 0) {
+        setChatMessages([
+          {
+            id: 'welcome',
+            text: 'Hello! I\'m Pili, your AI fitness assistant 🏋️‍♀️ How can I help you with your fitness journey today? 💪',
+            sender: 'bot',
+            timestamp: new Date(),
+          },
+        ]);
+      }
+      // Focus the input field when chat opens
       setTimeout(() => {
         textFieldRef.current?.focus();
       }, 100);
