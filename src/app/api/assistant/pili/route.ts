@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
               // Only send non-empty, meaningful content
               if (cleanedContent && 
                   cleanedContent.length > 0 && 
-                  !cleanedContent.match(/^[\s\n\r]*$/) &&
+                  cleanedContent !== '' &&
                   !cleanedContent.includes('finish_reason') &&
                   !cleanedContent.includes('metadata') &&
                   !cleanedContent.includes('llm_provider')) {
