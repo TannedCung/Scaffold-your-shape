@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { OpenAI } from 'openai';
 import { z } from 'zod';
+import { headers } from 'next/headers';
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -140,11 +141,44 @@ const mcpServer = new MCPServer({
   resources,
   openai,
   supabase,
+  transport: 'sse', // Enable SSE transport
 });
 
 // Handle MCP requests
 export async function POST(req: Request) {
   try {
+    const headersList = await headers();
+    const accept = headersList.get('accept') || '';
+
+    // Check if client accepts SSE
+    if (accept.includes('text/event-stream')) {
+      const encoder = new TextEncoder();
+      const stream = new ReadableStream({
+        async start(controller) {
+          try {
+            const body = await req.json();
+            const responseStream = await mcpServer.handleStreamingRequest(body);
+
+            for await (const chunk of responseStream) {
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`));
+            }
+            controller.close();
+          } catch (error) {
+            controller.error(error);
+          }
+        },
+      });
+
+      return new Response(stream, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        },
+      });
+    }
+
+    // Handle regular JSON requests
     const body = await req.json();
     const response = await mcpServer.handleRequest(body);
     return NextResponse.json(response);
