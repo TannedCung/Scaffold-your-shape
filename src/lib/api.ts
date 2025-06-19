@@ -67,8 +67,18 @@ export async function fetchApi<T>(
 // Profile API functions
 export const profileApi = {
   get: (cookie?: string) => fetchApi<Profile>('/api/profiles', {}, { cookie }),
+  getById: (id: string, cookie?: string) => fetchApi<Profile>(`/api/profiles/${id}`, {}, { cookie }),
+  getAll: (limit?: number, cookie?: string) => {
+    const url = limit ? `/api/profiles?limit=${limit}` : '/api/profiles/all';
+    return fetchApi<Profile[]>(url, {}, { cookie });
+  },
   update: (data: Partial<Profile>, cookie?: string) => 
     fetchApi<Profile>('/api/profiles', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }, { cookie }),
+  updateById: (id: string, data: Partial<Profile>, cookie?: string) => 
+    fetchApi<Profile>(`/api/profiles/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     }, { cookie }),
@@ -76,7 +86,15 @@ export const profileApi = {
 
 // Activity API functions
 export const activityApi = {
-  getAll: () => fetchApi<Activity[]>('/api/activities'),
+  getAll: (limit?: number) => {
+    const url = limit ? `/api/activities?limit=${limit}` : '/api/activities';
+    return fetchApi<Activity[]>(url);
+  },
+  search: (query: string, limit?: number) => {
+    const params = new URLSearchParams({ query });
+    if (limit) params.append('limit', limit.toString());
+    return fetchApi<Activity[]>(`/api/activities/search?${params}`);
+  },
   getWithDetails: () => fetchApi<ActivityWithDetails[]>('/api/activities/with-details'),
   getById: (id: string) => fetchApi<ActivityWithDetails>(`/api/activities/${id}`),
   create: (data: Partial<Activity>) => fetchApi<Activity>('/api/activities', {
