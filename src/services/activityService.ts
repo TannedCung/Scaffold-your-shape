@@ -10,16 +10,49 @@ import {
 } from '@/types';
 import { activityApi } from '@/lib/api';
 
-// Fetch activities (Read)
-export async function fetchActivities(userId?: string): Promise<Activity[]> {
+// Search activities by query (new function)
+export async function searchActivities(query: string, limit: number = 10): Promise<Activity[]> {
   try {
-    const { data, error } = await activityApi.getAll();
+    const { data, error } = await activityApi.search(query, limit);
     
     if (error) {
       throw error;
     }
 
-    return (data || []).map(item => {
+    return (data || []).map((item: ActivityWithDetails) => {
+      const activity = mapActivityDbToActivity(item as unknown as ActivityDb);
+      const details = item as ActivityWithDetails;
+      
+      // Handle map data if present
+      if (details.maps && details.maps.length > 0) {
+        activity.map = mapMapDbToMap(details.maps[0] as unknown as MapDb);
+      }
+      
+      // Handle segmentation data if present
+      if (details.segmentations && details.segmentations.length > 0) {
+        activity.segmentEfforts = details.segmentations.map((seg) => 
+          mapSegmentationDbToSegmentation(seg as unknown as SegmentationDb)
+        );
+      }
+      
+      return activity;
+    });
+  } catch (error) {
+    console.error('Error searching activities:', error);
+    return [];
+  }
+}
+
+// Fetch activities with pagination (enhanced function)
+export async function fetchActivities(userId?: string, limit?: number): Promise<Activity[]> {
+  try {
+    const { data, error } = await activityApi.getAll(limit);
+    
+    if (error) {
+      throw error;
+    }
+
+    return (data || []).map((item: Activity) => {
       const activity = mapActivityDbToActivity(item as unknown as ActivityDb);
       const details = item as ActivityWithDetails;
       

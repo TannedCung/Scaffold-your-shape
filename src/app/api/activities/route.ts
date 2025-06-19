@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { supabase } from '@/lib/supabase';
 import { authOptions } from '@/lib/auth';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     
@@ -11,11 +11,20 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: activities, error } = await supabase
+    const { searchParams } = new URL(request.url);
+    const limit = searchParams.get('limit');
+
+    let query = supabase
       .from('activities')
       .select('*')
       .eq('user_id', session.user.id)
       .order('date', { ascending: false });
+
+    if (limit) {
+      query = query.limit(parseInt(limit));
+    }
+
+    const { data: activities, error } = await query;
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
