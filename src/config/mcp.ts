@@ -5,9 +5,7 @@ const envSchema = z.object({
   // Supabase configuration
   NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
-  
-  // OpenAI configuration
-  OPENAI_API_KEY: z.string().min(1),
+
   
   // Redis configuration for rate limiting
   UPSTASH_REDIS_URL: z.string().url(),

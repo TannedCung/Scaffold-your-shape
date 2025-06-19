@@ -1,5 +1,4 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
-import { MCPClient } from '@modelcontextprotocol/sdk';
 
 interface MCPResponse<T = unknown> {
   data?: T;
@@ -15,17 +14,13 @@ interface MCPStreamOptions {
 
 export function useMCP() {
   const [response, setResponse] = useState<MCPResponse>({ loading: false });
-  const eventSourceRef = useRef<EventSource | null>(null);
-  const client = new MCPClient({
-    baseUrl: '/api/mcp',
-    transport: 'sse',
-  });
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Cleanup function for SSE connection
+  // Cleanup function
   useEffect(() => {
     return () => {
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
     };
   }, []);
@@ -37,59 +32,55 @@ export function useMCP() {
   ): Promise<MCPResponse<T>> => {
     setResponse({ loading: true });
 
-    // If streaming is requested
-    if (options?.onChunk) {
-      try {
-        // Close existing connection if any
-        if (eventSourceRef.current) {
-          eventSourceRef.current.close();
-        }
-
-        // Create new EventSource
-        const eventSource = new EventSource(
-          `/api/mcp?tool=${toolName}&params=${encodeURIComponent(JSON.stringify(params))}`
-        );
-        eventSourceRef.current = eventSource;
-
-        // Handle incoming chunks
-        eventSource.onmessage = (event) => {
-          try {
-            const chunk = JSON.parse(event.data);
-            options.onChunk?.(chunk);
-          } catch (error) {
-            options.onError?.(error instanceof Error ? error : new Error(String(error)));
-          }
-        };
-
-        // Handle errors
-        eventSource.onerror = () => {
-          const error = new Error('EventSource failed');
-          options.onError?.(error);
-          eventSource.close();
-          setResponse({ loading: false });
-        };
-
-        // Handle completion
-        eventSource.addEventListener('complete', () => {
-          options.onComplete?.();
-          eventSource.close();
-          setResponse({ loading: false });
-        });
-
-        return { loading: true };
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        setResponse({ error: errorMessage, loading: false });
-        return { error: errorMessage, loading: false };
-      }
-    }
-
-    // Handle non-streaming requests
     try {
-      const result = await client.executeTool(toolName, params);
-      setResponse({ data: result, loading: false });
-      return { data: result, loading: false };
+      // Cancel any existing request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
+
+      // Create MCP JSON-RPC request
+      const mcpRequest = {
+        jsonrpc: '2.0',
+        method: 'tools/call',
+        params: {
+          name: toolName,
+          arguments: params,
+        },
+        id: Date.now(),
+      };
+
+      const response = await fetch('/api/mcp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(mcpRequest),
+        signal: abortController.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.error) {
+        throw new Error(result.error.message || 'MCP tool execution failed');
+      }
+
+      const toolResult = result.result as T;
+      setResponse({ data: toolResult, loading: false });
+      return { data: toolResult, loading: false };
+
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        // Request was cancelled, don't update state
+        return { loading: false };
+      }
+
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setResponse({ error: errorMessage, loading: false });
       return { error: errorMessage, loading: false };
@@ -103,54 +94,55 @@ export function useMCP() {
   ): Promise<MCPResponse<T>> => {
     setResponse({ loading: true });
 
-    // If streaming is requested
-    if (options?.onChunk) {
-      try {
-        if (eventSourceRef.current) {
-          eventSourceRef.current.close();
-        }
-
-        const eventSource = new EventSource(
-          `/api/mcp?resource=${resourceName}${id ? `&id=${id}` : ''}`
-        );
-        eventSourceRef.current = eventSource;
-
-        eventSource.onmessage = (event) => {
-          try {
-            const chunk = JSON.parse(event.data);
-            options.onChunk?.(chunk);
-          } catch (error) {
-            options.onError?.(error instanceof Error ? error : new Error(String(error)));
-          }
-        };
-
-        eventSource.onerror = () => {
-          const error = new Error('EventSource failed');
-          options.onError?.(error);
-          eventSource.close();
-          setResponse({ loading: false });
-        };
-
-        eventSource.addEventListener('complete', () => {
-          options.onComplete?.();
-          eventSource.close();
-          setResponse({ loading: false });
-        });
-
-        return { loading: true };
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        setResponse({ error: errorMessage, loading: false });
-        return { error: errorMessage, loading: false };
-      }
-    }
-
-    // Handle non-streaming requests
     try {
-      const result = await client.getResource(resourceName, id);
-      setResponse({ data: result, loading: false });
-      return { data: result, loading: false };
+      // Cancel any existing request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
+
+      // Create MCP JSON-RPC request for reading resource
+      const resourceUri = id ? `${resourceName}://${id}` : `${resourceName}://list`;
+      const mcpRequest = {
+        jsonrpc: '2.0',
+        method: 'resources/read',
+        params: {
+          uri: resourceUri,
+        },
+        id: Date.now(),
+      };
+
+      const response = await fetch('/api/mcp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(mcpRequest),
+        signal: abortController.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.error) {
+        throw new Error(result.error.message || 'MCP resource read failed');
+      }
+
+      const resourceResult = result.result as T;
+      setResponse({ data: resourceResult, loading: false });
+      return { data: resourceResult, loading: false };
+
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        // Request was cancelled, don't update state
+        return { loading: false };
+      }
+
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setResponse({ error: errorMessage, loading: false });
       return { error: errorMessage, loading: false };
@@ -163,61 +155,16 @@ export function useMCP() {
     data: Record<string, unknown>,
     options?: MCPStreamOptions
   ): Promise<MCPResponse<T>> => {
-    setResponse({ loading: true });
-
-    // If streaming is requested
-    if (options?.onChunk) {
-      try {
-        if (eventSourceRef.current) {
-          eventSourceRef.current.close();
-        }
-
-        const eventSource = new EventSource(
-          `/api/mcp?resource=${resourceName}&id=${id}&data=${encodeURIComponent(JSON.stringify(data))}`
-        );
-        eventSourceRef.current = eventSource;
-
-        eventSource.onmessage = (event) => {
-          try {
-            const chunk = JSON.parse(event.data);
-            options.onChunk?.(chunk);
-          } catch (error) {
-            options.onError?.(error instanceof Error ? error : new Error(String(error)));
-          }
-        };
-
-        eventSource.onerror = () => {
-          const error = new Error('EventSource failed');
-          options.onError?.(error);
-          eventSource.close();
-          setResponse({ loading: false });
-        };
-
-        eventSource.addEventListener('complete', () => {
-          options.onComplete?.();
-          eventSource.close();
-          setResponse({ loading: false });
-        });
-
-        return { loading: true };
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        setResponse({ error: errorMessage, loading: false });
-        return { error: errorMessage, loading: false };
-      }
+    // For updating resources, we'll use the update_profile tool directly
+    if (resourceName === 'profiles') {
+      return executeTool<T>('update_profile', { profileId: id, data });
     }
 
-    // Handle non-streaming requests
-    try {
-      const result = await client.updateResource(resourceName, id, data);
-      setResponse({ data: result, loading: false });
-      return { data: result, loading: false };
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      setResponse({ error: errorMessage, loading: false });
-      return { error: errorMessage, loading: false };
-    }
-  }, []);
+    // For other resources, return an error as they're read-only
+    const errorMessage = `Resource ${resourceName} is read-only`;
+    setResponse({ error: errorMessage, loading: false });
+    return { error: errorMessage, loading: false };
+  }, [executeTool]);
 
   return {
     executeTool,

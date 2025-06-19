@@ -1,197 +1,500 @@
-import { Client as MCPServer, MCPTool, MCPResource } from '@modelcontextprotocol/sdk/client/index.js';
-import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { OpenAI } from 'openai';
-import { z } from 'zod';
-import { headers } from 'next/headers';
+import { NextRequest, NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase';
 
-// Initialize Supabase client
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+interface MCPRequest {
+  jsonrpc: '2.0';
+  method: string;
+  params?: unknown;
+  id: string | number | null;
+}
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+interface MCPResponse {
+  jsonrpc: '2.0';
+  result?: unknown;
+  error?: {
+    code: number;
+    message: string;
+    data?: unknown;
+  };
+  id: string | number | null;
+}
 
-// Define tool schemas
-const searchActivitiesSchema = z.object({
-  query: z.string().describe('Search query for activities'),
-  limit: z.number().optional().describe('Maximum number of results to return'),
-});
+interface MCPTool {
+  name: string;
+  description: string;
+  inputSchema: {
+    type: 'object';
+    properties: Record<string, unknown>;
+    required?: string[];
+  };
+}
 
-const getActivityDetailsSchema = z.object({
-  activityId: z.string().describe('ID of the activity to retrieve'),
-});
+interface MCPResource {
+  uri: string;
+  name: string;
+  description?: string;
+  mimeType?: string;
+}
 
-const getProfileSchema = z.object({
-  profileId: z.string().describe('ID of the profile to retrieve'),
-});
-
-const updateProfileSchema = z.object({
-  profileId: z.string().describe('ID of the profile to update'),
-  data: z.object({
-    name: z.string().optional(),
-    email: z.string().optional(),
-    preferences: z.record(z.unknown()).optional(),
-  }).describe('Profile data to update'),
-});
-
-// Create MCP tools
+// Available tools
 const tools: MCPTool[] = [
   {
     name: 'search_activities',
     description: 'Search for activities based on query',
-    schema: searchActivitiesSchema,
-    handler: async ({ query, limit = 10 }: { query: string; limit?: number }) => {
-      const { data, error } = await supabase
-        .from('activities')
-        .select('*')
-        .ilike('name', `%${query}%`)
-        .limit(limit);
-
-      if (error) throw error;
-      return data;
-    },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          description: 'Search query for activities'
+        },
+        limit: {
+          type: 'number',
+          description: 'Maximum number of results to return',
+          default: 10
+        }
+      },
+      required: ['query']
+    }
   },
   {
     name: 'get_activity_details',
     description: 'Get detailed information about a specific activity',
-    schema: getActivityDetailsSchema,
-    handler: async ({ activityId }: { activityId: string }) => {
-      const { data, error } = await supabase
-        .from('activities')
-        .select('*')
-        .eq('id', activityId)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        activityId: {
+          type: 'string',
+          description: 'ID of the activity to retrieve'
+        }
+      },
+      required: ['activityId']
+    }
   },
   {
     name: 'get_profile',
     description: 'Get user profile information',
-    schema: getProfileSchema,
-    handler: async ({ profileId }: { profileId: string }) => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', profileId)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        profileId: {
+          type: 'string',
+          description: 'ID of the profile to retrieve'
+        }
+      },
+      required: ['profileId']
+    }
   },
   {
     name: 'update_profile',
     description: 'Update user profile information',
-    schema: updateProfileSchema,
-    handler: async ({ profileId, data }: { profileId: string; data: Record<string, unknown> }) => {
-      const { data: updatedProfile, error } = await supabase
-        .from('profiles')
-        .update(data)
-        .eq('id', profileId)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return updatedProfile;
-    },
-  },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        profileId: {
+          type: 'string',
+          description: 'ID of the profile to update'
+        },
+        data: {
+          type: 'object',
+          description: 'Profile data to update',
+          properties: {
+            name: { type: 'string' },
+            email: { type: 'string' },
+            preferences: { type: 'object' }
+          }
+        }
+      },
+      required: ['profileId', 'data']
+    }
+  }
 ];
 
-// Create MCP resources
+// Available resources
 const resources: MCPResource[] = [
   {
-    name: 'activities',
+    uri: 'activities://list',
+    name: 'Activities',
     description: 'Collection of user activities',
-    schema: z.object({
-      id: z.string(),
-      name: z.string(),
-      description: z.string().optional(),
-      type: z.string(),
-      duration: z.number(),
-      distance: z.number().optional(),
-      calories: z.number().optional(),
-      created_at: z.string(),
-      user_id: z.string(),
-    }),
+    mimeType: 'application/json'
   },
   {
-    name: 'profiles',
+    uri: 'profiles://list',
+    name: 'Profiles',
     description: 'User profile information',
-    schema: z.object({
-      id: z.string(),
-      name: z.string(),
-      email: z.string(),
-      preferences: z.record(z.unknown()),
-      created_at: z.string(),
-      updated_at: z.string(),
-    }),
-  },
+    mimeType: 'application/json'
+  }
 ];
 
-// Create MCP server instance
-const mcpServer = new MCPServer({
-  tools,
-  resources,
-  openai,
-  supabase,
-  transport: 'sse', // Enable SSE transport
-});
-
-// Handle MCP requests
-export async function POST(req: Request) {
+async function handleToolCall(name: string, params: Record<string, unknown>): Promise<unknown> {
+  console.log(`Executing tool: ${name} with params:`, params);
+  
   try {
-    const headersList = await headers();
-    const accept = headersList.get('accept') || '';
+    switch (name) {
+      case 'search_activities': {
+        const { query, limit = 10 } = params;
+        console.log(`Searching activities with query: ${query}, limit: ${limit}`);
+        
+        const { data, error } = await supabase
+          .from('activities')
+          .select('*')
+          .or(`name.ilike.%${query}%, type.ilike.%${query}%, notes.ilike.%${query}%`)
+          .order('created_at', { ascending: false })
+          .limit(Number(limit));
 
-    // Check if client accepts SSE
-    if (accept.includes('text/event-stream')) {
-      const encoder = new TextEncoder();
-      const stream = new ReadableStream({
-        async start(controller) {
-          try {
-            const body = await req.json();
-            const responseStream = await mcpServer.handleStreamingRequest(body);
-
-            for await (const chunk of responseStream) {
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`));
+        if (error) {
+          console.error('Supabase error details:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+          });
+          throw new Error(`Supabase error: ${error.message}`);
+        }
+        
+        console.log(`Found ${data?.length || 0} activities`);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(data, null, 2)
             }
-            controller.close();
-          } catch (error) {
-            controller.error(error);
-          }
-        },
-      });
+          ]
+        };
+      }
 
-      return new Response(stream, {
-        headers: {
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
-        },
-      });
+      case 'get_activity_details': {
+        const { activityId } = params;
+        console.log(`Getting activity details for ID: ${activityId}`);
+        
+        const { data, error } = await supabase
+          .from('activities')
+          .select('*')
+          .eq('id', activityId)
+          .single();
+
+        if (error) {
+          console.error('Supabase error details:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+          });
+          throw new Error(`Supabase error: ${error.message}`);
+        }
+        
+        console.log('Activity details retrieved successfully');
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(data, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'get_profile': {
+        const { profileId } = params;
+        console.log(`Getting profile for ID: ${profileId}`);
+        
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', profileId)
+          .single();
+
+        if (error) {
+          console.error('Supabase error details:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+          });
+          throw new Error(`Supabase error: ${error.message}`);
+        }
+        
+        console.log('Profile retrieved successfully');
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(data, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'update_profile': {
+        const { profileId, data: updateData } = params;
+        console.log(`Updating profile ${profileId} with data:`, updateData);
+        
+        const { data, error } = await supabase
+          .from('profiles')
+          .update(updateData)
+          .eq('id', profileId)
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Supabase error details:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+          });
+          throw new Error(`Supabase error: ${error.message}`);
+        }
+        
+        console.log('Profile updated successfully');
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(data, null, 2)
+            }
+          ]
+        };
+      }
+
+      default:
+        console.error(`Unknown tool: ${name}`);
+        throw new Error(`Unknown tool: ${name}`);
     }
-
-    // Handle regular JSON requests
-    const body = await req.json();
-    const response = await mcpServer.handleRequest(body);
-    return NextResponse.json(response);
   } catch (error) {
-    console.error('MCP Server Error:', error);
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 }
-    );
+    console.error(`Tool execution failed for ${name}:`, error);
+    throw new Error(`Tool execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
-// Handle MCP health check
-export async function GET() {
-  return NextResponse.json({ status: 'ok' });
+async function handleResourceRead(uri: string): Promise<unknown> {
+  console.log(`Reading resource: ${uri}`);
+  
+  try {
+    switch (uri) {
+      case 'activities://list': {
+        console.log('Querying activities table...');
+        const { data, error } = await supabase
+          .from('activities')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        if (error) {
+          console.error('Supabase error details:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+          });
+          throw new Error(`Supabase error: ${error.message}`);
+        }
+        
+        console.log(`Retrieved ${data?.length || 0} activities`);
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: 'application/json',
+              text: JSON.stringify(data, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'profiles://list': {
+        console.log('Querying profiles table...');
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .limit(50);
+
+        if (error) {
+          console.error('Supabase error details:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+          });
+          throw new Error(`Supabase error: ${error.message}`);
+        }
+        
+        console.log(`Retrieved ${data?.length || 0} profiles`);
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: 'application/json',
+              text: JSON.stringify(data, null, 2)
+            }
+          ]
+        };
+      }
+
+      default:
+        console.error(`Unknown resource: ${uri}`);
+        throw new Error(`Unknown resource: ${uri}`);
+    }
+  } catch (error) {
+    console.error(`Resource read failed for ${uri}:`, error);
+    throw new Error(`Resource read failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+async function handleMCPRequest(request: MCPRequest): Promise<MCPResponse> {
+  console.log(`Handling MCP request: ${request.method}`, request.params);
+  
+  try {
+    switch (request.method) {
+      case 'initialize':
+        console.log('Initializing MCP server');
+        return {
+          jsonrpc: '2.0',
+          result: {
+            protocolVersion: '2024-11-05',
+            capabilities: {
+              tools: {},
+              resources: {}
+            },
+            serverInfo: {
+              name: 'scaffold-your-shape-server',
+              version: '1.0.0'
+            }
+          },
+          id: request.id
+        };
+
+      case 'tools/list':
+        console.log('Listing available tools');
+        return {
+          jsonrpc: '2.0',
+          result: {
+            tools
+          },
+          id: request.id
+        };
+
+      case 'tools/call': {
+        const params = request.params as { name: string; arguments: Record<string, unknown> };
+        if (!params || !params.name) {
+          throw new Error('Missing tool name in tools/call request');
+        }
+        
+        const toolResult = await handleToolCall(params.name, params.arguments || {});
+        console.log('Tool call completed successfully');
+        return {
+          jsonrpc: '2.0',
+          result: toolResult,
+          id: request.id
+        };
+      }
+
+      case 'resources/list':
+        console.log('Listing available resources');
+        return {
+          jsonrpc: '2.0',
+          result: {
+            resources
+          },
+          id: request.id
+        };
+
+      case 'resources/read': {
+        const params = request.params as { uri: string };
+        if (!params || !params.uri) {
+          throw new Error('Missing URI in resources/read request');
+        }
+        
+        const resourceResult = await handleResourceRead(params.uri);
+        console.log('Resource read completed successfully');
+        return {
+          jsonrpc: '2.0',
+          result: resourceResult,
+          id: request.id
+        };
+      }
+
+      default:
+        console.error(`Method not found: ${request.method}`);
+        return {
+          jsonrpc: '2.0',
+          error: {
+            code: -32601,
+            message: `Method not found: ${request.method}`
+          },
+          id: request.id
+        };
+    }
+  } catch (error) {
+    console.error('MCP request handling error:', error);
+    return {
+      jsonrpc: '2.0',
+      error: {
+        code: -32603,
+        message: 'Internal error',
+        data: error instanceof Error ? error.message : 'Unknown error'
+      },
+      id: request.id
+    };
+  }
+}
+
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  console.log('Received POST request to MCP endpoint');
+  
+  try {
+    const body = await request.json() as MCPRequest;
+    console.log('Request body:', body);
+    
+    if (body.jsonrpc !== '2.0') {
+      console.error('Invalid JSON-RPC version:', body.jsonrpc);
+      return NextResponse.json({
+        jsonrpc: '2.0',
+        error: {
+          code: -32600,
+          message: 'Invalid Request: JSON-RPC version must be 2.0'
+        },
+        id: null
+      }, { status: 400 });
+    }
+
+    const response = await handleMCPRequest(body);
+    console.log('Sending response:', response);
+    return NextResponse.json(response);
+  } catch (error) {
+    console.error('POST request error:', error);
+    return NextResponse.json({
+      jsonrpc: '2.0',
+      error: {
+        code: -32700,
+        message: 'Parse error',
+        data: error instanceof Error ? error.message : 'Unknown error'
+      },
+      id: null
+    }, { status: 400 });
+  }
+}
+
+export async function GET(): Promise<NextResponse> {
+  console.log('Received GET request to MCP endpoint');
+  return NextResponse.json({
+    jsonrpc: '2.0',
+    error: {
+      code: -32000,
+      message: 'Method not allowed'
+    },
+    id: null
+  }, { status: 405 });
+}
+
+export async function DELETE(): Promise<NextResponse> {
+  console.log('Received DELETE request to MCP endpoint');
+  return NextResponse.json({
+    jsonrpc: '2.0',
+    error: {
+      code: -32000,
+      message: 'Method not allowed'
+    },
+    id: null
+  }, { status: 405 });
 } 
