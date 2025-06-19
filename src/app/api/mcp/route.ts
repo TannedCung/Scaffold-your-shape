@@ -1,4 +1,4 @@
-import { MCPServer, MCPTool, MCPResource } from '@modelcontextprotocol/sdk';
+import { Client as MCPServer, MCPTool, MCPResource } from '@modelcontextprotocol/sdk/client/index.js';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { OpenAI } from 'openai';
