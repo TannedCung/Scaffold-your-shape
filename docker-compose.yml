@@ -46,7 +46,7 @@ services:
 
   # Pili AI Chatbot service
   pili-api:
-    image: tannedcung/scaffold-your-shape:pili-20250616
+    image: tannedcung/scaffold-your-shape:pili-20250622
     container_name: pili-chatbot
     expose:
       - "8991"
