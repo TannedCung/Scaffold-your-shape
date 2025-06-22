@@ -121,21 +121,71 @@ const getUserStatsSchema = z.object({
 });
 
 // MCP Protocol types
+interface MCPToolCallParams {
+  name: string;
+  arguments: Record<string, unknown>;
+}
+
+interface MCPResourceReadParams {
+  uri: string;
+}
+
 interface MCPRequest {
   jsonrpc: string;
   id?: string | number;
   method: string;
-  params?: any;
+  params?: MCPToolCallParams | MCPResourceReadParams | Record<string, unknown>;
+}
+
+interface MCPToolResult {
+  content: Array<{
+    type: string;
+    text: string;
+  }>;
+}
+
+interface MCPResourceResult {
+  contents: Array<{
+    uri: string;
+    mimeType: string;
+    text: string;
+  }>;
+}
+
+interface MCPInitializeResult {
+  protocolVersion: string;
+  capabilities: {
+    tools: Record<string, unknown>;
+    resources: Record<string, unknown>;
+  };
+  serverInfo: {
+    name: string;
+    version: string;
+  };
+}
+
+interface MCPListResult {
+  tools?: Array<{
+    name: string;
+    description: string;
+    inputSchema: Record<string, unknown>;
+  }>;
+  resources?: Array<{
+    uri: string;
+    name: string;
+    description: string;
+    mimeType: string;
+  }>;
 }
 
 interface MCPResponse {
   jsonrpc: string;
   id?: string | number;
-  result?: any;
+  result?: MCPToolResult | MCPResourceResult | MCPInitializeResult | MCPListResult | { success: boolean };
   error?: {
     code: number;
     message: string;
-    data?: any;
+    data?: string | Record<string, unknown>;
   };
 }
 
@@ -1010,34 +1060,37 @@ async function handleMCPRequest(request: MCPRequest): Promise<MCPResponse> {
           },
         };
 
-      case 'tools/call':
-        const { name: toolName, arguments: toolArgs } = params;
-        
-        if (!toolHandlers[toolName as keyof typeof toolHandlers]) {
-          return {
-            jsonrpc: '2.0',
-            id,
-            error: {
-              code: -32601,
-              message: `Tool not found: ${toolName}`,
-            },
-          };
-        }
+             case 'tools/call':
+         const toolCallParams = params as MCPToolCallParams;
+         const { name: toolName, arguments: toolArgs } = toolCallParams;
+         
+         if (!toolHandlers[toolName as keyof typeof toolHandlers]) {
+           return {
+             jsonrpc: '2.0',
+             id,
+             error: {
+               code: -32601,
+               message: `Tool not found: ${toolName}`,
+             },
+           };
+         }
 
-        const result = await toolHandlers[toolName as keyof typeof toolHandlers](toolArgs);
-        
-        return {
-          jsonrpc: '2.0',
-          id,
-          result: {
-            content: [
-              {
-                type: 'text',
-                text: JSON.stringify(result, null, 2),
-              },
-            ],
-          },
-        };
+         // Use a type-safe approach to call the tool handler
+         const handler = toolHandlers[toolName as keyof typeof toolHandlers];
+         const result = await handler(toolArgs as never);
+         
+         return {
+           jsonrpc: '2.0',
+           id,
+           result: {
+             content: [
+               {
+                 type: 'text',
+                 text: JSON.stringify(result, null, 2),
+               },
+             ],
+           },
+         };
 
       case 'resources/list':
         return {
@@ -1048,8 +1101,9 @@ async function handleMCPRequest(request: MCPRequest): Promise<MCPResponse> {
           },
         };
 
-      case 'resources/read':
-        const { uri } = params;
+             case 'resources/read':
+         const resourceParams = params as MCPResourceReadParams;
+         const { uri } = resourceParams;
         
         if (uri === 'activities://list') {
           const { data, error } = await supabase
