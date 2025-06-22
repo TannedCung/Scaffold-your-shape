@@ -7,8 +7,10 @@ import { supabase } from '@/lib/supabase';
 
 // Define tool schemas
 const searchActivitiesSchema = z.object({
-  query: z.string().describe('Search query for activities'),
+  query: z.string().optional().describe('Search query for activity name'),
   limit: z.number().optional().describe('Maximum number of results to return'),
+  startDate: z.string().optional().describe('Start date filter (ISO string)'),
+  endDate: z.string().optional().describe('End date filter (ISO string)'),
 });
 
 const getActivityDetailsSchema = z.object({
@@ -191,11 +193,27 @@ interface MCPResponse {
 
 // Tool implementations
 const toolHandlers = {
-  search_activities: async ({ query, limit = 10 }: { query: string; limit?: number }) => {
-    const { data, error } = await supabase
+  search_activities: async ({ query, limit = 10, startDate, endDate }: { 
+    query?: string; limit?: number; startDate?: string; endDate?: string 
+  }) => {
+    let queryBuilder = supabase
       .from('activities')
-      .select('*')
-      .ilike('name', `%${query}%`)
+      .select('*');
+
+    if (query) {
+      queryBuilder = queryBuilder.ilike('name', `%${query}%`);
+    }
+
+    if (startDate) {
+      queryBuilder = queryBuilder.gte('date', startDate);
+    }
+
+    if (endDate) {
+      queryBuilder = queryBuilder.lte('date', endDate);
+    }
+
+    const { data, error } = await queryBuilder
+      .order('date', { ascending: false })
       .limit(limit);
 
     if (error) throw error;
@@ -593,21 +611,29 @@ const toolHandlers = {
 const availableTools = [
   {
     name: 'search_activities',
-    description: 'Search for activities based on query',
+    description: 'Search for activities based on name of the activity with optional date filtering',
     inputSchema: {
       type: 'object',
       properties: {
         query: {
           type: 'string',
-          description: 'Search query for activities',
+          description: 'Search query for activities, for example: "run", "walk", "swim", "bike", "hike", "yoga", "pilates", "dance", "other"',
         },
         limit: {
           type: 'number',
           description: 'Maximum number of results to return',
           default: 10,
         },
+        startDate: {
+          type: 'string',
+          description: 'Start date filter (ISO string format)',
+        },
+        endDate: {
+          type: 'string', 
+          description: 'End date filter (ISO string format)',
+        },
       },
-      required: ['query'],
+      required: [],
     },
   },
   {
