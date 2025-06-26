@@ -121,7 +121,7 @@ const ActivityTypeChart: React.FC<ActivityTypeChartProps> = ({ data, loading }) 
             formatter={(value: number, name: string, props) => {
               const payload = props.payload as ActivityTypeData;
               return [
-                `${value} activities (${payload.percentage}%)`,
+                `${Math.round(value)} activities (${payload.percentage.toFixed(1)}%)`,
                 payload.type
               ];
             }}

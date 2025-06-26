@@ -101,7 +101,7 @@ const DistanceOverTimeChart: React.FC<DistanceOverTimeChartProps> = ({ data, loa
               boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
             }}
             formatter={(value: number, name: string) => [
-              `${value} km`,
+              `${value.toFixed(2)} km`,
               name === 'distance' ? 'Daily Distance' : 'Cumulative Distance'
             ]}
           />

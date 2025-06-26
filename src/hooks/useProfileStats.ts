@@ -177,7 +177,7 @@ export function useProfileStats(userId?: string) {
 
       setStats({
         totalActivities: totalActivities || 0,
-        totalDistance: Math.round(totalDistance * 100) / 100,
+        totalDistance: Number(totalDistance.toFixed(2)),
         totalChallenges: totalChallenges || 0,
         totalClubs: totalClubs || 0,
         activeChallenges,
@@ -206,6 +206,21 @@ export function useProfileStats(userId?: string) {
 function processMonthlyData(activities: Array<{ type: string; date: string; value: number; unit: string }>) {
   const monthlyStats: Record<string, { count: number; distance: number }> = {};
   
+  // Handle empty activities
+  if (!activities || activities.length === 0) {
+    const last12Months = Array.from({ length: 12 }, (_, i) => {
+      const date = new Date();
+      date.setMonth(date.getMonth() - i);
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+    }).reverse();
+    
+    return last12Months.map(month => ({
+      month,
+      count: 0,
+      distance: 0.00
+    }));
+  }
+  
   activities.forEach(activity => {
     const date = new Date(activity.date);
     const monthKey = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
@@ -221,7 +236,7 @@ function processMonthlyData(activities: Array<{ type: string; date: string; valu
       let distance = activity.value;
       if (activity.unit === 'meters') distance = distance / 1000;
       if (activity.unit === 'miles') distance = distance * 1.609344;
-      monthlyStats[monthKey].distance += distance;
+      monthlyStats[monthKey].distance += Number(distance.toFixed(2));
     }
   });
   
@@ -235,12 +250,19 @@ function processMonthlyData(activities: Array<{ type: string; date: string; valu
   return last12Months.map(month => ({
     month,
     count: monthlyStats[month]?.count || 0,
-    distance: Math.round((monthlyStats[month]?.distance || 0) * 100) / 100
+    distance: Number(((monthlyStats[month]?.distance || 0)).toFixed(2))
   }));
 }
 
 function processActivityTypeDistribution(activities: Array<{ type: string; date: string; value: number; unit: string }>) {
   const typeCount: Record<string, number> = {};
+  
+  // Handle empty activities
+  if (!activities || activities.length === 0) {
+    return [
+      { type: 'No Data', count: 0, percentage: 100.0 }
+    ];
+  }
   
   activities.forEach(activity => {
     typeCount[activity.type] = (typeCount[activity.type] || 0) + 1;
@@ -252,7 +274,7 @@ function processActivityTypeDistribution(activities: Array<{ type: string; date:
     .map(([type, count]) => ({
       type: type.charAt(0).toUpperCase() + type.slice(1),
       count,
-      percentage: total > 0 ? Math.round((count / total) * 100) : 0
+      percentage: total > 0 ? Number(((count / total) * 100).toFixed(1)) : 0
     }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 6); // Top 6 activity types
@@ -267,6 +289,14 @@ function processWeeklyData(activities: Array<{ type: string; date: string; value
     weeklyStats[day] = 0;
   });
   
+  // Handle empty activities - still return all days with 0 counts
+  if (!activities || activities.length === 0) {
+    return weekDays.map(day => ({
+      day: day.substring(0, 3), // Shorten to 3 letters
+      count: 0
+    }));
+  }
+  
   activities.forEach(activity => {
     const date = new Date(activity.date);
     const dayName = weekDays[date.getDay()];
@@ -280,6 +310,21 @@ function processWeeklyData(activities: Array<{ type: string; date: string; value
 }
 
 function processDistanceOverTime(activities: Array<{ type: string; date: string; value: number; unit: string }>) {
+  // Handle empty activities
+  if (!activities || activities.length === 0) {
+    const last30Days = Array.from({ length: 30 }, (_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      return date.toISOString().split('T')[0];
+    }).reverse();
+    
+    return last30Days.map(date => ({
+      date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      distance: 0.00,
+      cumulative: 0.00
+    }));
+  }
+  
   const distanceActivities = activities.filter(activity => 
     ['meters', 'kilometers', 'miles'].includes(activity.unit)
   );
@@ -293,7 +338,7 @@ function processDistanceOverTime(activities: Array<{ type: string; date: string;
     if (activity.unit === 'meters') distance = distance / 1000;
     if (activity.unit === 'miles') distance = distance * 1.609344;
     
-    dailyDistance[dateKey] = (dailyDistance[dateKey] || 0) + distance;
+    dailyDistance[dateKey] = Number(((dailyDistance[dateKey] || 0) + distance).toFixed(2));
   });
   
   // Get last 30 days
@@ -311,8 +356,8 @@ function processDistanceOverTime(activities: Array<{ type: string; date: string;
     
     return {
       date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      distance: Math.round(dailyDist * 100) / 100,
-      cumulative: Math.round(cumulative * 100) / 100
+      distance: Number(dailyDist.toFixed(2)),
+      cumulative: Number(cumulative.toFixed(2))
     };
   });
 } 

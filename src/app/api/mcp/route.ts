@@ -197,7 +197,7 @@ const toolHandlers = {
     query?: string; limit?: number; startDate?: string; endDate?: string 
   }) => {
     let queryBuilder = supabase
-      .from('activities')
+        .from('activities')
       .select('*');
 
     if (query) {
@@ -214,22 +214,22 @@ const toolHandlers = {
 
     const { data, error } = await queryBuilder
       .order('date', { ascending: false })
-      .limit(limit);
+        .limit(limit);
 
-    if (error) throw error;
-    return data;
-  },
+      if (error) throw error;
+      return data;
+    },
 
   get_activity_details: async ({ activityId }: { activityId: string }) => {
-    const { data, error } = await supabase
-      .from('activities')
-      .select('*')
-      .eq('id', activityId)
-      .single();
+      const { data, error } = await supabase
+        .from('activities')
+        .select('*')
+        .eq('id', activityId)
+        .single();
 
-    if (error) throw error;
-    return data;
-  },
+      if (error) throw error;
+      return data;
+    },
 
   create_activity: async ({ userId, name, type, value, unit, date, location, notes }: { 
     userId: string; name: string; type: string; value: number; unit: string; date: string; location?: string; notes?: string 
@@ -256,26 +256,26 @@ const toolHandlers = {
   },
 
   get_profile: async ({ profileId }: { profileId: string }) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', profileId)
-      .single();
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', profileId)
+        .single();
 
-    if (error) throw error;
-    return data;
-  },
+      if (error) throw error;
+      return data;
+    },
 
   update_profile: async ({ profileId, data }: { profileId: string; data: Record<string, unknown> }) => {
-    const { data: updatedProfile, error } = await supabase
-      .from('profiles')
-      .update(data)
-      .eq('id', profileId)
-      .select()
-      .single();
+      const { data: updatedProfile, error } = await supabase
+        .from('profiles')
+        .update(data)
+        .eq('id', profileId)
+        .select()
+        .single();
 
-    if (error) throw error;
-    return updatedProfile;
+      if (error) throw error;
+      return updatedProfile;
   },
 
   search_challenges: async ({ query, limit = 10, isPublic }: { query?: string; limit?: number; isPublic?: boolean }) => {

@@ -107,7 +107,7 @@ function ProfileContent() {
   // Utility function to format distance
   const formatDistance = (distance: number) => {
     if (distance >= 1) {
-      return `${distance}km`;
+      return `${distance.toFixed(2)}km`;
     }
     return `${(distance * 1000).toFixed(0)}m`;
   };
@@ -640,7 +640,7 @@ function ProfileContent() {
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, borderBottom: '1px solid #e0e0e0' }}>
                                   <Typography variant="body1" fontWeight={500}>Average Distance</Typography>
                                   <Typography variant="h6" fontWeight="bold" sx={{ color: '#10b981' }}>
-                                    {stats.totalActivities > 0 ? formatDistance(stats.totalDistance / stats.totalActivities) : '0km'}
+                                    {stats.totalActivities > 0 ? formatDistance(stats.totalDistance / stats.totalActivities) : '0.00km'}
                                   </Typography>
                                 </Box>
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2 }}>
