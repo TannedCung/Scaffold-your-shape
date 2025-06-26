@@ -17,6 +17,26 @@ interface ProfileStats {
     currentValue: number;
     progress: number;
   }>;
+  // Analytics data for charts
+  monthlyActivityData: Array<{
+    month: string;
+    count: number;
+    distance: number;
+  }>;
+  activityTypeDistribution: Array<{
+    type: string;
+    count: number;
+    percentage: number;
+  }>;
+  weeklyActivityData: Array<{
+    day: string;
+    count: number;
+  }>;
+  distanceOverTime: Array<{
+    date: string;
+    distance: number;
+    cumulative: number;
+  }>;
 }
 
 export function useProfileStats(userId?: string) {
@@ -27,6 +47,10 @@ export function useProfileStats(userId?: string) {
     totalChallenges: 0,
     totalClubs: 0,
     activeChallenges: [],
+    monthlyActivityData: [],
+    activityTypeDistribution: [],
+    weeklyActivityData: [],
+    distanceOverTime: [],
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -136,12 +160,31 @@ export function useProfileStats(userId?: string) {
         })
         .slice(0, 3); // Limit to 3 active challenges
 
+      // Get detailed analytics data
+      const { data: activitiesForAnalytics, error: analyticsError } = await supabase
+        .from('activities')
+        .select('type, date, value, unit')
+        .eq('user_id', effectiveUserId)
+        .order('date', { ascending: true });
+
+      if (analyticsError) throw analyticsError;
+
+      // Process analytics data
+      const monthlyData = processMonthlyData(activitiesForAnalytics || []);
+      const typeDistribution = processActivityTypeDistribution(activitiesForAnalytics || []);
+      const weeklyData = processWeeklyData(activitiesForAnalytics || []);
+      const distanceData = processDistanceOverTime(activitiesForAnalytics || []);
+
       setStats({
         totalActivities: totalActivities || 0,
         totalDistance: Math.round(totalDistance * 100) / 100,
         totalChallenges: totalChallenges || 0,
         totalClubs: totalClubs || 0,
         activeChallenges,
+        monthlyActivityData: monthlyData,
+        activityTypeDistribution: typeDistribution,
+        weeklyActivityData: weeklyData,
+        distanceOverTime: distanceData,
       });
 
     } catch (err) {
@@ -157,4 +200,119 @@ export function useProfileStats(userId?: string) {
   }, [loadStats]);
 
   return { stats, loading, error, refresh: loadStats };
+}
+
+// Helper functions for processing analytics data
+function processMonthlyData(activities: Array<{ type: string; date: string; value: number; unit: string }>) {
+  const monthlyStats: Record<string, { count: number; distance: number }> = {};
+  
+  activities.forEach(activity => {
+    const date = new Date(activity.date);
+    const monthKey = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+    
+    if (!monthlyStats[monthKey]) {
+      monthlyStats[monthKey] = { count: 0, distance: 0 };
+    }
+    
+    monthlyStats[monthKey].count++;
+    
+    // Add distance if applicable
+    if (['meters', 'kilometers', 'miles'].includes(activity.unit)) {
+      let distance = activity.value;
+      if (activity.unit === 'meters') distance = distance / 1000;
+      if (activity.unit === 'miles') distance = distance * 1.609344;
+      monthlyStats[monthKey].distance += distance;
+    }
+  });
+  
+  // Convert to array and sort by month
+  const last12Months = Array.from({ length: 12 }, (_, i) => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - i);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+  }).reverse();
+  
+  return last12Months.map(month => ({
+    month,
+    count: monthlyStats[month]?.count || 0,
+    distance: Math.round((monthlyStats[month]?.distance || 0) * 100) / 100
+  }));
+}
+
+function processActivityTypeDistribution(activities: Array<{ type: string; date: string; value: number; unit: string }>) {
+  const typeCount: Record<string, number> = {};
+  
+  activities.forEach(activity => {
+    typeCount[activity.type] = (typeCount[activity.type] || 0) + 1;
+  });
+  
+  const total = activities.length;
+  
+  return Object.entries(typeCount)
+    .map(([type, count]) => ({
+      type: type.charAt(0).toUpperCase() + type.slice(1),
+      count,
+      percentage: total > 0 ? Math.round((count / total) * 100) : 0
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 6); // Top 6 activity types
+}
+
+function processWeeklyData(activities: Array<{ type: string; date: string; value: number; unit: string }>) {
+  const weekDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const weeklyStats: Record<string, number> = {};
+  
+  // Initialize all days
+  weekDays.forEach(day => {
+    weeklyStats[day] = 0;
+  });
+  
+  activities.forEach(activity => {
+    const date = new Date(activity.date);
+    const dayName = weekDays[date.getDay()];
+    weeklyStats[dayName]++;
+  });
+  
+  return weekDays.map(day => ({
+    day: day.substring(0, 3), // Shorten to 3 letters
+    count: weeklyStats[day]
+  }));
+}
+
+function processDistanceOverTime(activities: Array<{ type: string; date: string; value: number; unit: string }>) {
+  const distanceActivities = activities.filter(activity => 
+    ['meters', 'kilometers', 'miles'].includes(activity.unit)
+  );
+  
+  const dailyDistance: Record<string, number> = {};
+  
+  distanceActivities.forEach(activity => {
+    const dateKey = new Date(activity.date).toISOString().split('T')[0];
+    let distance = activity.value;
+    
+    if (activity.unit === 'meters') distance = distance / 1000;
+    if (activity.unit === 'miles') distance = distance * 1.609344;
+    
+    dailyDistance[dateKey] = (dailyDistance[dateKey] || 0) + distance;
+  });
+  
+  // Get last 30 days
+  const last30Days = Array.from({ length: 30 }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    return date.toISOString().split('T')[0];
+  }).reverse();
+  
+  let cumulative = 0;
+  
+  return last30Days.map(date => {
+    const dailyDist = dailyDistance[date] || 0;
+    cumulative += dailyDist;
+    
+    return {
+      date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      distance: Math.round(dailyDist * 100) / 100,
+      cumulative: Math.round(cumulative * 100) / 100
+    };
+  });
 } 
