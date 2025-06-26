@@ -39,6 +39,7 @@ import StravaActivityImporter from '@/components/strava/StravaActivityImporter';
 import { useSession } from 'next-auth/react';
 import { useUser } from '@/hooks/useUser';
 import { useStrava } from '@/hooks/useStrava';
+import { useProfileStats } from '@/hooks/useProfileStats';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 
@@ -66,6 +67,9 @@ function ProfileContent() {
   // Determine the user ID from either NextAuth session or Supabase user
   const userId = session?.user?.id || user?.id;
   
+  // Get profile statistics
+  const { stats, loading: statsLoading, error: statsError } = useProfileStats(userId);
+  
   // Check if we're still loading authentication
   const isLoading = sessionStatus === 'loading' || profileLoading || stravaLoading;
 
@@ -83,6 +87,23 @@ function ProfileContent() {
     setSuccessMessage(`Successfully imported ${count} activities from Strava!`);
     setShowSuccess(true);
     router.refresh();
+  };
+
+  // Utility function to format distance
+  const formatDistance = (distance: number) => {
+    if (distance >= 1) {
+      return `${distance}km`;
+    }
+    return `${(distance * 1000).toFixed(0)}m`;
+  };
+
+  // Utility function to calculate days remaining
+  const getDaysRemaining = (endDate: string) => {
+    const now = new Date();
+    const end = new Date(endDate);
+    const diffTime = end.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return Math.max(0, diffDays);
   };
 
   // Create safe profile object for the form
@@ -301,6 +322,11 @@ function ProfileContent() {
           </Box>
 
           {/* Stats Cards */}
+          {statsError && (
+            <Alert severity="error" sx={{ mb: 3 }}>
+              {statsError}
+            </Alert>
+          )}
           <Box
             sx={{
               display: 'grid',
@@ -310,33 +336,49 @@ function ProfileContent() {
             }}
           >
             <Box sx={{ textAlign: 'center', p: 2, backgroundColor: 'rgba(45, 165, 142, 0.1)', borderRadius: 2 }}>
-              <Typography variant="h4" fontWeight="bold" color="primary">
-                156
-              </Typography>
+              {statsLoading ? (
+                <CircularProgress size={24} sx={{ mb: 1 }} />
+              ) : (
+                <Typography variant="h4" fontWeight="bold" color="primary">
+                  {stats.totalActivities}
+                </Typography>
+              )}
               <Typography variant="body2" color="text.secondary">
-                Workouts
+                Activities
               </Typography>
             </Box>
             <Box sx={{ textAlign: 'center', p: 2, backgroundColor: 'rgba(59, 130, 246, 0.1)', borderRadius: 2 }}>
-              <Typography variant="h4" fontWeight="bold" color="secondary">
-                352km
-              </Typography>
+              {statsLoading ? (
+                <CircularProgress size={24} sx={{ mb: 1 }} />
+              ) : (
+                <Typography variant="h4" fontWeight="bold" color="secondary">
+                  {formatDistance(stats.totalDistance)}
+                </Typography>
+              )}
               <Typography variant="body2" color="text.secondary">
                 Distance
               </Typography>
             </Box>
             <Box sx={{ textAlign: 'center', p: 2, backgroundColor: 'rgba(16, 185, 129, 0.1)', borderRadius: 2 }}>
-              <Typography variant="h4" fontWeight="bold" sx={{ color: '#10b981' }}>
-                12
-              </Typography>
+              {statsLoading ? (
+                <CircularProgress size={24} sx={{ mb: 1 }} />
+              ) : (
+                <Typography variant="h4" fontWeight="bold" sx={{ color: '#10b981' }}>
+                  {stats.totalChallenges}
+                </Typography>
+              )}
               <Typography variant="body2" color="text.secondary">
                 Challenges
               </Typography>
             </Box>
             <Box sx={{ textAlign: 'center', p: 2, backgroundColor: 'rgba(245, 158, 11, 0.1)', borderRadius: 2 }}>
-              <Typography variant="h4" fontWeight="bold" sx={{ color: '#f59e0b' }}>
-                4
-              </Typography>
+              {statsLoading ? (
+                <CircularProgress size={24} sx={{ mb: 1 }} />
+              ) : (
+                <Typography variant="h4" fontWeight="bold" sx={{ color: '#f59e0b' }}>
+                  {stats.totalClubs}
+                </Typography>
+              )}
               <Typography variant="body2" color="text.secondary">
                 Clubs
               </Typography>
@@ -380,48 +422,46 @@ function ProfileContent() {
                 Current Challenges
               </Typography>
               
-              <Box sx={{ mb: 3 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body1" fontWeight={500}>
-                    30-Day Push-up Challenge
-                  </Typography>
-                  <Typography variant="body2" color="primary">
-                    40%
+              {statsLoading ? (
+                <Box sx={{ textAlign: 'center', py: 2 }}>
+                  <CircularProgress size={24} />
+                </Box>
+              ) : stats.activeChallenges.length > 0 ? (
+                <>
+                  {stats.activeChallenges.map((challenge) => (
+                    <Box key={challenge.id} sx={{ mb: 3, '&:last-child': { mb: 2 } }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                        <Typography variant="body1" fontWeight={500}>
+                          {challenge.title}
+                        </Typography>
+                        <Typography variant="body2" color="primary">
+                          {challenge.progress}%
+                        </Typography>
+                      </Box>
+                      <LinearProgress 
+                        variant="determinate" 
+                        value={challenge.progress} 
+                        sx={{ height: 8, borderRadius: 4, mb: 1 }}
+                      />
+                      <Typography variant="body2" color="text.secondary">
+                        {challenge.currentValue} / {challenge.targetValue} {challenge.unit} • {getDaysRemaining(challenge.endDate)} days left
+                      </Typography>
+                    </Box>
+                  ))}
+                </>
+              ) : (
+                <Box sx={{ textAlign: 'center', py: 2 }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    No active challenges
                   </Typography>
                 </Box>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={40} 
-                  sx={{ height: 8, borderRadius: 4, mb: 1 }}
-                />
-                <Typography variant="body2" color="text.secondary">
-                  1,200 / 3,000 push-ups • 18 days left
-                </Typography>
-              </Box>
-              
-              <Box sx={{ mb: 2 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body1" fontWeight={500}>
-                    Cycling Expedition
-                  </Typography>
-                  <Typography variant="body2" color="primary">
-                    40%
-                  </Typography>
-                </Box>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={40} 
-                  sx={{ height: 8, borderRadius: 4, mb: 1 }}
-                />
-                <Typography variant="body2" color="text.secondary">
-                  120 / 300 km • 8 days left
-                </Typography>
-              </Box>
+              )}
               
               <Button 
                 variant="outlined" 
                 fullWidth 
                 sx={{ mt: 1 }}
+                onClick={() => router.push('/challenges')}
               >
                 View All Challenges
               </Button>
