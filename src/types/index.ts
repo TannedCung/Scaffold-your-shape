@@ -493,6 +493,8 @@ export interface ClubMember {
   userId: string;
   role: 'admin' | 'member';
   joinedAt: string;
+  club?: Club; // Optional club details when populated
+  profile?: Profile; // Optional profile details when populated
 }
 
 export function mapClubMemberDbToClubMember(db: ClubMemberDb): ClubMember {

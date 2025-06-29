@@ -77,7 +77,7 @@ function ProfileContent() {
   const { stats, loading: statsLoading, error: statsError } = useProfileStats(userId);
   
   // Get user clubs
-  const { clubs, loading: clubsLoading, error: clubsError } = useUserClubs(userId);
+  const { userClubs, loading: clubsLoading, error: clubsError } = useUserClubs();
   
   // Tab state
   const [activeTab, setActiveTab] = useState(0);
@@ -501,15 +501,15 @@ function ProfileContent() {
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
                 <CircularProgress />
               </Box>
-            ) : clubs.length > 0 ? (
+            ) : userClubs.length > 0 ? (
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: '1fr 1fr 1fr' }, gap: 3 }}>
-                {clubs.map((club) => (
-                  <Card key={club.id} sx={{ cursor: 'pointer', '&:hover': { boxShadow: 4 } }}>
+                {userClubs.map((membership) => (
+                  <Card key={membership.id} sx={{ cursor: 'pointer', '&:hover': { boxShadow: 4 } }}>
                     <Box
                       sx={{
                         height: 200,
-                        background: club.image_url 
-                          ? `url(${club.image_url})` 
+                        background: membership.club?.imageUrl 
+                          ? `url(${membership.club.imageUrl})` 
                           : 'linear-gradient(135deg, #2da58e 0%, #1a8a73 100%)',
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
@@ -518,7 +518,7 @@ function ProfileContent() {
                         alignItems: 'flex-end',
                         p: 2,
                       }}
-                      onClick={() => router.push(`/club/${club.id}`)}
+                      onClick={() => router.push(`/club/${membership.clubId}`)}
                     >
                       <Box
                         sx={{
@@ -534,32 +534,32 @@ function ProfileContent() {
                           borderRadius: 1,
                         }}
                       >
-                        {club.role === 'admin' ? (
+                        {membership.role === 'admin' ? (
                           <AdminIcon fontSize="small" color="primary" />
                         ) : (
                           <MemberIcon fontSize="small" color="action" />
                         )}
                         <Typography variant="caption" sx={{ textTransform: 'capitalize' }}>
-                          {club.role}
+                          {membership.role}
                         </Typography>
                       </Box>
                     </Box>
                     <CardContent>
                       <Typography variant="h6" fontWeight="bold" gutterBottom>
-                        {club.name}
+                        {membership.club?.name || 'Unknown Club'}
                       </Typography>
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 2, minHeight: 40 }}>
-                        {club.description || 'No description available'}
+                        {membership.club?.description || 'No description available'}
                       </Typography>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                           <ClubsIcon fontSize="small" color="action" />
                           <Typography variant="body2" color="text.secondary">
-                            {club.member_count} members
+                            {membership.club?.memberCount || 0} members
                           </Typography>
                         </Box>
                         <Typography variant="caption" color="text.secondary">
-                          Joined {new Date(club.joined_at).toLocaleDateString()}
+                          Joined {new Date(membership.joinedAt).toLocaleDateString()}
                         </Typography>
                       </Box>
                     </CardContent>
@@ -672,25 +672,25 @@ function ProfileContent() {
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, borderBottom: '1px solid #e0e0e0' }}>
                                   <Typography variant="body1" fontWeight={500}>Total Clubs</Typography>
                                   <Typography variant="h6" fontWeight="bold" color="primary">
-                                    {clubs.length}
+                                    {userClubs.length}
                                   </Typography>
                                 </Box>
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, borderBottom: '1px solid #e0e0e0' }}>
                                   <Typography variant="body1" fontWeight={500}>Admin Roles</Typography>
                                   <Typography variant="h6" fontWeight="bold" color="secondary">
-                                    {clubs.filter(club => club.role === 'admin').length}
+                                    {userClubs.filter(membership => membership.role === 'admin').length}
                                   </Typography>
                                 </Box>
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, borderBottom: '1px solid #e0e0e0' }}>
                                   <Typography variant="body1" fontWeight={500}>Member Roles</Typography>
                                   <Typography variant="h6" fontWeight="bold" sx={{ color: '#10b981' }}>
-                                    {clubs.filter(club => club.role === 'member').length}
+                                    {userClubs.filter(membership => membership.role === 'member').length}
                                   </Typography>
                                 </Box>
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2 }}>
                                   <Typography variant="body1" fontWeight={500}>Total Network Size</Typography>
                                   <Typography variant="h6" fontWeight="bold" sx={{ color: '#f59e0b' }}>
-                                    {clubs.reduce((total, club) => total + club.member_count, 0)}
+                                    {userClubs.reduce((total, membership) => total + (membership.club?.memberCount || 0), 0)}
                                   </Typography>
                                 </Box>
                               </Box>

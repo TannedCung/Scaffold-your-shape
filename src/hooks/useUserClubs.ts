@@ -1,81 +1,41 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { supabase } from '@/lib/supabase';
+import { clubApi } from '@/lib/api';
+import { ClubMember } from '@/types';
 
-interface UserClub {
-  id: string;
-  name: string;
-  description: string;
-  image_url: string | null;
-  member_count: number;
-  role: 'admin' | 'member';
-  joined_at: string;
-}
-
-export function useUserClubs(userId?: string) {
-  const { data: session, status } = useSession();
-  const [clubs, setClubs] = useState<UserClub[]>([]);
+export function useUserClubs() {
+  const { data: session } = useSession();
+  const [userClubs, setUserClubs] = useState<ClubMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const effectiveUserId = userId || session?.user?.id;
-
-  const loadClubs = useCallback(async () => {
-    if (status === 'loading' || !effectiveUserId) return;
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const { data, error: clubsError } = await supabase
-        .from('club_members')
-        .select(`
-          role,
-          joined_at,
-          clubs!inner (
-            id,
-            name,
-            description,
-            image_url,
-            member_count
-          )
-        `)
-        .eq('user_id', effectiveUserId);
-
-      if (clubsError) throw clubsError;
-
-      const userClubs: UserClub[] = (data || []).map(item => {
-        const club = item.clubs as unknown as {
-          id: string;
-          name: string;
-          description: string;
-          image_url: string | null;
-          member_count: number;
-        };
-        
-        return {
-          id: club.id,
-          name: club.name,
-          description: club.description,
-          image_url: club.image_url,
-          member_count: club.member_count,
-          role: item.role as 'admin' | 'member',
-          joined_at: item.joined_at,
-        };
-      });
-
-      setClubs(userClubs);
-    } catch (err) {
-      console.error('Error loading user clubs:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load clubs');
-    } finally {
-      setLoading(false);
-    }
-  }, [effectiveUserId, status]);
-
   useEffect(() => {
-    loadClubs();
-  }, [loadClubs]);
+    const fetchUserClubs = async () => {
+      if (!session?.user?.id) {
+        setLoading(false);
+        return;
+      }
 
-  return { clubs, loading, error, refresh: loadClubs };
+      try {
+        setError(null);
+        // This would need a new API endpoint to get user's club memberships
+        const { data, error: apiError } = await clubApi.getMyMemberships();
+        
+        if (apiError) {
+          throw new Error(apiError);
+        }
+
+                         // Data is already transformed by the API
+        setUserClubs(data || []);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load user clubs');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserClubs();
+  }, [session?.user?.id]);
+
+  return { userClubs, loading, error };
 } 

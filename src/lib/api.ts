@@ -1,4 +1,4 @@
-import { Profile, Activity, ActivityPointConversion, Club, Challenge, ActivityWithDetails, ChallengeDb, ClubDb, ChallengeParticipant, ChallengeLeaderboard } from '@/types';
+import { Profile, Activity, ActivityPointConversion, Club, Challenge, ActivityWithDetails, ChallengeDb, ClubDb, ChallengeParticipant, ChallengeLeaderboard, ClubMember } from '@/types';
 
 interface ApiResponse<T> {
   data?: T;
@@ -151,6 +151,33 @@ export const clubApi = {
     fetchApi<{ success: boolean }>(`/api/clubs/${id}`, {
       method: 'DELETE',
     }),
+  join: (id: string) => 
+    fetchApi<{ success: boolean }>(`/api/clubs/${id}/join`, {
+      method: 'POST',
+    }),
+  leave: (id: string) => 
+    fetchApi<{ success: boolean }>(`/api/clubs/${id}/join`, {
+      method: 'DELETE',
+    }),
+  updateMemberRole: (clubId: string, memberId: string, role: 'admin' | 'member') => 
+    fetchApi<{ success: boolean }>(`/api/clubs/${clubId}/members/${memberId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ role }),
+    }),
+  removeMember: (clubId: string, memberId: string) => 
+    fetchApi<{ success: boolean }>(`/api/clubs/${clubId}/members/${memberId}`, {
+      method: 'DELETE',
+    }),
+  getMembers: (id: string, params?: { limit?: number; offset?: number }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.limit) searchParams.set('limit', params.limit.toString());
+    if (params?.offset) searchParams.set('offset', params.offset.toString());
+    
+    const url = `/api/clubs/${id}/members${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+    return fetchApi<ClubMember[]>(url);
+  },
+  getMyMemberships: () => 
+    fetchApi<ClubMember[]>('/api/clubs/my-memberships'),
 };
 
 // Challenge API functions
