@@ -32,11 +32,6 @@ export async function fetchApi<T>(
     extra?.token ? { Authorization: `Bearer ${extra.token}` } : {}
   );
 
-  console.log('fetchApi url:', url);
-  console.log('fetchApi headers:', mergedHeaders);
-  console.log('fetchApi options:', options);
-  console.log('fetchApi extra:', extra);
-
   try {
     const response = await fetch(url, {
       ...options,
