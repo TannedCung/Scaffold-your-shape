@@ -23,8 +23,12 @@ import {
   DialogActions,
   CircularProgress,
   Alert,
-  Divider,
-  Paper
+  Paper,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell
 } from '@mui/material';
 import {
   Group as GroupIcon,
@@ -35,15 +39,211 @@ import {
   Person as PersonIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
-  Lock as LockIcon,
-  Public as PublicIcon,
-  Star as StarIcon
+  EmojiEvents as EmojiEventsIcon
 } from '@mui/icons-material';
 import { useClubDetail } from '@/hooks/useClubDetail';
 import { formatDistanceToNow } from 'date-fns';
 
 interface ClubDetailContentProps {
   clubId: string;
+}
+
+interface Activity {
+  id: string;
+  userName: string;
+  type: string;
+  name: string;
+  value: number;
+  unit: string;
+  date: string;
+}
+
+// Placeholder activity data - replace with real data when available
+const getClubActivities = (clubId: string): Activity[] => {
+  // This would be replaced with actual API call
+  return [];
+};
+
+function ClubActivityFeed({ activities }: { activities: Activity[] }) {
+  return (
+    <Paper elevation={0} sx={{ p: 2, bgcolor: '#f7faf9', mb: 3 }}>
+      <Typography variant="h6" sx={{ color: '#2da58e', fontWeight: 700, mb: 2 }}>Recent Activities</Typography>
+      {activities.length === 0 ? (
+        <Typography variant="body2" color="text.secondary">No activities yet.</Typography>
+      ) : (
+        <List>
+          {activities.slice(0, 6).map((a) => (
+            <ListItem key={a.id} sx={{ px: 0 }}>
+              <ListItemAvatar>
+                <Avatar sx={{ bgcolor: '#2da58e' }}>{a.userName ? a.userName[0] : '?'}</Avatar>
+              </ListItemAvatar>
+              <ListItemText
+                primary={<Typography sx={{ fontWeight: 600 }}>{a.userName || 'Unknown'}</Typography>}
+                secondary={<>
+                  <Typography component="span" variant="body2" color="text.secondary">
+                    {a.type}: {a.name} ({a.value} {a.unit})
+                  </Typography>
+                  <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                    {new Date(a.date).toLocaleDateString()}
+                  </Typography>
+                </>}
+              />
+            </ListItem>
+          ))}
+        </List>
+      )}
+    </Paper>
+  );
+}
+
+function ClubOverview({ description }: { description: string }) {
+  return (
+    <Box sx={{ mb: 3 }}>
+      <Typography variant="h5" sx={{ fontWeight: 700, color: '#2da58e', mb: 1 }}>Overview</Typography>
+      <Typography variant="body1" color="text.secondary">{description}</Typography>
+    </Box>
+  );
+}
+
+function Leaderboard({ members }: { members: Array<{ id: string; profile?: { name?: string }; role: string }> }) {
+  return (
+    <Paper elevation={0} sx={{ p: 2, bgcolor: '#fff', mb: 3 }}>
+      <Typography variant="h6" sx={{ color: '#2da58e', fontWeight: 700, mb: 2 }}>Leaderboard</Typography>
+      <Table size="small" sx={{ width: '100%' }}>
+        <TableHead>
+          <TableRow sx={{ bgcolor: '#e0f7f3' }}>
+            <TableCell sx={{ fontWeight: 700, color: '#2da58e' }}>#</TableCell>
+            <TableCell sx={{ fontWeight: 700, color: '#2da58e' }}>Name</TableCell>
+            <TableCell sx={{ fontWeight: 700, color: '#2da58e' }}>Role</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {members.slice(0, 5).map((m, i) => (
+            <TableRow key={m.id} sx={{ borderBottom: '1px solid #e0f7f3' }}>
+              <TableCell>{i + 1}</TableCell>
+              <TableCell>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Avatar sx={{ width: 28, height: 28, bgcolor: '#2da58e', mr: 1 }}>
+                    {m.profile?.name ? m.profile.name[0] : '?'}
+                  </Avatar>
+                  {m.profile?.name || 'Unknown'}
+                </Box>
+              </TableCell>
+              <TableCell>
+                <Chip
+                  icon={m.role === 'admin' ? <AdminIcon /> : <PersonIcon />}
+                  label={m.role}
+                  size="small"
+                  color={m.role === 'admin' ? 'secondary' : 'default'}
+                  variant="outlined"
+                />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Paper>
+  );
+}
+
+function ClubDescription({ description }: { description: string }) {
+  return (
+    <Box sx={{ mb: 3 }}>
+      <Typography variant="h5" sx={{ fontWeight: 700, color: '#2da58e', mb: 1 }}>Club Goal</Typography>
+      <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+        {description}
+      </Typography>
+    </Box>
+  );
+}
+
+function ClubActions({ 
+  isMember, 
+  onJoinClub, 
+  onLeaveClub, 
+  actionLoading, 
+  canEditClub 
+}: { 
+  isMember: boolean;
+  onJoinClub: () => void;
+  onLeaveClub: () => void;
+  actionLoading: boolean;
+  canEditClub: boolean;
+}) {
+  return (
+    <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+      {isMember ? (
+        <>
+          <Button
+            variant="outlined"
+            color="error"
+            startIcon={<ExitToAppIcon />}
+            onClick={onLeaveClub}
+            disabled={actionLoading}
+            sx={{ fontWeight: 700, px: 4, py: 1.5, borderRadius: 2 }}
+          >
+            Leave Club
+          </Button>
+          {canEditClub && (
+            <Button
+              variant="outlined"
+              startIcon={<EditIcon />}
+              disabled={actionLoading}
+              sx={{ borderColor: '#2da58e', color: '#2da58e', fontWeight: 700, px: 4, py: 1.5, borderRadius: 2, ':hover': { bgcolor: '#e0f7f3' } }}
+            >
+              Edit Club
+            </Button>
+          )}
+        </>
+      ) : (
+        <>
+          <Button
+            variant="contained"
+            startIcon={<PersonAddIcon />}
+            onClick={onJoinClub}
+            disabled={actionLoading}
+            sx={{ bgcolor: '#2da58e', color: '#fff', fontWeight: 700, px: 4, py: 1.5, borderRadius: 2, ':hover': { bgcolor: '#24977e' } }}
+          >
+            Join Club
+          </Button>
+          <Button
+            variant="outlined"
+            sx={{ borderColor: '#2da58e', color: '#2da58e', fontWeight: 700, px: 4, py: 1.5, borderRadius: 2, ':hover': { bgcolor: '#e0f7f3' } }}
+          >
+            Invite Friends
+          </Button>
+        </>
+      )}
+    </Box>
+  );
+}
+
+function ClubParticipationStats({ memberCount }: { memberCount: number }) {
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+      <GroupIcon sx={{ color: '#2da58e', fontSize: 32 }} />
+      <Typography variant="h5" sx={{ color: '#2da58e', fontWeight: 800 }}>
+        {memberCount?.toLocaleString?.() ?? '0'}
+      </Typography>
+      <Typography variant="body1" sx={{ color: '#24977e', fontWeight: 500, ml: 1 }}>
+        participants
+      </Typography>
+    </Box>
+  );
+}
+
+function ClubFinisherBadge() {
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, bgcolor: '#f7faf9', p: 2, borderRadius: 2, mb: 3 }}>
+      <EmojiEventsIcon sx={{ color: '#2da58e', fontSize: 48 }} />
+      <Box>
+                 <Typography variant="h6" sx={{ color: '#2da58e', fontWeight: 700 }}>Earn a Digital Finisher&apos;s Badge!</Typography>
+        <Typography variant="body2" color="text.secondary">
+          Complete club milestones to earn a special digital badge for your Trophy Case. Show off your achievement and inspire others!
+        </Typography>
+      </Box>
+    </Box>
+  );
 }
 
 export default function ClubDetailContent({ clubId }: ClubDetailContentProps) {
@@ -82,7 +282,6 @@ export default function ClubDetailContent({ clubId }: ClubDetailContentProps) {
   const handleJoinClub = async () => {
     const result = await joinClub();
     if (result.error) {
-      // Handle error (you might want to show a snackbar)
       console.error('Failed to join club:', result.error);
     }
   };
@@ -153,198 +352,31 @@ export default function ClubDetailContent({ clubId }: ClubDetailContentProps) {
     });
   };
 
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error || !club) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Alert severity="error">{error || 'Club not found'}</Alert>
-      </Box>
-    );
+  if (loading || !club) {
+    return null; // Loading and error handling is done in the wrapper component
   }
 
   const selectedMemberData = selectedMember 
     ? club.membersList.find(m => m.userId === selectedMember)
     : null;
 
+  const activities = getClubActivities(clubId);
+
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
-      {/* Club Header */}
-      <Paper 
-        sx={{ 
-          mb: 3, 
-          p: 3, 
-          background: `linear-gradient(135deg, rgba(45, 165, 142, 0.1) 0%, rgba(27, 125, 107, 0.1) 100%)`,
-          border: '1px solid rgba(45, 165, 142, 0.2)'
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <Avatar 
-            src={club.imageUrl || undefined} 
-            sx={{ 
-              width: 80, 
-              height: 80, 
-              mr: 3,
-              bgcolor: '#2da58e'
-            }}
-          >
-            <GroupIcon sx={{ fontSize: 40 }} />
-          </Avatar>
-          <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="h4" fontWeight="bold" gutterBottom>
-              {club.name}
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-              <Chip
-                icon={club.isPrivate ? <LockIcon /> : <PublicIcon />}
-                label={club.isPrivate ? 'Private' : 'Public'}
-                size="small"
-                color={club.isPrivate ? 'default' : 'primary'}
-              />
-              <Chip
-                icon={<GroupIcon />}
-                label={`${club.memberCount} members`}
-                size="small"
-                variant="outlined"
-              />
-              {club.userMembership?.role === 'admin' && (
-                <Chip
-                  icon={<StarIcon />}
-                  label="Admin"
-                  size="small"
-                  color="secondary"
-                />
-              )}
-            </Box>
-            <Typography variant="body1" color="text.secondary">
-              {club.description}
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            {club.isMember ? (
-              <>
-                <Button
-                  variant="outlined"
-                  color="error"
-                  startIcon={<ExitToAppIcon />}
-                  onClick={handleLeaveClub}
-                  disabled={actionLoading}
-                >
-                  Leave Club
-                </Button>
-                {canEditClub() && (
-                  <Button
-                    variant="outlined"
-                    startIcon={<EditIcon />}
-                    disabled={actionLoading}
-                  >
-                    Edit Club
-                  </Button>
-                )}
-              </>
-            ) : (
-              <Button
-                variant="contained"
-                startIcon={<PersonAddIcon />}
-                onClick={handleJoinClub}
-                disabled={actionLoading}
-                sx={{
-                  bgcolor: '#2da58e',
-                  '&:hover': { bgcolor: '#1b7d6b' }
-                }}
-              >
-                Join Club
-              </Button>
-            )}
-          </Box>
-        </Box>
-      </Paper>
-
-      <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
-        {/* Club Stats */}
-        <Box sx={{ flex: { xs: '1', md: '0 0 33%' } }}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" fontWeight="bold" gutterBottom>
-                Club Statistics
-              </Typography>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="body2">Total Members</Typography>
-                <Typography variant="h6" color="primary">{club.memberCount}</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="body2">Admins</Typography>
-                <Typography variant="h6" color="secondary">{club.adminCount}</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="body2">Status</Typography>
-                <Typography variant="body1" fontWeight="bold">
-                  {club.isPrivate ? 'Private' : 'Public'}
-                </Typography>
-              </Box>
-              <Divider sx={{ my: 2 }} />
-              <Typography variant="body2" color="text.secondary">
-                Created {formatDistanceToNow(new Date(club.created_at))} ago
-              </Typography>
-            </CardContent>
-          </Card>
-        </Box>
-
-        {/* Members List */}
-        <Box sx={{ flex: { xs: '1', md: '0 0 67%' } }}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" fontWeight="bold" gutterBottom>
-                Members ({club.memberCount})
-              </Typography>
-              <List>
-                {club.membersList.map((member) => (
-                  <ListItem key={member.id} divider>
-                    <ListItemAvatar>
-                      <Avatar src={member.profile?.avatar_url}>
-                        {member.profile?.name?.charAt(0).toUpperCase()}
-                      </Avatar>
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Typography variant="body1">
-                            {member.profile?.name || 'Unknown User'}
-                          </Typography>
-                          <Chip
-                            icon={member.role === 'admin' ? <AdminIcon /> : <PersonIcon />}
-                            label={member.role}
-                            size="small"
-                            color={member.role === 'admin' ? 'secondary' : 'default'}
-                            variant="outlined"
-                          />
-                        </Box>
-                      }
-                      secondary={`Joined ${formatDistanceToNow(new Date(member.joinedAt))} ago`}
-                    />
-                    {canManageMembers() && member.userId !== club.userMembership?.userId && (
-                      <ListItemSecondaryAction>
-                        <IconButton
-                          onClick={(e) => handleMemberMenuOpen(e, member.userId)}
-                          disabled={actionLoading}
-                        >
-                          <MoreVertIcon />
-                        </IconButton>
-                      </ListItemSecondaryAction>
-                    )}
-                  </ListItem>
-                ))}
-              </List>
-            </CardContent>
-          </Card>
-        </Box>
-      </Box>
+    <Box sx={{ maxWidth: 700, mx: 'auto', px: { xs: 2, sm: 0 } }}>
+      <ClubParticipationStats memberCount={club.memberCount} />
+      <ClubDescription description={club.description} />
+      <ClubActions 
+        isMember={club.isMember}
+        onJoinClub={handleJoinClub}
+        onLeaveClub={handleLeaveClub}
+        actionLoading={actionLoading}
+        canEditClub={canEditClub()}
+      />
+      <ClubFinisherBadge />
+      <ClubOverview description={club.description} />
+      <ClubActivityFeed activities={activities} />
+      <Leaderboard members={club.membersList} />
 
       {/* Member Management Menu */}
       <Menu

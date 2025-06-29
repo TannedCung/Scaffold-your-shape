@@ -1,14 +1,14 @@
 // Club Detail Page
 import MainLayout from '@/components/layout/MainLayout';
-import ClubDetailContent from '@/components/club/ClubDetailContent';
+import ClubDetailPage from '@/components/club/ClubDetailPage';
 import React from 'react';
 
-export default async function ClubDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ClubDetailPageRoute({ params }: { params: Promise<{ id: string }> }) {
   const clubId = (await params).id;
 
   return (
     <MainLayout>
-      <ClubDetailContent clubId={clubId} />
+      <ClubDetailPage clubId={clubId} />
     </MainLayout>
   );
 }
