@@ -16,6 +16,7 @@
     "@modelcontextprotocol/sdk": "^1.13.0",
     "@mui/icons-material": "^7.0.2",
     "@mui/material": "^7.0.2",
+    "@mui/x-charts": "^8.6.0",
     "@supabase/supabase-js": "^2.49.4",
     "@types/leaflet": "^1.9.17",
     "@upstash/ratelimit": "^1.0.0",
