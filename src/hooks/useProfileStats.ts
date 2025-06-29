@@ -9,13 +9,12 @@ interface ProfileStats {
   totalClubs: number;
   activeChallenges: Array<{
     id: string;
-    title: string;
+    name: string;
     description: string;
-    targetValue: number;
-    unit: string;
+    startDate: string;
     endDate: string;
-    currentValue: number;
     progress: number;
+    daysRemaining: number;
   }>;
   // Analytics data for charts
   monthlyActivityData: Array<{
@@ -58,27 +57,33 @@ export function useProfileStats(userId?: string) {
   const effectiveUserId = userId || session?.user?.id;
 
   const loadStats = useCallback(async () => {
+    console.log('useProfileStats - loadStats called with:', { status, effectiveUserId });
     if (status === 'loading' || !effectiveUserId) return;
 
+    console.log('useProfileStats - Starting data fetch...');
     setLoading(true);
     setError(null);
 
     try {
       // Get total activities count
+      console.log('useProfileStats - Fetching total activities count...');
       const { count: totalActivities, error: totalError } = await supabase
         .from('activities')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', effectiveUserId);
 
       if (totalError) throw totalError;
+      console.log('useProfileStats - Total activities:', totalActivities);
 
       // Get all activities for distance calculation
+      console.log('useProfileStats - Fetching activities for distance calculation...');
       const { data: allActivitiesData, error: allError } = await supabase
         .from('activities')
         .select('value, unit')
         .eq('user_id', effectiveUserId);
 
       if (allError) throw allError;
+      console.log('useProfileStats - Activities for distance:', { count: allActivitiesData?.length, sample: allActivitiesData?.slice(0, 3) });
 
       // Calculate total distance (convert everything to kilometers)
       const calculateDistance = (activities: Array<{ value: number; unit: string }>) => {
@@ -93,6 +98,7 @@ export function useProfileStats(userId?: string) {
       };
 
       const totalDistance = calculateDistance(allActivitiesData || []);
+      console.log('useProfileStats - Total distance calculated:', totalDistance);
 
       // Get challenges count (total challenges user has participated in)
       const { count: totalChallenges, error: challengesError } = await supabase
@@ -149,18 +155,18 @@ export function useProfileStats(userId?: string) {
           
           return {
             id: challenge.id,
-            title: challenge.title,
+            name: challenge.title,
             description: challenge.description,
-            targetValue: challenge.target_value,
-            unit: challenge.unit,
+            startDate: challenge.end_date,
             endDate: challenge.end_date,
-            currentValue: item.current_value,
             progress: Math.round(progress),
+            daysRemaining: 0,
           };
         })
         .slice(0, 3); // Limit to 3 active challenges
 
       // Get detailed analytics data
+      console.log('useProfileStats - Fetching activities for analytics...');
       const { data: activitiesForAnalytics, error: analyticsError } = await supabase
         .from('activities')
         .select('type, date, value, unit')
@@ -168,14 +174,23 @@ export function useProfileStats(userId?: string) {
         .order('date', { ascending: true });
 
       if (analyticsError) throw analyticsError;
+      console.log('useProfileStats - Activities for analytics:', { count: activitiesForAnalytics?.length, sample: activitiesForAnalytics?.slice(0, 3) });
 
       // Process analytics data
+      console.log('useProfileStats - Processing analytics data...');
       const monthlyData = processMonthlyData(activitiesForAnalytics || []);
+      console.log('useProfileStats - Monthly data processed:', monthlyData);
+      
       const typeDistribution = processActivityTypeDistribution(activitiesForAnalytics || []);
+      console.log('useProfileStats - Type distribution processed:', typeDistribution);
+      
       const weeklyData = processWeeklyData(activitiesForAnalytics || []);
+      console.log('useProfileStats - Weekly data processed:', weeklyData);
+      
       const distanceData = processDistanceOverTime(activitiesForAnalytics || []);
+      console.log('useProfileStats - Distance data processed:', distanceData);
 
-      setStats({
+      const finalStats = {
         totalActivities: totalActivities || 0,
         totalDistance: Number(totalDistance.toFixed(2)),
         totalChallenges: totalChallenges || 0,
@@ -185,7 +200,10 @@ export function useProfileStats(userId?: string) {
         activityTypeDistribution: typeDistribution,
         weeklyActivityData: weeklyData,
         distanceOverTime: distanceData,
-      });
+      };
+      
+      console.log('useProfileStats - Final stats object:', finalStats);
+      setStats(finalStats);
 
     } catch (err) {
       console.error('Error loading profile stats:', err);
@@ -204,6 +222,7 @@ export function useProfileStats(userId?: string) {
 
 // Helper functions for processing analytics data
 function processMonthlyData(activities: Array<{ type: string; date: string; value: number; unit: string }>) {
+  console.log('processMonthlyData - Starting with activities:', activities.length);
   const monthlyStats: Record<string, { count: number; distance: number }> = {};
   
   // Handle empty activities
