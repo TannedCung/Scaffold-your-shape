@@ -13,10 +13,10 @@ import {
   MenuItem,
   FormControlLabel,
   Switch,
-  Grid,
   Alert,
   CircularProgress
 } from '@mui/material';
+
 import { challengeApi } from '@/lib/api';
 import { ChallengeType, DifficultyLevel, RewardType, ExerciseUnit } from '@/types';
 
@@ -47,7 +47,7 @@ export default function CreateChallengeForm({ onSuccess, onCancel }: CreateChall
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: string | number | boolean | undefined) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (error) setError(null);
   };
@@ -120,90 +120,78 @@ export default function CreateChallengeForm({ onSuccess, onCancel }: CreateChall
           minRows={3}
         />
 
-        <Grid container spacing={2}>
-          <Grid item xs={6}>
-            <TextField
-              label="Target Value"
-              type="number"
-              value={formData.targetValue}
-              onChange={(e) => handleInputChange('targetValue', parseInt(e.target.value) || 0)}
-              fullWidth
-              required
-            />
-          </Grid>
-          <Grid item xs={6}>
-            <FormControl fullWidth>
-              <InputLabel>Unit</InputLabel>
-              <Select
-                value={formData.unit}
-                onChange={(e) => handleInputChange('unit', e.target.value)}
-                label="Unit"
-              >
-                <MenuItem value="reps">Reps</MenuItem>
-                <MenuItem value="meters">Meters</MenuItem>
-                <MenuItem value="minutes">Minutes</MenuItem>
-                <MenuItem value="hours">Hours</MenuItem>
-                <MenuItem value="seconds">Seconds</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <TextField
+            label="Target Value"
+            type="number"
+            value={formData.targetValue}
+            onChange={(e) => handleInputChange('targetValue', parseInt(e.target.value) || 0)}
+            sx={{ flex: 1 }}
+            required
+          />
+          <FormControl sx={{ flex: 1 }}>
+            <InputLabel>Unit</InputLabel>
+            <Select
+              value={formData.unit}
+              onChange={(e) => handleInputChange('unit', e.target.value)}
+              label="Unit"
+            >
+              <MenuItem value="reps">Reps</MenuItem>
+              <MenuItem value="meters">Meters</MenuItem>
+              <MenuItem value="minutes">Minutes</MenuItem>
+              <MenuItem value="hours">Hours</MenuItem>
+              <MenuItem value="seconds">Seconds</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
 
-        <Grid container spacing={2}>
-          <Grid item xs={6}>
-            <TextField
-              label="Start Date"
-              type="datetime-local"
-              value={formData.startDate}
-              onChange={(e) => handleInputChange('startDate', e.target.value)}
-              fullWidth
-              required
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-          <Grid item xs={6}>
-            <TextField
-              label="End Date"
-              type="datetime-local"
-              value={formData.endDate}
-              onChange={(e) => handleInputChange('endDate', e.target.value)}
-              fullWidth
-              required
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-        </Grid>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <TextField
+            label="Start Date"
+            type="datetime-local"
+            value={formData.startDate}
+            onChange={(e) => handleInputChange('startDate', e.target.value)}
+            sx={{ flex: 1 }}
+            required
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            label="End Date"
+            type="datetime-local"
+            value={formData.endDate}
+            onChange={(e) => handleInputChange('endDate', e.target.value)}
+            sx={{ flex: 1 }}
+            required
+            InputLabelProps={{ shrink: true }}
+          />
+        </Box>
 
-        <Grid container spacing={2}>
-          <Grid item xs={6}>
-            <FormControl fullWidth>
-              <InputLabel>Challenge Type</InputLabel>
-              <Select
-                value={formData.challengeType}
-                onChange={(e) => handleInputChange('challengeType', e.target.value)}
-                label="Challenge Type"
-              >
-                <MenuItem value="individual">Individual</MenuItem>
-                <MenuItem value="team">Team</MenuItem>
-                <MenuItem value="club">Club</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={6}>
-            <FormControl fullWidth>
-              <InputLabel>Difficulty</InputLabel>
-              <Select
-                value={formData.difficultyLevel}
-                onChange={(e) => handleInputChange('difficultyLevel', e.target.value)}
-                label="Difficulty"
-              >
-                <MenuItem value="beginner">Beginner</MenuItem>
-                <MenuItem value="intermediate">Intermediate</MenuItem>
-                <MenuItem value="advanced">Advanced</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <FormControl sx={{ flex: 1 }}>
+            <InputLabel>Challenge Type</InputLabel>
+            <Select
+              value={formData.challengeType}
+              onChange={(e) => handleInputChange('challengeType', e.target.value)}
+              label="Challenge Type"
+            >
+              <MenuItem value="individual">Individual</MenuItem>
+              <MenuItem value="team">Team</MenuItem>
+              <MenuItem value="club">Club</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl sx={{ flex: 1 }}>
+            <InputLabel>Difficulty</InputLabel>
+            <Select
+              value={formData.difficultyLevel}
+              onChange={(e) => handleInputChange('difficultyLevel', e.target.value)}
+              label="Difficulty"
+            >
+              <MenuItem value="beginner">Beginner</MenuItem>
+              <MenuItem value="intermediate">Intermediate</MenuItem>
+              <MenuItem value="advanced">Advanced</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
 
         <TextField
           label="Max Participants (Optional)"
