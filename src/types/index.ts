@@ -506,6 +506,11 @@ export function mapClubMemberDbToClubMember(db: ClubMemberDb): ClubMember {
 }
 
 // Challenge types
+export type ChallengeType = 'individual' | 'team' | 'club';
+export type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced';
+export type RewardType = 'badge' | 'points' | 'certificate' | 'custom';
+export type ChallengeStatus = 'draft' | 'active' | 'completed' | 'cancelled';
+
 // DB shape for Challenge (snake_case)
 export interface ChallengeDb {
   id: string;
@@ -521,6 +526,17 @@ export interface ChallengeDb {
   is_public: boolean;
   participant_count: number;
   background_image_url?: string | null;
+  challenge_type: ChallengeType;
+  difficulty_level: DifficultyLevel;
+  reward_type: RewardType;
+  reward_value: number;
+  max_participants?: number | null;
+  auto_join: boolean;
+  featured: boolean;
+  tags?: string[] | null;
+  rules?: string | null;
+  status: ChallengeStatus;
+  club_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -539,6 +555,17 @@ export interface Challenge {
   isPublic: boolean;
   participantCount: number;
   backgroundImageUrl?: string;
+  challengeType: ChallengeType;
+  difficultyLevel: DifficultyLevel;
+  rewardType: RewardType;
+  rewardValue: number;
+  maxParticipants?: number;
+  autoJoin: boolean;
+  featured: boolean;
+  tags?: string[];
+  rules?: string;
+  status: ChallengeStatus;
+  clubId?: string;
   created_at: string;
   updatedAt: string;
 }
@@ -558,6 +585,17 @@ export function mapChallengeDbToChallenge(db: ChallengeDb): Challenge {
     isPublic: db.is_public,
     participantCount: db.participant_count,
     backgroundImageUrl: db.background_image_url ?? undefined,
+    challengeType: db.challenge_type,
+    difficultyLevel: db.difficulty_level,
+    rewardType: db.reward_type,
+    rewardValue: db.reward_value,
+    maxParticipants: db.max_participants ?? undefined,
+    autoJoin: db.auto_join,
+    featured: db.featured,
+    tags: db.tags ?? undefined,
+    rules: db.rules ?? undefined,
+    status: db.status,
+    clubId: db.club_id ?? undefined,
     created_at: db.created_at,
     updatedAt: db.updated_at,
   };
@@ -572,6 +610,10 @@ export interface ChallengeParticipantDb {
   completed: boolean;
   completed_at?: string | null;
   joined_at: string;
+  progress_percentage: number;
+  last_activity_date?: string | null;
+  rank?: number | null;
+  notes?: string | null;
 }
 
 export interface ChallengeParticipant {
@@ -582,6 +624,10 @@ export interface ChallengeParticipant {
   completed: boolean;
   completedAt?: string;
   joinedAt: string;
+  progressPercentage: number;
+  lastActivityDate?: string;
+  rank?: number;
+  notes?: string;
 }
 
 export function mapChallengeParticipantDbToChallengeParticipant(db: ChallengeParticipantDb): ChallengeParticipant {
@@ -593,6 +639,100 @@ export function mapChallengeParticipantDbToChallengeParticipant(db: ChallengePar
     completed: db.completed,
     completedAt: db.completed_at ?? undefined,
     joinedAt: db.joined_at,
+    progressPercentage: db.progress_percentage,
+    lastActivityDate: db.last_activity_date ?? undefined,
+    rank: db.rank ?? undefined,
+    notes: db.notes ?? undefined,
+  };
+}
+
+// Challenge Leaderboard types
+export interface ChallengeLeaderboardDb {
+  challenge_id: string;
+  user_id: string;
+  user_name: string;
+  avatar_url?: string | null;
+  current_value: number;
+  progress_percentage: number;
+  completed: boolean;
+  completed_at?: string | null;
+  joined_at: string;
+  rank: number;
+}
+
+export interface ChallengeLeaderboard {
+  challengeId: string;
+  userId: string;
+  userName: string;
+  avatarUrl?: string;
+  currentValue: number;
+  progressPercentage: number;
+  completed: boolean;
+  completedAt?: string;
+  joinedAt: string;
+  rank: number;
+}
+
+export function mapChallengeLeaderboardDbToChallengeLeaderboard(db: ChallengeLeaderboardDb): ChallengeLeaderboard {
+  return {
+    challengeId: db.challenge_id,
+    userId: db.user_id,
+    userName: db.user_name,
+    avatarUrl: db.avatar_url ?? undefined,
+    currentValue: db.current_value,
+    progressPercentage: db.progress_percentage,
+    completed: db.completed,
+    completedAt: db.completed_at ?? undefined,
+    joinedAt: db.joined_at,
+    rank: db.rank,
+  };
+}
+
+// Challenge Stats types
+export interface ChallengeStatsDb {
+  challenge_id: string;
+  title: string;
+  start_date: string;
+  end_date: string;
+  participant_count: number;
+  target_value: number;
+  unit: string;
+  actual_participants: number;
+  completed_participants: number;
+  avg_progress: number;
+  max_progress: number;
+  completion_rate: number;
+}
+
+export interface ChallengeStats {
+  challengeId: string;
+  title: string;
+  startDate: string;
+  endDate: string;
+  participantCount: number;
+  targetValue: number;
+  unit: string;
+  actualParticipants: number;
+  completedParticipants: number;
+  avgProgress: number;
+  maxProgress: number;
+  completionRate: number;
+}
+
+export function mapChallengeStatsDbToChallengeStats(db: ChallengeStatsDb): ChallengeStats {
+  return {
+    challengeId: db.challenge_id,
+    title: db.title,
+    startDate: db.start_date,
+    endDate: db.end_date,
+    participantCount: db.participant_count,
+    targetValue: db.target_value,
+    unit: db.unit,
+    actualParticipants: db.actual_participants,
+    completedParticipants: db.completed_participants,
+    avgProgress: db.avg_progress,
+    maxProgress: db.max_progress,
+    completionRate: db.completion_rate,
   };
 }
 
