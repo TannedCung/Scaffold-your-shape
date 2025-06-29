@@ -50,7 +50,43 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json(challenges);
+    // Fetch user's participation status for all challenges
+    const challengeIds = challenges?.map(c => c.id) || [];
+    let userParticipations: Array<{
+      challenge_id: string;
+      user_id: string;
+      current_value: number;
+      progress_percentage: number;
+      completed: boolean;
+      joined_at: string;
+      last_activity_date: string | null;
+      rank: number | null;
+      notes: string | null;
+    }> = [];
+    
+    if (challengeIds.length > 0) {
+      const { data: participations, error: participationError } = await supabase
+        .from('challenge_participants')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .in('challenge_id', challengeIds);
+
+      if (!participationError) {
+        userParticipations = participations || [];
+      }
+    }
+
+    // Enrich challenges with participation status
+    const enrichedChallenges = challenges?.map(challenge => {
+      const participation = userParticipations.find(p => p.challenge_id === challenge.id);
+      return {
+        ...challenge,
+        user_participation: participation || null,
+        is_participant: !!participation
+      };
+         }) || [];
+
+    return NextResponse.json(enrichedChallenges);
   } catch (error) {
     console.error('Server error:', error);
     return NextResponse.json(

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import React, { useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import {
   Container,
   Typography,
@@ -9,7 +9,6 @@ import {
   Button,
   Card,
   CardContent,
-  Grid,
   Avatar,
   LinearProgress,
   Chip,
@@ -20,151 +19,115 @@ import {
   TextField,
   Alert,
   CircularProgress,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText
+  IconButton,
+  Stack,
+  Paper,
+  Divider
 } from '@mui/material';
 import {
+  ArrowBack as ArrowBackIcon,
   EmojiEvents as TrophyIcon,
   Group as GroupIcon,
   CalendarToday as CalendarIcon,
   Flag as FlagIcon,
+  Update as UpdateIcon,
   ExitToApp as LeaveIcon,
   Add as JoinIcon,
-  Update as UpdateIcon
+  Star as StarIcon,
+  Schedule as ScheduleIcon,
+  TrendingUp as TrendingUpIcon
 } from '@mui/icons-material';
+import { motion } from 'framer-motion';
 import MainLayout from '@/components/layout/MainLayout';
-import { challengeApi } from '@/lib/api';
-import { Challenge, ChallengeLeaderboard } from '@/types';
-import { useSession } from 'next-auth/react';
+import { useChallengeDetail } from '@/hooks/useChallengeDetail';
+import { fadeInUp } from '@/utils/animations';
+
+// Create motion components
+const MotionCard = motion(Card);
+const MotionBox = motion(Box);
+const MotionChip = motion(Chip);
 
 export default function ChallengeDetailPage() {
   const params = useParams();
-  const { data: session } = useSession();
+  const router = useRouter();
   const challengeId = params?.id as string;
 
-  const [challenge, setChallenge] = useState<Challenge | null>(null);
-  const [leaderboard, setLeaderboard] = useState<ChallengeLeaderboard[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
+  const {
+    challenge,
+    loading,
+    error,
+    actionLoading,
+    joinChallenge,
+    leaveChallenge,
+    updateProgress,
+    getChallengeStatus,
+    getDaysRemaining
+  } = useChallengeDetail(challengeId);
+
   // Dialog states
   const [joinDialogOpen, setJoinDialogOpen] = useState(false);
   const [updateProgressOpen, setUpdateProgressOpen] = useState(false);
   const [progressValue, setProgressValue] = useState(0);
-  const [actionLoading, setActionLoading] = useState(false);
+  const [progressNotes, setProgressNotes] = useState('');
+  const [alertMessage, setAlertMessage] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
-  // User participation state
-  const [userParticipation, setUserParticipation] = useState<any>(null);
-  const [isParticipant, setIsParticipant] = useState(false);
-
-  useEffect(() => {
-    if (challengeId) {
-      fetchChallengeDetails();
+  // Set initial progress value when challenge loads
+  React.useEffect(() => {
+    if (challenge?.userParticipation) {
+      setProgressValue(challenge.userParticipation.currentValue);
     }
-  }, [challengeId]);
-
-  const fetchChallengeDetails = async () => {
-    try {
-      setLoading(true);
-      // Skip loading leaderboard for now
-      const challengeResponse = await challengeApi.getById(challengeId);
-
-      if (challengeResponse.error) {
-        throw new Error(challengeResponse.error);
-      }
-
-      setChallenge(challengeResponse.data || null);
-      // Skip setting leaderboard - setLeaderboard(leaderboardResponse.data || []);
-
-      // Check if current user is a participant
-      if (session?.user?.id && challengeResponse.data && (challengeResponse.data as any).challenge_participants) {
-        const userParticipant = (challengeResponse.data as any).challenge_participants.find(
-          (p: any) => p.user_id === session.user.id
-        );
-        setUserParticipation(userParticipant);
-        setIsParticipant(!!userParticipant);
-        if (userParticipant) {
-          setProgressValue(userParticipant.current_value);
-        }
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load challenge');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [challenge]);
 
   const handleJoinChallenge = async () => {
-    if (!session?.user?.id) return;
+    const result = await joinChallenge();
+    if (result.error) {
+      setAlertMessage({ type: 'error', message: result.error });
+    } else {
+      setAlertMessage({ type: 'success', message: 'Successfully joined the challenge!' });
+    }
+    setJoinDialogOpen(false);
+  };
 
-    setActionLoading(true);
-    try {
-      const { error } = await challengeApi.join(challengeId);
-      if (error) throw new Error(error);
-      
-      setJoinDialogOpen(false);
-      await fetchChallengeDetails();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to join challenge');
-    } finally {
-      setActionLoading(false);
+  const handleLeaveChallenge = async () => {
+    const result = await leaveChallenge();
+    if (result.error) {
+      setAlertMessage({ type: 'error', message: result.error });
+    } else {
+      setAlertMessage({ type: 'success', message: 'Left the challenge successfully.' });
     }
   };
 
   const handleUpdateProgress = async () => {
-    if (!session?.user?.id) return;
-
-    setActionLoading(true);
-    try {
-      const { error } = await challengeApi.updateProgress(challengeId, {
-        currentValue: progressValue
-      });
-      if (error) throw new Error(error);
-      
-      setUpdateProgressOpen(false);
-      await fetchChallengeDetails();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update progress');
-    } finally {
-      setActionLoading(false);
+    const result = await updateProgress(progressValue, progressNotes);
+    if (result.error) {
+      setAlertMessage({ type: 'error', message: result.error });
+    } else {
+      setAlertMessage({ type: 'success', message: 'Progress updated successfully!' });
     }
+    setUpdateProgressOpen(false);
+    setProgressNotes('');
   };
 
-  const handleLeaveChallenge = async () => {
-    if (!session?.user?.id) return;
+  const formatStatusText = (status: string) => {
+    if (!status || typeof status !== 'string') return 'Unknown';
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  };
 
-    setActionLoading(true);
-    try {
-      const { error } = await challengeApi.leave(challengeId);
-      if (error) throw new Error(error);
-      
-      await fetchChallengeDetails();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to leave challenge');
-    } finally {
-      setActionLoading(false);
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'success';
+      case 'completed': return 'info';
+      case 'ended': return 'error';
+      case 'upcoming': return 'warning';
+      default: return 'default';
     }
-  };
-
-  const getDaysRemaining = () => {
-    if (!challenge) return 0;
-    const endDate = new Date(challenge.endDate);
-    const today = new Date();
-    return Math.max(0, Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
-  };
-
-  const getProgressPercentage = () => {
-    if (!userParticipation || !challenge) return 0;
-    return Math.min(100, Math.round((userParticipation.current_value / challenge.targetValue) * 100));
   };
 
   if (loading) {
     return (
       <MainLayout>
         <Container maxWidth="lg" sx={{ py: 4, display: 'flex', justifyContent: 'center' }}>
-          <CircularProgress />
+          <CircularProgress size={60} sx={{ color: '#2da58e' }} />
         </Container>
       </MainLayout>
     );
@@ -174,9 +137,16 @@ export default function ChallengeDetailPage() {
     return (
       <MainLayout>
         <Container maxWidth="lg" sx={{ py: 4 }}>
-          <Alert severity="error">
+          <Alert severity="error" sx={{ mb: 2 }}>
             {error || 'Challenge not found'}
           </Alert>
+          <Button 
+            startIcon={<ArrowBackIcon />} 
+            onClick={() => router.back()}
+            sx={{ color: '#2da58e' }}
+          >
+            Go Back
+          </Button>
         </Container>
       </MainLayout>
     );
@@ -185,193 +155,383 @@ export default function ChallengeDetailPage() {
   return (
     <MainLayout>
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        {/* Header Section */}
-        <Card sx={{ mb: 4 }}>
-          <Box
-            sx={{
-              height: 200,
-              background: challenge.backgroundImageUrl 
-                ? `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url(${challenge.backgroundImageUrl})`
-                : 'linear-gradient(135deg, #2da58e 0%, #1b7d6b 100%)',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              display: 'flex',
-              alignItems: 'flex-end',
-              p: 3
+        {/* Alert Messages */}
+        {alertMessage && (
+          <Alert 
+            severity={alertMessage.type} 
+            sx={{ mb: 3 }}
+            onClose={() => setAlertMessage(null)}
+          >
+            {alertMessage.message}
+          </Alert>
+        )}
+
+        {/* Header with Back Button */}
+        <MotionBox 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          sx={{ mb: 3 }}
+        >
+          <Button 
+            startIcon={<ArrowBackIcon />} 
+            onClick={() => router.back()}
+            sx={{ 
+              color: '#2da58e',
+              mb: 2,
+              '&:hover': { bgcolor: 'rgba(45, 165, 142, 0.1)' }
             }}
           >
-            <Box sx={{ color: 'white' }}>
-              <Typography variant="h3" fontWeight="bold" gutterBottom>
-                {challenge.title}
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                <Chip
-                  label={`${challenge.challengeType} Challenge`}
-                  sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}
-                />
-                <Chip
-                  label={challenge.difficultyLevel}
-                  sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}
-                />
-                <Chip
-                  label={`${getDaysRemaining()} days left`}
-                  sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}
-                />
+            Back to Challenges
+          </Button>
+        </MotionBox>
+
+        {/* Hero Section */}
+        <MotionCard 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          sx={{ 
+            mb: 4,
+            background: challenge.backgroundImageUrl 
+              ? `linear-gradient(135deg, rgba(45,165,142,0.9) 0%, rgba(27,125,107,0.9) 100%), url(${challenge.backgroundImageUrl})`
+              : 'linear-gradient(135deg, #2da58e 0%, #1b7d6b 100%)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            color: 'white',
+            overflow: 'hidden'
+          }}
+        >
+          <CardContent sx={{ p: 4 }}>
+            <Stack spacing={3}>
+              {/* Title and Status */}
+              <Box>
+                <Typography variant="h3" fontWeight="bold" gutterBottom>
+                  {challenge.title || 'Untitled Challenge'}
+                </Typography>
+                <Stack direction="row" spacing={1} flexWrap="wrap">
+                  <MotionChip
+                    label={formatStatusText(getChallengeStatus())}
+                    color={getStatusColor(getChallengeStatus()) as 'success' | 'info' | 'error' | 'warning' | 'default'}
+                    variant="filled"
+                    whileHover={{ scale: 1.05 }}
+                  />
+                  <MotionChip
+                    label={`${challenge.challengeType || 'Unknown'} Challenge`}
+                    sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}
+                    whileHover={{ scale: 1.05 }}
+                  />
+                  <MotionChip
+                    label={challenge.difficultyLevel || 'Unknown'}
+                    sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}
+                    whileHover={{ scale: 1.05 }}
+                  />
+                  {challenge.featured && (
+                    <MotionChip
+                      icon={<StarIcon />}
+                      label="Featured"
+                      sx={{ bgcolor: '#ffd700', color: '#000' }}
+                      whileHover={{ scale: 1.05 }}
+                    />
+                  )}
+                </Stack>
               </Box>
-            </Box>
-          </Box>
+
+              {/* Quick Stats */}
+              <Stack direction="row" spacing={4} flexWrap="wrap">
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <FlagIcon />
+                  <Typography variant="body1" fontWeight="medium">
+                    Goal: {challenge.targetValue || 0} {challenge.unit || 'units'}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <GroupIcon />
+                  <Typography variant="body1" fontWeight="medium">
+                    {challenge.participantCount || 0} participants
+                    {challenge.maxParticipants && ` / ${challenge.maxParticipants}`}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <ScheduleIcon />
+                  <Typography variant="body1" fontWeight="medium">
+                    {getDaysRemaining()} days left
+                  </Typography>
+                </Box>
+              </Stack>
+            </Stack>
+          </CardContent>
+        </MotionCard>
+
+        {/* Main Content Grid */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 4 }}>
           
-          <CardContent>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={8}>
-                <Typography variant="body1" paragraph>
-                  {challenge.description}
+          {/* Left Column - Challenge Info */}
+          <Stack spacing={3}>
+            
+            {/* Description */}
+            <MotionCard
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <CardContent>
+                <Typography variant="h6" fontWeight="bold" gutterBottom>
+                  About This Challenge
+                </Typography>
+                <Typography variant="body1" color="text.secondary" paragraph>
+                  {challenge.description || 'No description available.'}
                 </Typography>
                 
-                <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', mb: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <FlagIcon color="primary" />
-                    <Typography variant="body2">
-                      Goal: {challenge.targetValue} {challenge.unit}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <GroupIcon color="primary" />
-                    <Typography variant="body2">
-                      {challenge.participantCount} participants
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <CalendarIcon color="primary" />
-                    <Typography variant="body2">
-                      {new Date(challenge.startDate).toLocaleDateString()} - {new Date(challenge.endDate).toLocaleDateString()}
-                    </Typography>
-                  </Box>
-                </Box>
+                {/* Challenge Details */}
+                <Stack direction="row" spacing={2} flexWrap="wrap" sx={{ mt: 2 }}>
+                  <Chip
+                    icon={<CalendarIcon />}
+                    label={`${challenge.startDate ? new Date(challenge.startDate).toLocaleDateString() : 'No start date'} - ${challenge.endDate ? new Date(challenge.endDate).toLocaleDateString() : 'No end date'}`}
+                    variant="outlined"
+                  />
+                  {challenge.activityType && (
+                    <Chip
+                      label={`Activity: ${challenge.activityType}`}
+                      variant="outlined"
+                    />
+                  )}
+                  {challenge.rewardType && (
+                    <Chip
+                      icon={<TrophyIcon />}
+                      label={`${challenge.rewardType}: ${challenge.rewardValue}`}
+                      variant="outlined"
+                    />
+                  )}
+                </Stack>
+              </CardContent>
+            </MotionCard>
 
-                {challenge.rules && (
-                  <Box>
-                    <Typography variant="h6" gutterBottom>Rules & Guidelines</Typography>
-                    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                      {challenge.rules}
-                    </Typography>
-                  </Box>
-                )}
-              </Grid>
-              
-              <Grid item xs={12} md={4}>
-                <Box sx={{ textAlign: 'center' }}>
-                  {isParticipant ? (
-                    <Card sx={{ p: 3, bgcolor: '#f8fafc' }}>
-                      <Typography variant="h6" gutterBottom>Your Progress</Typography>
-                      <Box sx={{ mb: 2 }}>
-                        <Typography variant="h4" color="primary" fontWeight="bold">
-                          {userParticipation?.current_value || 0}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          of {challenge.targetValue} {challenge.unit}
-                        </Typography>
-                      </Box>
-                      <LinearProgress
-                        variant="determinate"
-                        value={getProgressPercentage()}
-                        sx={{ mb: 2, height: 8, borderRadius: 4 }}
-                      />
-                      <Typography variant="body2" gutterBottom>
-                        {getProgressPercentage()}% Complete
+            {/* Rules */}
+            {challenge.rules && (
+              <MotionCard
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <CardContent>
+                  <Typography variant="h6" fontWeight="bold" gutterBottom>
+                    Rules & Guidelines
+                  </Typography>
+                  <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                    {challenge.rules}
+                  </Typography>
+                </CardContent>
+              </MotionCard>
+            )}
+          </Stack>
+
+          {/* Right Column - Participation & Progress */}
+          <Stack spacing={3}>
+            
+            {/* Participation Card */}
+            <MotionCard
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+              sx={{ 
+                border: challenge.isParticipant ? '2px solid #2da58e' : '1px solid #e0e0e0',
+                bgcolor: challenge.isParticipant ? '#f8fafc' : 'background.paper'
+              }}
+            >
+              <CardContent sx={{ textAlign: 'center' }}>
+                {challenge.isParticipant ? (
+                  <Stack spacing={2}>
+                    <Box>
+                      <Avatar 
+                        sx={{ 
+                          bgcolor: '#2da58e', 
+                          width: 56, 
+                          height: 56, 
+                          mx: 'auto',
+                          mb: 1
+                        }}
+                      >
+                        <TrophyIcon fontSize="large" />
+                      </Avatar>
+                      <Typography variant="h6" color="success.main" fontWeight="bold">
+                        You&apos;re Participating!
+                      </Typography>
+                    </Box>
+
+                    {/* Progress Display */}
+                    <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
+                      <Typography variant="h4" color="primary" fontWeight="bold">
+                        {challenge.currentProgress || 0}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        of {challenge.targetValue || 0} {challenge.unit || 'units'}
                       </Typography>
                       
-                      <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-                        <Button
-                          variant="contained"
-                          startIcon={<UpdateIcon />}
-                          onClick={() => setUpdateProgressOpen(true)}
-                          sx={{ bgcolor: '#2da58e', '&:hover': { bgcolor: '#1b7d6b' } }}
-                        >
-                          Update Progress
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          color="error"
-                          onClick={handleLeaveChallenge}
-                          disabled={actionLoading}
-                          sx={{ minWidth: 'auto' }}
-                        >
-                          Leave
-                        </Button>
-                      </Box>
-                    </Card>
-                  ) : (
-                    <Button
-                      variant="contained"
-                      size="large"
-                      startIcon={<JoinIcon />}
-                      onClick={() => setJoinDialogOpen(true)}
+                      <LinearProgress
+                        variant="determinate"
+                        value={challenge.progressPercentage || 0}
+                        sx={{ 
+                          mt: 1, 
+                          height: 8, 
+                          borderRadius: 4,
+                          bgcolor: 'rgba(45, 165, 142, 0.1)',
+                          '& .MuiLinearProgress-bar': { bgcolor: '#2da58e' }
+                        }}
+                      />
+                      <Typography variant="body2" sx={{ mt: 1 }} color="text.secondary">
+                        {challenge.progressPercentage || 0}% Complete
+                      </Typography>
+                      
+                      {challenge.userParticipation?.completed && (
+                        <Chip
+                          label="🏆 Completed!"
+                          color="success"
+                          sx={{ mt: 1, fontWeight: 'bold' }}
+                        />
+                      )}
+                    </Paper>
+
+                    {/* Action Buttons */}
+                    <Stack direction="row" spacing={1}>
+                      <Button
+                        variant="contained"
+                        startIcon={<UpdateIcon />}
+                        onClick={() => setUpdateProgressOpen(true)}
+                        disabled={actionLoading || getChallengeStatus() !== 'active'}
+                        sx={{ 
+                          bgcolor: '#2da58e', 
+                          '&:hover': { bgcolor: '#1b7d6b' },
+                          flex: 1
+                        }}
+                      >
+                        Update Progress
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        onClick={handleLeaveChallenge}
+                        disabled={actionLoading}
+                        startIcon={<LeaveIcon />}
+                      >
+                        Leave
+                      </Button>
+                    </Stack>
+                  </Stack>
+                ) : (
+                  <Stack spacing={2}>
+                    <Avatar 
                       sx={{ 
-                        bgcolor: '#2da58e',
-                        '&:hover': { bgcolor: '#1b7d6b' },
-                        py: 2,
-                        px: 4
+                        bgcolor: '#e0e0e0', 
+                        width: 56, 
+                        height: 56, 
+                        mx: 'auto'
                       }}
                     >
-                      Join Challenge
-                    </Button>
-                  )}
-                </Box>
-              </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
-
-        {/* Leaderboard */}
-        <Card>
-          <CardContent>
-            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <TrophyIcon />
-              Leaderboard
-            </Typography>
-            
-            {leaderboard.length > 0 ? (
-              <List>
-                {leaderboard.map((participant, index) => (
-                  <ListItem key={participant.userId} sx={{ px: 0 }}>
-                    <ListItemAvatar>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Typography variant="h6" color="primary" fontWeight="bold">
-                          #{index + 1}
-                        </Typography>
-                        <Avatar src={participant.avatarUrl} alt={participant.userName}>
-                          {participant.userName.charAt(0).toUpperCase()}
-                        </Avatar>
-                      </Box>
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={participant.userName}
-                      secondary={`${participant.currentValue} ${challenge.unit} • ${participant.progressPercentage.toFixed(1)}% complete`}
-                    />
-                    {participant.completed && (
-                      <TrophyIcon color="warning" />
+                      <JoinIcon fontSize="large" />
+                    </Avatar>
+                    
+                    {getChallengeStatus() === 'active' ? (
+                      <>
+                        {challenge.maxParticipants && challenge.participantCount >= challenge.maxParticipants ? (
+                          <Alert severity="warning">
+                            Challenge is full ({challenge.maxParticipants} participants)
+                          </Alert>
+                        ) : (
+                          <>
+                            <Typography variant="h6" gutterBottom>
+                              Ready to Join?
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" gutterBottom>
+                              Take on this challenge and track your progress with others.
+                            </Typography>
+                            <Button
+                              variant="contained"
+                              size="large"
+                              startIcon={<JoinIcon />}
+                              onClick={() => setJoinDialogOpen(true)}
+                              disabled={actionLoading}
+                              sx={{ 
+                                bgcolor: '#2da58e',
+                                '&:hover': { bgcolor: '#1b7d6b' },
+                                py: 1.5
+                              }}
+                            >
+                              Join Challenge
+                            </Button>
+                          </>
+                        )}
+                      </>
+                    ) : getChallengeStatus() === 'upcoming' ? (
+                      <Alert severity="info">
+                        Challenge starts on {challenge.startDate ? new Date(challenge.startDate).toLocaleDateString() : 'Unknown date'}
+                      </Alert>
+                    ) : getChallengeStatus() === 'ended' ? (
+                      <Alert severity="error">
+                        Challenge has ended
+                      </Alert>
+                    ) : (
+                      <Alert severity="info">
+                        Challenge is {formatStatusText(getChallengeStatus())}
+                      </Alert>
                     )}
-                  </ListItem>
-                ))}
-              </List>
-            ) : (
-              <Typography color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-                No participants yet. Be the first to join!
-              </Typography>
-            )}
-          </CardContent>
-        </Card>
+                  </Stack>
+                )}
+              </CardContent>
+            </MotionCard>
+
+            {/* Challenge Stats */}
+            <MotionCard
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <CardContent>
+                <Typography variant="h6" fontWeight="bold" gutterBottom>
+                  Challenge Stats
+                </Typography>
+                <Stack spacing={2}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="body2" color="text.secondary">Total Participants</Typography>
+                    <Typography variant="body2" fontWeight="medium">{challenge.participantCount || 0}</Typography>
+                  </Box>
+                  <Divider />
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="body2" color="text.secondary">Challenge Type</Typography>
+                    <Typography variant="body2" fontWeight="medium">{challenge.challengeType || 'Unknown'}</Typography>
+                  </Box>
+                  <Divider />
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="body2" color="text.secondary">Difficulty</Typography>
+                    <Typography variant="body2" fontWeight="medium">{challenge.difficultyLevel || 'Unknown'}</Typography>
+                  </Box>
+                  {challenge.maxParticipants && (
+                    <>
+                      <Divider />
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography variant="body2" color="text.secondary">Max Participants</Typography>
+                        <Typography variant="body2" fontWeight="medium">{challenge.maxParticipants}</Typography>
+                      </Box>
+                    </>
+                  )}
+                </Stack>
+              </CardContent>
+            </MotionCard>
+          </Stack>
+        </Box>
 
         {/* Dialogs */}
-        <Dialog open={joinDialogOpen} onClose={() => setJoinDialogOpen(false)}>
-          <DialogTitle>Join Challenge</DialogTitle>
-          <DialogContent>
-            <Typography>
-              Are you ready to take on the "{challenge.title}" challenge?
+        <Dialog open={joinDialogOpen} onClose={() => setJoinDialogOpen(false)} maxWidth="sm" fullWidth>
+          <DialogTitle sx={{ bgcolor: '#2da58e', color: 'white' }}>
+            Join Challenge
+          </DialogTitle>
+          <DialogContent sx={{ pt: 3 }}>
+            <Typography variant="body1" gutterBottom>
+                             Are you ready to take on the &quot;{challenge?.title || 'this'}&quot; challenge?
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+                              By joining, you&apos;ll be able to track your progress and compete with other participants.
             </Typography>
           </DialogContent>
-          <DialogActions>
+          <DialogActions sx={{ p: 3 }}>
             <Button onClick={() => setJoinDialogOpen(false)}>Cancel</Button>
             <Button
               onClick={handleJoinChallenge}
@@ -384,21 +544,33 @@ export default function ChallengeDetailPage() {
           </DialogActions>
         </Dialog>
 
-        <Dialog open={updateProgressOpen} onClose={() => setUpdateProgressOpen(false)}>
-          <DialogTitle>Update Progress</DialogTitle>
-          <DialogContent>
-            <TextField
-              autoFocus
-              margin="dense"
-              label={`Current Value (${challenge.unit})`}
-              type="number"
-              fullWidth
-              value={progressValue}
-              onChange={(e) => setProgressValue(parseInt(e.target.value) || 0)}
-              sx={{ mt: 2 }}
-            />
+        <Dialog open={updateProgressOpen} onClose={() => setUpdateProgressOpen(false)} maxWidth="sm" fullWidth>
+          <DialogTitle sx={{ bgcolor: '#2da58e', color: 'white' }}>
+            Update Progress
+          </DialogTitle>
+          <DialogContent sx={{ pt: 3 }}>
+            <Stack spacing={2}>
+              <TextField
+                autoFocus
+                label={`Current Value (${challenge?.unit || 'units'})`}
+                type="number"
+                fullWidth
+                value={progressValue}
+                onChange={(e) => setProgressValue(parseInt(e.target.value) || 0)}
+                inputProps={{ min: 0 }}
+              />
+              <TextField
+                label="Notes (optional)"
+                multiline
+                rows={3}
+                fullWidth
+                value={progressNotes}
+                onChange={(e) => setProgressNotes(e.target.value)}
+                placeholder="Add any notes about your progress..."
+              />
+            </Stack>
           </DialogContent>
-          <DialogActions>
+          <DialogActions sx={{ p: 3 }}>
             <Button onClick={() => setUpdateProgressOpen(false)}>Cancel</Button>
             <Button
               onClick={handleUpdateProgress}

@@ -5,9 +5,10 @@ import { authOptions } from '@/lib/auth';
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.id) {
@@ -28,7 +29,7 @@ export async function PUT(
     const { data: participant, error: participantError } = await supabase
       .from('challenge_participants')
       .select('id, current_value')
-      .eq('challenge_id', params.id)
+      .eq('challenge_id', id)
       .eq('user_id', session.user.id)
       .single();
 
@@ -52,7 +53,7 @@ export async function PUT(
     const { data: updatedParticipant, error } = await supabase
       .from('challenge_participants')
       .update(updateData)
-      .eq('challenge_id', params.id)
+      .eq('challenge_id', id)
       .eq('user_id', session.user.id)
       .select(`
         *,

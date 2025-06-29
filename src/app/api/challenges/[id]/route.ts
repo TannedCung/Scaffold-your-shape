@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
 import { supabase } from '@/lib/supabase';
+import { authOptions } from '@/lib/auth';
 import { mapChallengeDbToChallenge } from '@/types';
 
 export async function GET(
@@ -8,6 +10,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const session = await getServerSession(authOptions);
 
     if (!id) {
       return NextResponse.json(
@@ -22,16 +25,7 @@ export async function GET(
       .select(`
         *,
         club:clubs(id, name),
-        challenge_participants!inner(
-          id,
-          user_id,
-          progress_percentage,
-          current_value,
-          joined_at,
-          last_activity_date,
-          rank,
-          notes
-        )
+        profiles!challenges_creator_id_fkey(name, avatar_url)
       `)
       .eq('id', id)
       .single();
@@ -55,7 +49,33 @@ export async function GET(
     // Map the challenge data
     const mappedChallenge = mapChallengeDbToChallenge(challenge);
 
-    return NextResponse.json({ data: mappedChallenge });
+    // If user is logged in, fetch their participation status
+    if (session?.user?.id) {
+      const { data: participation, error: participationError } = await supabase
+        .from('challenge_participants')
+        .select('*')
+        .eq('challenge_id', id)
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (!participationError && participation) {
+        return NextResponse.json({ 
+          data: {
+            ...mappedChallenge,
+            user_participation: participation,
+            is_participant: true
+          }
+        });
+      }
+    }
+
+    return NextResponse.json({ 
+      data: {
+        ...mappedChallenge,
+        user_participation: null,
+        is_participant: false
+      }
+    });
   } catch (error) {
     console.warn('Warning in GET /api/challenges/[id]:', error);
     return NextResponse.json(

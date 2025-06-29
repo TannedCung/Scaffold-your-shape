@@ -48,21 +48,24 @@ export async function GET(
     }
 
     // Format the leaderboard data
-    const formattedLeaderboard = (leaderboard || []).map((entry, index) => ({
-      id: entry.user_id,
-      userId: entry.user_id,
-      challengeId: entry.challenge_id,
-      currentValue: entry.current_value || 0,
-      progressPercentage: entry.progress_percentage || 0,
-      rank: entry.rank || (offset + index + 1),
-      joinedAt: entry.joined_at,
-      lastActivityDate: entry.last_activity_date,
-      profile: {
-        id: (entry.profile as any)?.id || entry.user_id,
-        fullName: (entry.profile as any)?.name || 'Unknown User',
-        avatarUrl: (entry.profile as any)?.avatar_url
-      }
-    }));
+    const formattedLeaderboard = (leaderboard || []).map((entry, index) => {
+      const profile = entry.profile as { id?: string; name?: string; avatar_url?: string | null } | null;
+      return {
+        id: entry.user_id,
+        userId: entry.user_id,
+        challengeId: entry.challenge_id,
+        currentValue: entry.current_value || 0,
+        progressPercentage: entry.progress_percentage || 0,
+        rank: entry.rank || (offset + index + 1),
+        joinedAt: entry.joined_at,
+        lastActivityDate: entry.last_activity_date,
+        profile: {
+          id: profile?.id || entry.user_id,
+          fullName: profile?.name || 'Unknown User',
+          avatarUrl: profile?.avatar_url
+        }
+      };
+    });
 
     return NextResponse.json({ 
       data: formattedLeaderboard,
