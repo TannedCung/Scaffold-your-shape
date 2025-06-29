@@ -22,42 +22,46 @@ export function useChallengesWithParticipations() {
         setLoading(true);
         setError(null);
 
-        // Fetch challenges
+        // Fetch challenges with participation status included
         const { data: challengesData, error: challengesError } = await challengeApi.getAll();
         
         if (challengesError) {
           throw new Error(challengesError);
         }
 
-        const mappedChallenges = (challengesData || []).map(mapChallengeDbToChallenge);
-
-        // Fetch user participations if logged in
-        let userParticipations: ChallengeParticipant[] = [];
-        if (session?.user?.id) {
-          const { data: participationsData, error: participationsError } = await challengeApi.getMyParticipations();
+        // The API now returns challenges with participation status already included
+        const enrichedChallenges = (challengesData || []).map(challengeDb => {
+          const mappedChallenge = mapChallengeDbToChallenge(challengeDb);
           
-          console.log('Participations API response:', { participationsData, participationsError, type: typeof participationsData, isArray: Array.isArray(participationsData) });
-          
-          if (participationsError) {
-            console.warn('Warning fetching participations:', participationsError);
-          } else {
-            // Ensure participationsData is an array
-            userParticipations = Array.isArray(participationsData) ? participationsData : [];
-          }
-        }
+          // Map the participation data from snake_case to camelCase
+          const userParticipation: ChallengeParticipant | undefined = challengeDb.user_participation ? {
+            id: challengeDb.user_participation.id || '',
+            challengeId: challengeDb.user_participation.challenge_id,
+            userId: challengeDb.user_participation.user_id,
+            currentValue: challengeDb.user_participation.current_value || 0,
+            completed: challengeDb.user_participation.completed || false,
+            completedAt: challengeDb.user_participation.completed_at || undefined,
+            joinedAt: challengeDb.user_participation.joined_at,
+            progressPercentage: challengeDb.user_participation.progress_percentage || 0,
+            lastActivityDate: challengeDb.user_participation.last_activity_date || undefined,
+            rank: challengeDb.user_participation.rank || undefined,
+            notes: challengeDb.user_participation.notes || undefined
+          } : undefined;
 
-        // Combine challenges with participation status
-        const challengesWithParticipation: ChallengeWithParticipation[] = mappedChallenges.map(challenge => {
-          const participation = userParticipations.find(p => p.challengeId === challenge.id);
           return {
-            ...challenge,
-            isParticipant: !!participation,
-            userParticipation: participation,
-            currentProgress: participation?.currentValue || 0
+            ...mappedChallenge,
+            isParticipant: challengeDb.is_participant || false,
+            userParticipation,
+            currentProgress: userParticipation?.currentValue || 0
           };
         });
 
-        setChallenges(challengesWithParticipation);
+        // Extract participations for the participations state
+        const userParticipations = enrichedChallenges
+          .filter(c => c.userParticipation)
+          .map(c => c.userParticipation!);
+
+        setChallenges(enrichedChallenges);
         setParticipations(userParticipations);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load challenges');
