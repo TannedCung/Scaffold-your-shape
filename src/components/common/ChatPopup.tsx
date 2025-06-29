@@ -140,7 +140,7 @@ const ChatPopup: React.FC = () => {
   };
 
   // Handle keyboard navigation for message history
-  const handleSendMessage = async () => {
+  const handleSendMessage = useCallback(async () => {
     if (message.trim() === '' || isLoading) return;
 
     const userMessage = message.trim();
@@ -344,7 +344,7 @@ const ChatPopup: React.FC = () => {
         textFieldRef.current?.focus();
       }, 100);
     }
-  };
+  }, [message, isLoading]);
 
   const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'ArrowUp') {
