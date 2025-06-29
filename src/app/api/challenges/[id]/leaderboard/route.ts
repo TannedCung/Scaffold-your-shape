@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabaseAdmin';
+import { supabase } from '@/lib/supabase';
 
 export async function GET(
   request: NextRequest,
@@ -19,7 +19,7 @@ export async function GET(
     }
 
     // Fetch leaderboard data using the view
-    const { data: leaderboard, error } = await supabaseAdmin
+    const { data: leaderboard, error } = await supabase
       .from('challenge_leaderboard')
       .select(`
         challenge_id,
@@ -31,7 +31,7 @@ export async function GET(
         last_activity_date,
         profile:profiles(
           id,
-          full_name,
+          name,
           avatar_url
         )
       `)
@@ -59,7 +59,7 @@ export async function GET(
       lastActivityDate: entry.last_activity_date,
       profile: {
         id: (entry.profile as any)?.id || entry.user_id,
-        fullName: (entry.profile as any)?.full_name || 'Unknown User',
+        fullName: (entry.profile as any)?.name || 'Unknown User',
         avatarUrl: (entry.profile as any)?.avatar_url
       }
     }));

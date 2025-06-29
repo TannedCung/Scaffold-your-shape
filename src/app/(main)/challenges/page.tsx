@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useChallenges } from '@/hooks/useChallenges';
+import { useChallengesWithParticipations } from '@/hooks/useChallengesWithParticipations';
 import { 
   Container, 
   Typography, 
@@ -39,13 +39,7 @@ const MotionButton = motion(Button);
 
 export default function ChallengesPage() {
   const [createOpen, setCreateOpen] = React.useState(false);
-  const { challenges, loading, error } = useChallenges();
-
-  // My challenges (sample data)
-  const myChallenges: { challengeId: string; progress: number }[] = [
-    { challengeId: '1', progress: 1200 },
-    { challengeId: '5', progress: 120000 }
-  ];
+  const { challenges, loading, error, refreshParticipations } = useChallengesWithParticipations();
 
   return (
     <MainLayout>
@@ -179,7 +173,11 @@ export default function ChallengesPage() {
         <Dialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="xs" fullWidth>
           <DialogTitle sx={{ bgcolor: '#2da58e', color: '#fff' }}>Create Challenge</DialogTitle>
           <DialogContent>
-            <CreateChallengeForm onSuccess={() => { setCreateOpen(false); window.location.reload(); }} />
+            <CreateChallengeForm onSuccess={() => { 
+              setCreateOpen(false); 
+              refreshParticipations();
+              window.location.reload(); 
+            }} />
           </DialogContent>
         </Dialog>
         <ChallengeList />
@@ -198,18 +196,15 @@ export default function ChallengesPage() {
             Trending Challenges
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', mx: -2 }}>
-            {challenges.slice(0, 3).map((challenge) => {
-              const participation = myChallenges.find(mc => mc.challengeId === challenge.id);
-              return (
-                <Box key={challenge.id} sx={{ width: { xs: '100%', sm: '50%', md: '33.333%' }, p: 2 }}>
-                  <ChallengeCard 
-                    challenge={challenge} 
-                    isParticipant={!!participation}
-                    currentProgress={participation?.progress || 0}
-                  />
-                </Box>
-              );
-            })}
+            {challenges.slice(0, 3).map((challenge) => (
+              <Box key={challenge.id} sx={{ width: { xs: '100%', sm: '50%', md: '33.333%' }, p: 2 }}>
+                <ChallengeCard 
+                  challenge={challenge} 
+                  isParticipant={challenge.isParticipant}
+                  currentProgress={challenge.currentProgress || 0}
+                />
+              </Box>
+            ))}
           </Box>
         </MotionBox>
 
@@ -224,18 +219,15 @@ export default function ChallengesPage() {
             Upcoming Challenges
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', mx: -2 }}>
-            {challenges.slice(2, 5).map((challenge) => {
-              const participation = myChallenges.find(mc => mc.challengeId === challenge.id);
-              return (
-                <Box key={challenge.id} sx={{ width: { xs: '100%', sm: '50%', md: '33.333%' }, p: 2 }}>
-                  <ChallengeCard 
-                    challenge={challenge} 
-                    isParticipant={!!participation}
-                    currentProgress={participation?.progress || 0}
-                  />
-                </Box>
-              );
-            })}
+            {challenges.slice(2, 5).map((challenge) => (
+              <Box key={challenge.id} sx={{ width: { xs: '100%', sm: '50%', md: '33.333%' }, p: 2 }}>
+                <ChallengeCard 
+                  challenge={challenge} 
+                  isParticipant={challenge.isParticipant}
+                  currentProgress={challenge.currentProgress || 0}
+                />
+              </Box>
+            ))}
           </Box>
         </MotionBox>
 
@@ -250,18 +242,15 @@ export default function ChallengesPage() {
             All Challenges
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', mx: -2 }}>
-            {challenges.map((challenge) => {
-              const participation = myChallenges.find(mc => mc.challengeId === challenge.id);
-              return (
-                <Box key={challenge.id} sx={{ width: { xs: '100%', sm: '50%', md: '33.333%' }, p: 2 }}>
-                  <ChallengeCard 
-                    challenge={challenge} 
-                    isParticipant={!!participation}
-                    currentProgress={participation?.progress || 0}
-                  />
-                </Box>
-              );
-            })}
+            {challenges.map((challenge) => (
+              <Box key={challenge.id} sx={{ width: { xs: '100%', sm: '50%', md: '33.333%' }, p: 2 }}>
+                <ChallengeCard 
+                  challenge={challenge} 
+                  isParticipant={challenge.isParticipant}
+                  currentProgress={challenge.currentProgress || 0}
+                />
+              </Box>
+            ))}
           </Box>
         </MotionBox>
       </Container>

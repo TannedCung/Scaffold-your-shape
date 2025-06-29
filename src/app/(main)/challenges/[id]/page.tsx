@@ -68,21 +68,15 @@ export default function ChallengeDetailPage() {
   const fetchChallengeDetails = async () => {
     try {
       setLoading(true);
-      const [challengeResponse, leaderboardResponse] = await Promise.all([
-        challengeApi.getById(challengeId),
-        challengeApi.getLeaderboard(challengeId)
-      ]);
+      // Skip loading leaderboard for now
+      const challengeResponse = await challengeApi.getById(challengeId);
 
       if (challengeResponse.error) {
         throw new Error(challengeResponse.error);
       }
 
-      if (leaderboardResponse.error) {
-        throw new Error(leaderboardResponse.error);
-      }
-
       setChallenge(challengeResponse.data || null);
-      setLeaderboard(leaderboardResponse.data || []);
+      // Skip setting leaderboard - setLeaderboard(leaderboardResponse.data || []);
 
       // Check if current user is a participant
       if (session?.user?.id && challengeResponse.data && (challengeResponse.data as any).challenge_participants) {
@@ -133,6 +127,22 @@ export default function ChallengeDetailPage() {
       await fetchChallengeDetails();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update progress');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleLeaveChallenge = async () => {
+    if (!session?.user?.id) return;
+
+    setActionLoading(true);
+    try {
+      const { error } = await challengeApi.leave(challengeId);
+      if (error) throw new Error(error);
+      
+      await fetchChallengeDetails();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to leave challenge');
     } finally {
       setActionLoading(false);
     }
@@ -271,14 +281,25 @@ export default function ChallengeDetailPage() {
                         {getProgressPercentage()}% Complete
                       </Typography>
                       
-                      <Button
-                        variant="contained"
-                        startIcon={<UpdateIcon />}
-                        onClick={() => setUpdateProgressOpen(true)}
-                        sx={{ mt: 2, bgcolor: '#2da58e', '&:hover': { bgcolor: '#1b7d6b' } }}
-                      >
-                        Update Progress
-                      </Button>
+                      <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                        <Button
+                          variant="contained"
+                          startIcon={<UpdateIcon />}
+                          onClick={() => setUpdateProgressOpen(true)}
+                          sx={{ bgcolor: '#2da58e', '&:hover': { bgcolor: '#1b7d6b' } }}
+                        >
+                          Update Progress
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          onClick={handleLeaveChallenge}
+                          disabled={actionLoading}
+                          sx={{ minWidth: 'auto' }}
+                        >
+                          Leave
+                        </Button>
+                      </Box>
                     </Card>
                   ) : (
                     <Button

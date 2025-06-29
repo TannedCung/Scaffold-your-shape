@@ -75,7 +75,7 @@ export async function POST(
       })
       .select(`
         *,
-        profiles(full_name, avatar_url)
+        profiles(name, avatar_url)
       `)
       .single();
 
