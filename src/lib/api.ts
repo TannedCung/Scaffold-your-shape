@@ -1,4 +1,4 @@
-import { Profile, Activity, ActivityPointConversion, Club, Challenge, ActivityWithDetails, ChallengeDb, ClubDb, ChallengeParticipant } from '@/types';
+import { Profile, Activity, ActivityPointConversion, Club, Challenge, ActivityWithDetails, ChallengeDb, ClubDb, ChallengeParticipant, ChallengeLeaderboard } from '@/types';
 
 interface ApiResponse<T> {
   data?: T;
@@ -195,10 +195,10 @@ export const challengeApi = {
     if (params?.offset) searchParams.set('offset', params.offset.toString());
     
     const url = `/api/challenges/${id}/leaderboard${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
-    return fetchApi<any[]>(url);
+    return fetchApi<ChallengeLeaderboard[]>(url);
   },
   join: (id: string) => 
-    fetchApi<any>(`/api/challenges/${id}/join`, {
+    fetchApi<{ success: boolean }>(`/api/challenges/${id}/join`, {
       method: 'POST',
     }),
   leave: (id: string) => 
@@ -206,7 +206,7 @@ export const challengeApi = {
       method: 'DELETE',
     }),
   updateProgress: (id: string, data: { currentValue: number; notes?: string }) => 
-    fetchApi<any>(`/api/challenges/${id}/progress`, {
+    fetchApi<{ success: boolean }>(`/api/challenges/${id}/progress`, {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
