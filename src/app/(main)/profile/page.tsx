@@ -449,7 +449,7 @@ function ProfileContent() {
                         <Box key={challenge.id} sx={{ mb: 3, '&:last-child': { mb: 2 } }}>
                           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                             <Typography variant="body1" fontWeight={500}>
-                              {challenge.title}
+                              {challenge.name}
                             </Typography>
                             <Typography variant="body2" color="primary">
                               {challenge.progress}%
@@ -460,9 +460,9 @@ function ProfileContent() {
                             value={challenge.progress} 
                             sx={{ height: 8, borderRadius: 4, mb: 1 }}
                           />
-                          <Typography variant="body2" color="text.secondary">
-                            {challenge.currentValue} / {challenge.targetValue} {challenge.unit} • {getDaysRemaining(challenge.endDate)} days left
-                          </Typography>
+                                                            <Typography variant="body2" color="text.secondary">
+                                    {challenge.progress}% complete • {getDaysRemaining(challenge.endDate)} days left
+                                  </Typography>
                         </Box>
                       ))}
                     </>
@@ -714,7 +714,7 @@ function ProfileContent() {
                                 <Box key={challenge.id} sx={{ py: 2, borderBottom: '1px solid #e0e0e0', '&:last-child': { borderBottom: 'none' } }}>
                                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                                     <Typography variant="body1" fontWeight={500}>
-                                      {challenge.title}
+                                      {challenge.name}
                                     </Typography>
                                     <Typography variant="body2" color="primary" fontWeight="bold">
                                       {challenge.progress}%

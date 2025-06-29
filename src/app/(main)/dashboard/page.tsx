@@ -22,13 +22,13 @@ import RecentActivities from '@/components/dashboard/RecentActivities';
 import MainLayout from '@/components/layout/MainLayout';
 import CreateActivityDialog from '@/components/activities/CreateActivityDialog';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
-import { useChallenges } from '@/hooks/useChallenges';
+import { useChallengesWithParticipations } from '@/hooks/useChallengesWithParticipations';
 import { useRouter } from 'next/navigation';
 
 export default function DashboardPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const { stats, loading: statsLoading, error: statsError } = useDashboardStats();
-  const { challenges, loading: challengesLoading } = useChallenges();
+  const { challenges, loading: challengesLoading } = useChallengesWithParticipations();
   const router = useRouter();
 
   // Filter upcoming challenges (start date in the future)
