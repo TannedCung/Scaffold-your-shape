@@ -15,6 +15,9 @@ interface ProfileStats {
     endDate: string;
     progress: number;
     daysRemaining: number;
+    currentValue: number;
+    targetValue: number;
+    unit: string;
   }>;
   // Analytics data for charts
   monthlyActivityData: Array<{
@@ -161,6 +164,9 @@ export function useProfileStats(userId?: string) {
             endDate: challenge.end_date,
             progress: Math.round(progress),
             daysRemaining: 0,
+            currentValue: Number(item.current_value.toFixed(2)),
+            targetValue: Number(challenge.target_value.toFixed(2)),
+            unit: challenge.unit,
           };
         })
         .slice(0, 3); // Limit to 3 active challenges

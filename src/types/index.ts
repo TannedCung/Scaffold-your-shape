@@ -539,6 +539,9 @@ export interface ChallengeDb {
   club_id?: string | null;
   created_at: string;
   updated_at: string;
+  // Participation fields (populated when user is logged in)
+  user_participation?: ChallengeParticipantDb | null;
+  is_participant?: boolean;
 }
 
 export interface Challenge {
@@ -568,6 +571,9 @@ export interface Challenge {
   clubId?: string;
   created_at: string;
   updatedAt: string;
+  // Participation fields (populated when user is logged in)
+  user_participation?: ChallengeParticipant | null;
+  is_participant?: boolean;
 }
 
 export function mapChallengeDbToChallenge(db: ChallengeDb): Challenge {
