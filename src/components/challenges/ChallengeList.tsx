@@ -6,8 +6,10 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { Challenge } from '@/types';
 import { challengeApi } from '@/lib/api';
 import { mapChallengeDbToChallenge } from '@/types';
+import { useRouter } from 'next/navigation';
 
 export default function ChallengeList() {
+  const router = useRouter();
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +34,8 @@ export default function ChallengeList() {
     fetchChallenges();
   }, []);
 
-  const handleDelete = async (deleteId: string) => {
+  const handleDelete = async (e: React.MouseEvent, deleteId: string) => {
+    e.stopPropagation(); // Prevent card click when deleting
     try {
       const { error } = await challengeApi.delete(deleteId);
       
@@ -44,6 +47,10 @@ export default function ChallengeList() {
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to delete challenge');
     }
+  };
+
+  const handleChallengeClick = (challengeId: string) => {
+    router.push(`/challenges/${challengeId}`);
   };
 
   if (loading) {
@@ -76,10 +83,18 @@ export default function ChallengeList() {
         <Paper
           key={challenge.id}
           elevation={0}
+          onClick={() => handleChallengeClick(challenge.id)}
           sx={{
             p: 2,
             bgcolor: '#f7faf9',
             borderRadius: 2,
+            cursor: 'pointer',
+            transition: 'all 0.2s ease-in-out',
+            '&:hover': {
+              bgcolor: '#e8f5f3',
+              transform: 'translateY(-2px)',
+              boxShadow: '0 4px 12px rgba(45, 165, 142, 0.15)',
+            }
           }}
         >
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -92,8 +107,14 @@ export default function ChallengeList() {
               </Typography>
             </Box>
             <IconButton
-              onClick={() => handleDelete(challenge.id)}
-              sx={{ color: 'error.main' }}
+              onClick={(e) => handleDelete(e, challenge.id)}
+              sx={{ 
+                color: 'error.main',
+                '&:hover': {
+                  bgcolor: 'error.light',
+                  color: 'white',
+                }
+              }}
             >
               <DeleteIcon />
             </IconButton>

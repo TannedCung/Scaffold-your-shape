@@ -15,6 +15,7 @@ import DateRangeIcon from '@mui/icons-material/DateRange';
 import PeopleIcon from '@mui/icons-material/People';
 import { Challenge } from '@/types';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
 // Create motion components
 const MotionCard = motion(Card);
@@ -32,6 +33,7 @@ export default function ChallengeCard({
   isParticipant = false, 
   currentProgress = 0 
 }: ChallengeCardProps) {
+  const router = useRouter();
   
   // Calculate days remaining
   const endDate = new Date(challenge.endDate);
@@ -44,6 +46,10 @@ export default function ChallengeCard({
   
   // Calculate progress percentage
   const progressPercentage = isParticipant ? Math.min(100, Math.round((currentProgress / challenge.targetValue) * 100)) : 0;
+
+  const handleCardClick = () => {
+    router.push(`/challenges/${challenge.id}`);
+  };
   
 
   
@@ -64,6 +70,7 @@ export default function ChallengeCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
       whileHover={{ y: -8, transition: { duration: 0.2 } }}
+      onClick={handleCardClick}
       sx={{ 
         height: '100%', 
         display: 'flex',
@@ -71,6 +78,10 @@ export default function ChallengeCard({
         overflow: 'hidden',
         borderRadius: 2,
         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        cursor: 'pointer',
+        '&:hover': {
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+        }
       }}
     >
       <Box sx={{ position: 'relative' }}>
