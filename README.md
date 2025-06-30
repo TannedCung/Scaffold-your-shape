@@ -1,5 +1,7 @@
 # Scaffold Your Shape - Fitness Tracking Application
 
+![Dashboard](documents/images/dashboard.png)
+
 A comprehensive fitness tracking application that allows users to track various exercises (push-ups, pull-ups, bench press, etc.) and outdoor activities (running, walking, swimming, etc.).
 
 ## Features
@@ -8,6 +10,8 @@ A comprehensive fitness tracking application that allows users to track various 
 - **Club**: Join fitness communities to connect with like-minded people
 - **Challenges**: Compete in fitness challenges with other users
 - **Profile**: Track your fitness journey with detailed statistics
+- **Sync with Strava**: Seamlessly integrate your Strava activities
+- **Multi-agent Chatbot**: Interact with a smart chatbot for assistance
 
 ## Tech Stack
 
@@ -47,7 +51,7 @@ supabase login
  <project-ref>
 supabase link --project-ref
 # Push the schema to your Supabase database
-supabase db push --file supabase_schema.sql
+supabase db push
 ```
 
 Alternatively, you can copy the contents of `supabase_schema.sql` and run them in the Supabase SQL editor in your dashboard.
