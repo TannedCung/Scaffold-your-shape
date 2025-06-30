@@ -74,7 +74,7 @@ export default function Home() {
                 spacing={2}
                 variants={staggerChildren}
               >
-                <Link href="/sign-up" passHref style={{ textDecoration: 'none' }}>
+                <Link href="/sign-in" passHref style={{ textDecoration: 'none', display: 'flex', justifyContent: 'center' }}>
                   <MotionButton 
                     variant="contained" 
                     color="secondary" 
@@ -95,48 +95,7 @@ export default function Home() {
                     Get Started
                   </MotionButton>
                 </Link>
-                <Link href="/sign-in" passHref style={{ textDecoration: 'none' }}>
-                  <MotionButton 
-                    variant="outlined" 
-                    size="large"
-                    variants={itemVariants}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    sx={{ 
-                      px: 4, 
-                      py: 1.5,
-                      color: 'white',
-                      borderColor: 'white',
-                      '&:hover': {
-                        borderColor: 'white',
-                        bgcolor: 'rgba(255, 255, 255, 0.1)',
-                      }
-                    }}
-                  >
-                    Log In
-                  </MotionButton>
-                </Link>
               </MotionStack>
-            </Box>
-            <Box sx={{ width: { xs: '100%', md: '50%' }, px: 2, display: { xs: 'none', md: 'block' } }}>
-              <MotionBox 
-                sx={{ position: 'relative', height: 400 }}
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.7, delay: 0.3 }}
-              >
-                <Box sx={{ 
-                  width: '100%', 
-                  height: '100%', 
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '2rem',
-                  color: 'rgba(255, 255, 255, 0.7)'
-                }}>
-                  Fitness Tracking Image
-                </Box>
-              </MotionBox>
             </Box>
           </Box>
         </Container>
@@ -337,7 +296,7 @@ export default function Home() {
           >
             Join thousands of users already tracking their fitness goals.
           </MotionTypography>
-          <Link href="/sign-up" passHref style={{ textDecoration: 'none' }}>
+          <Link href="/sign-in" passHref style={{ textDecoration: 'none' }}>
             <MotionButton 
               variant="contained" 
               size="large"
@@ -354,7 +313,7 @@ export default function Home() {
                 }
               }}
             >
-              Sign Up Now
+              Join Now
             </MotionButton>
           </Link>
         </Container>
