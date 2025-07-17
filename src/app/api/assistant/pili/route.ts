@@ -50,9 +50,7 @@ export async function POST(request: NextRequest) {
     const contentType = response.headers.get('content-type');
     
     if (contentType?.includes('text/plain') || contentType?.includes('text/event-stream')) {
-      // Handle streaming response
-      console.log('Handling streaming response from Pili');
-      
+      // Handle streaming response      
       const encoder = new TextEncoder();
       const decoder = new TextDecoder();
       
@@ -74,9 +72,7 @@ export async function POST(request: NextRequest) {
               }
               
               // Decode the chunk and send as SSE
-              const chunk = decoder.decode(value);
-              console.log('Streaming chunk from Pili:', chunk);
-              
+              const chunk = decoder.decode(value);              
               // Filter and clean the content - be very conservative
               let cleanedContent = chunk;
               
@@ -156,10 +152,7 @@ export async function POST(request: NextRequest) {
                   cleanedContent !== '' &&
                   !cleanedContent.includes('finish_reason') &&
                   !cleanedContent.includes('metadata') &&
-                  !cleanedContent.includes('llm_provider')) {
-                
-                console.log('Sending cleaned content:|', cleanedContent);
-                
+                  !cleanedContent.includes('llm_provider')) {                
                 // Format as Server-Sent Events
                 const sseData = JSON.stringify({ 
                   type: 'chunk', 
@@ -168,7 +161,6 @@ export async function POST(request: NextRequest) {
                 });
                 controller.enqueue(encoder.encode(`data: ${sseData}\n\n`));
               } else {
-                console.log('Filtered out non-content chunk:', chunk.substring(0, 100) + '...');
               }
               
               return pump();
