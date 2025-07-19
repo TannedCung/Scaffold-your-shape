@@ -250,42 +250,186 @@ const toolHandlers = {
   },
 
   get_user_stats: async ({ userId }: { userId: string }) => {
-    // Get total activities
-    const { count: totalActivities, error: activitiesError } = await supabase
+    // Get all activities for detailed analysis
+    const { data: allActivities, error: activitiesError } = await supabase
       .from('activities')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId);
+      .select('*')
+      .eq('user_id', userId)
+      .order('date', { ascending: false });
 
     if (activitiesError) throw activitiesError;
 
-         // Get total distance (sum of all distance-based activities)
-     const { data: distanceData, error: distanceError } = await supabase
-       .from('activities')
-       .select('value, unit')
-       .eq('user_id', userId)
-       .in('unit', ['meters', 'kilometers']);
+    const activities = allActivities || [];
+    const totalActivities = activities.length;
 
-     if (distanceError) throw distanceError;
+    // Calculate total distance (sum of all distance-based activities)
+    const totalDistance = activities.reduce((sum, activity) => {
+      if (['meters', 'kilometers', 'miles'].includes(activity.unit)) {
+        let value = activity.value;
+        if (activity.unit === 'kilometers') value *= 1000;
+        else if (activity.unit === 'miles') value *= 1609.34;
+        return sum + value;
+      }
+      return sum;
+    }, 0);
 
-     const totalDistance = distanceData?.reduce((sum, activity) => {
-       const value = activity.unit === 'kilometers' ? activity.value * 1000 : activity.value;
-       return sum + value;
-     }, 0) || 0;
+    // Calculate total time (sum of all time-based activities in minutes)
+    const totalTime = activities.reduce((sum, activity) => {
+      if (['minutes', 'hours'].includes(activity.unit)) {
+        let value = activity.value;
+        if (activity.unit === 'hours') value *= 60;
+        return sum + value;
+      }
+      return sum;
+    }, 0);
 
-    // Get completed challenges count
-    const { count: completedChallenges, error: challengesError } = await supabase
+    // Calculate total calories
+    const totalCalories = activities.reduce((sum, activity) => {
+      if (activity.unit === 'calories') {
+        return sum + activity.value;
+      }
+      return sum;
+    }, 0);
+
+    // Calculate total reps
+    const totalReps = activities.reduce((sum, activity) => {
+      if (activity.unit === 'reps') {
+        return sum + activity.value;
+      }
+      return sum;
+    }, 0);
+
+    // Activity type breakdown
+    const activityTypeBreakdown = activities.reduce((breakdown, activity) => {
+      breakdown[activity.type] = (breakdown[activity.type] || 0) + 1;
+      return breakdown;
+    }, {} as Record<string, number>);
+
+    // Unit breakdown
+    const unitBreakdown = activities.reduce((breakdown, activity) => {
+      breakdown[activity.unit] = (breakdown[activity.unit] || 0) + 1;
+      return breakdown;
+    }, {} as Record<string, number>);
+
+    // Recent activity trends
+    const now = new Date();
+    const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const lastMonth = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    const activitiesLastWeek = activities.filter(a => new Date(a.date) >= lastWeek).length;
+    const activitiesLastMonth = activities.filter(a => new Date(a.date) >= lastMonth).length;
+
+    // Find most recent activity
+    const mostRecentActivity = activities.length > 0 ? {
+      name: activities[0].name,
+      type: activities[0].type,
+      date: activities[0].date,
+      value: activities[0].value,
+      unit: activities[0].unit
+    } : null;
+
+    // Calculate average values by unit
+    const averagesByUnit = Object.keys(unitBreakdown).reduce((averages, unit) => {
+      const activitiesWithUnit = activities.filter(a => a.unit === unit);
+      const totalValue = activitiesWithUnit.reduce((sum, a) => sum + a.value, 0);
+      averages[unit] = activitiesWithUnit.length > 0 ? totalValue / activitiesWithUnit.length : 0;
+      return averages;
+    }, {} as Record<string, number>);
+
+    // Get challenge participation stats
+    const { data: challengeParticipations, error: participationError } = await supabase
       .from('challenge_participants')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('completed', true);
+      .select('completed')
+      .eq('user_id', userId);
 
-    if (challengesError) throw challengesError;
+    if (participationError) throw participationError;
+
+    const totalChallengeParticipations = challengeParticipations?.length || 0;
+    const completedChallenges = challengeParticipations?.filter(p => p.completed).length || 0;
+
+    // Get club memberships count
+    const { count: clubMemberships, error: clubError } = await supabase
+      .from('club_members')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
+
+    if (clubError) throw clubError;
+
+    // Calculate activity streak (consecutive days with activities)
+    let currentStreak = 0;
+    let longestStreak = 0;
+    let tempStreak = 0;
+    
+    if (activities.length > 0) {
+      const activityDates = [...new Set(activities.map(a => a.date.split('T')[0]))].sort().reverse();
+      const today = now.toISOString().split('T')[0];
+      
+      // Check current streak
+      let checkDate = new Date(today);
+      for (const activityDate of activityDates) {
+        const actDate = checkDate.toISOString().split('T')[0];
+        if (activityDates.includes(actDate)) {
+          currentStreak++;
+          checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+
+      // Calculate longest streak
+      for (let i = 0; i < activityDates.length; i++) {
+        if (i === 0) {
+          tempStreak = 1;
+        } else {
+          const prevDate = new Date(activityDates[i - 1]);
+          const currDate = new Date(activityDates[i]);
+          const diffDays = Math.abs((prevDate.getTime() - currDate.getTime()) / (1000 * 60 * 60 * 24));
+          
+          if (diffDays <= 1) {
+            tempStreak++;
+          } else {
+            longestStreak = Math.max(longestStreak, tempStreak);
+            tempStreak = 1;
+          }
+        }
+      }
+      longestStreak = Math.max(longestStreak, tempStreak);
+    }
 
     return {
       userId,
-      totalActivities: totalActivities || 0,
-      totalDistance,
-      totalChallengesCompleted: completedChallenges || 0,
+      summary: {
+        totalActivities,
+        totalDistance: Math.round(totalDistance), // in meters
+        totalTime: Math.round(totalTime), // in minutes
+        totalCalories: Math.round(totalCalories),
+        totalReps: Math.round(totalReps),
+      },
+      breakdowns: {
+        byActivityType: activityTypeBreakdown,
+        byUnit: unitBreakdown,
+        averagesByUnit: Object.keys(averagesByUnit).reduce((rounded, unit) => {
+          rounded[unit] = Math.round(averagesByUnit[unit] * 100) / 100;
+          return rounded;
+        }, {} as Record<string, number>),
+      },
+      trends: {
+        activitiesLastWeek,
+        activitiesLastMonth,
+        currentStreak,
+        longestStreak,
+      },
+      challenges: {
+        totalParticipations: totalChallengeParticipations,
+        completed: completedChallenges,
+        completionRate: totalChallengeParticipations > 0 ? 
+          Math.round((completedChallenges / totalChallengeParticipations) * 100) : 0,
+      },
+      memberships: {
+        totalClubs: clubMemberships || 0,
+      },
+      mostRecentActivity,
+      generatedAt: new Date().toISOString(),
     };
   },
 };
@@ -451,13 +595,13 @@ const availableTools = [
   },
   {
     name: 'get_user_stats',
-    description: 'Get comprehensive statistics for a user including total activities count, total distance covered (in meters), and total completed challenges. Provides an overview of user engagement and progress. Sample request: {"userId": "user123"}',
+    description: 'Get comprehensive and detailed statistics for a user including: activity summaries (total count, distance in meters, time in minutes, calories, reps), activity breakdowns by type and unit, average values per unit, recent activity trends (last week/month), activity streaks (current and longest), challenge participation stats with completion rates, club memberships count, and most recent activity details. Provides a complete overview of user engagement, progress, and activity patterns. Sample request: {"userId": "user123"}',
     inputSchema: {
       type: 'object',
       properties: {
         userId: {
           type: 'string',
-          description: 'Unique identifier of the user to get statistics for',
+          description: 'Unique identifier of the user to get comprehensive statistics for',
         },
       },
       required: ['userId'],
