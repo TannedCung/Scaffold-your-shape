@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import ReactMarkdown from 'react-markdown';
 import {
   Box,
   Fab,
@@ -23,6 +24,9 @@ import {
   Avatar,
   Tooltip,
   Badge,
+  Popover,
+  Grid,
+  ButtonBase,
 } from '@mui/material';
 import ChatIcon from '@mui/icons-material/Chat';
 import CloseIcon from '@mui/icons-material/Close';
@@ -33,8 +37,9 @@ import FitnessCenterIcon from '@mui/icons-material/FitnessCenter'; // Placeholde
 import GroupIcon from '@mui/icons-material/Group'; // Placeholder for service
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'; // Placeholder for service
 import SmartToyIcon from '@mui/icons-material/SmartToy'; // Chatbot icon
+import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 
-// Placeholder for a more complex message type
+// Enhanced message type
 interface Message {
   id: string;
   text: string;
@@ -42,18 +47,130 @@ interface Message {
   timestamp: Date;
 }
 
-// Placeholder for service type
+// Service type
 interface Service {
   icon: React.ReactElement;
   name: string;
   description: string;
 }
 
+// Emoji categories
+interface EmojiCategory {
+  name: string;
+  emojis: string[];
+}
+
+// Common emoji data
+const EMOJI_CATEGORIES: EmojiCategory[] = [
+  {
+    name: 'Smileys',
+    emojis: ['😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳']
+  },
+  {
+    name: 'Fitness',
+    emojis: ['💪', '🏃‍♂️', '🏃‍♀️', '🚴‍♂️', '🚴‍♀️', '🏋️‍♂️', '🏋️‍♀️', '🤸‍♂️', '🤸‍♀️', '🧘‍♂️', '🧘‍♀️', '🏊‍♂️', '🏊‍♀️', '⚽', '🏀', '🏈', '⚾', '🎾', '🏐', '🏓', '🥊', '🏆', '🥇', '🥈', '🥉', '🎯', '⛹️‍♂️', '⛹️‍♀️']
+  },
+  {
+    name: 'Health',
+    emojis: ['❤️', '💚', '💙', '💜', '🧡', '💛', '🤍', '🖤', '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '🩺', '💊', '🏥', '🧬', '🔬', '⚗️', '🦠', '💉', '🩹', '🌡️']
+  },
+  {
+    name: 'Food',
+    emojis: ['🍎', '🍌', '🍊', '🍇', '🫐', '🍓', '🥝', '🍑', '🥭', '🍍', '🥥', '🥑', '🍆', '🥒', '🥬', '🌶️', '🫑', '🌽', '🥕', '🧄', '🧅', '🥔', '🍠', '🥐', '🍞', '🥖', '🥨', '🧀', '🥚', '🍳']
+  },
+  {
+    name: 'Gestures',
+    emojis: ['👍', '👎', '👏', '🙌', '👐', '🤲', '🤝', '🙏', '✍️', '💅', '🤳', '💪', '🦾', '🦿', '🦵', '🦶', '👂', '🦻', '👃', '👶', '👧', '🧒', '👦', '👩', '🧑', '👨', '👱‍♀️', '👱', '👱‍♂️', '🧔']
+  },
+  {
+    name: 'Nature',
+    emojis: ['🌱', '🌿', '☘️', '🍀', '🎍', '🎋', '🍃', '🍂', '🍁', '🍄', '🌾', '💐', '🌷', '🌹', '🥀', '🌺', '🌸', '🌼', '🌻', '🌞', '🌝', '🌛', '🌜', '🌚', '🌕', '🌖', '🌗', '🌘', '🌑', '🌒']
+  },
+];
+
+// Enhanced escape sequence processor
+const processEscapeSequences = (text: string): string => {
+  if (!text) return '';
+  
+  let processed = text;
+  
+  // Standard escape sequences
+  const escapeMap: Record<string, string> = {
+    '\\n': '\n',        // Newline
+    '\\t': '\t',        // Tab
+    '\\r': '\r',        // Carriage return
+    '\\b': '\b',        // Backspace
+    '\\f': '\f',        // Form feed
+    '\\v': '\v',        // Vertical tab
+    '\\"': '"',         // Double quote
+    "\\'": "'",         // Single quote
+    '\\\\': '\\',       // Backslash
+    '\\0': '\0',        // Null character
+  };
+  
+  // Process standard escape sequences
+  Object.entries(escapeMap).forEach(([escaped, actual]) => {
+    processed = processed.replace(new RegExp(escaped.replace(/[\\]/g, '\\\\'), 'g'), actual);
+  });
+  
+  // Process Unicode escape sequences (\uXXXX)
+  processed = processed.replace(/\\u([0-9A-Fa-f]{4})/g, (match, hex) => {
+    try {
+      return String.fromCharCode(parseInt(hex, 16));
+    } catch (error) {
+      console.warn('Invalid Unicode escape sequence:', match);
+      return match;
+    }
+  });
+  
+  // Process extended Unicode escape sequences (\u{XXXXX})
+  processed = processed.replace(/\\u\{([0-9A-Fa-f]+)\}/g, (match, hex) => {
+    try {
+      const codePoint = parseInt(hex, 16);
+      if (codePoint > 0x10FFFF) {
+        console.warn('Invalid Unicode code point:', match);
+        return match;
+      }
+      return String.fromCodePoint(codePoint);
+    } catch (error) {
+      console.warn('Invalid Unicode escape sequence:', match);
+      return match;
+    }
+  });
+  
+  // Process hexadecimal escape sequences (\xXX)
+  processed = processed.replace(/\\x([0-9A-Fa-f]{2})/g, (match, hex) => {
+    try {
+      return String.fromCharCode(parseInt(hex, 16));
+    } catch (error) {
+      console.warn('Invalid hex escape sequence:', match);
+      return match;
+    }
+  });
+  
+  // Process octal escape sequences (\ooo)
+  processed = processed.replace(/\\([0-7]{1,3})/g, (match, octal) => {
+    try {
+      const charCode = parseInt(octal, 8);
+      if (charCode > 255) {
+        console.warn('Invalid octal escape sequence:', match);
+        return match;
+      }
+      return String.fromCharCode(charCode);
+    } catch (error) {
+      console.warn('Invalid octal escape sequence:', match);
+      return match;
+    }
+  });
+  
+  return processed;
+};
+
 const ChatPopup: React.FC = () => {
   const { data: session } = useSession();
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState('');
-  const [chatMessages, setChatMessages] = useState<Message[]>([]); // Placeholder for chat history
+  const [chatMessages, setChatMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
   
@@ -61,8 +178,13 @@ const ChatPopup: React.FC = () => {
   const [messageHistory, setMessageHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   
+  // Emoji picker state
+  const [emojiPickerAnchor, setEmojiPickerAnchor] = useState<HTMLElement | null>(null);
+  const [selectedEmojiCategory, setSelectedEmojiCategory] = useState<number>(0);
+  
   const textFieldRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const emojiButtonRef = useRef<HTMLButtonElement>(null);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -82,12 +204,12 @@ const ChatPopup: React.FC = () => {
     
     // Don't process single characters or very short content - likely actual content
     if (rawContent.length <= 2) {
-      return rawContent;
+      return processEscapeSequences(rawContent);
     }
     
     // Don't process if it's clearly actual content (no JSON structure indicators)
     if (!rawContent.includes('"') && !rawContent.includes('{') && !rawContent.includes('}')) {
-      return rawContent;
+      return processEscapeSequences(rawContent);
     }
     
     let cleaned = rawContent;
@@ -106,23 +228,6 @@ const ChatPopup: React.FC = () => {
     cleaned = cleaned.replace(/^\{"finish_reason":"stop"\}$/, '');
     cleaned = cleaned.replace(/^"finish_reason":"stop"$/, '');
     
-    // Handle escape sequences (preserve actual content)
-    try {
-      cleaned = cleaned
-        .replace(/\\"/g, '"')
-        .replace(/\\n/g, '\n')
-        .replace(/\\t/g, '\t')
-        .replace(/\\r/g, '\r')
-        .replace(/\\\\/g, '\\');
-      
-      // Unicode sequences
-      cleaned = cleaned.replace(/\\u([0-9A-Fa-f]{4})/g, (match, hex) => {
-        return String.fromCharCode(parseInt(hex, 16));
-      });
-    } catch (error) {
-      console.warn('Unicode decoding error:', error);
-    }
-    
     // Only remove if it's EXACTLY a technical term (nothing else)
     if (/^(null|undefined|stop|\[DONE\]|\{\}|\[\])$/.test(cleaned.trim())) {
       return '';
@@ -136,8 +241,45 @@ const ChatPopup: React.FC = () => {
       }
     }
     
-    return cleaned;
+    // Process all escape sequences and unicode
+    return processEscapeSequences(cleaned);
   };
+
+  // Emoji picker functions
+  const handleEmojiPickerOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setEmojiPickerAnchor(event.currentTarget);
+  };
+
+  const handleEmojiPickerClose = useCallback(() => {
+    setEmojiPickerAnchor(null);
+  }, []);
+
+  const handleEmojiSelect = (emoji: string) => {
+    const textarea = textFieldRef.current?.querySelector('textarea');
+    if (textarea) {
+      const cursorPosition = textarea.selectionStart || message.length;
+      const beforeCursor = message.substring(0, cursorPosition);
+      const afterCursor = message.substring(cursorPosition);
+      const newMessage = beforeCursor + emoji + afterCursor;
+      
+      setMessage(newMessage);
+      
+      // Set cursor position after the inserted emoji
+      setTimeout(() => {
+        const newCursorPosition = cursorPosition + emoji.length;
+        textarea.setSelectionRange(newCursorPosition, newCursorPosition);
+        textarea.focus();
+      }, 0);
+    } else {
+      // Fallback: append to end
+      setMessage(prev => prev + emoji);
+      setTimeout(() => textFieldRef.current?.focus(), 0);
+    }
+    
+    handleEmojiPickerClose();
+  };
+
+  const isEmojiPickerOpen = Boolean(emojiPickerAnchor);
 
   // Handle keyboard navigation for message history
   const handleSendMessage = useCallback(async () => {
@@ -252,11 +394,14 @@ const ChatPopup: React.FC = () => {
                       // This preserves all spaces, characters, and content as-is during streaming
                       accumulatedText += content;
                       
-                      // Update the bot message with accumulated text
+                      // Process escape sequences for real-time display while preserving streaming integrity
+                      const displayText = processEscapeSequences(accumulatedText);
+                      
+                      // Update the bot message with processed text for display
                       setChatMessages((prevMessages) => 
                         prevMessages.map((msg) => 
                           msg.id === botMessageId 
-                            ? { ...msg, text: accumulatedText }
+                            ? { ...msg, text: displayText }
                             : msg
                         )
                       );
@@ -370,9 +515,13 @@ const ChatPopup: React.FC = () => {
       event.preventDefault();
       handleSendMessage();
     } else if (event.key === 'Escape') {
-      setHistoryIndex(-1);
+      if (isEmojiPickerOpen) {
+        handleEmojiPickerClose();
+      } else {
+        setHistoryIndex(-1);
+      }
     }
-  }, [messageHistory, historyIndex, handleSendMessage]);
+  }, [messageHistory, historyIndex, handleSendMessage, isEmojiPickerOpen, handleEmojiPickerClose]);
 
   const handleToggle = () => {
     setOpen(!open);
@@ -558,18 +707,121 @@ const ChatPopup: React.FC = () => {
                     position: 'relative',
                   }}
                 >
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      whiteSpace: 'pre-wrap', // Preserve newlines and wrap text
-                      wordBreak: 'break-word', // Handle long words
-                      fontFamily: 'inherit', // Use system font that supports unicode
-                      fontSize: '0.875rem',
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    {msg.text}
-                  </Typography>
+                  {msg.sender === 'bot' ? (
+                    <ReactMarkdown
+                      components={{
+                        p: ({ children }) => (
+                          <Typography 
+                            variant="body2" 
+                            sx={{ 
+                              whiteSpace: 'pre-wrap',
+                              wordBreak: 'break-word',
+                              fontFamily: 'inherit',
+                              fontSize: '0.875rem',
+                              lineHeight: 1.4,
+                              margin: 0,
+                              '&:not(:last-child)': {
+                                marginBottom: 1,
+                              },
+                            }}
+                          >
+                            {children}
+                          </Typography>
+                        ),
+                        strong: ({ children }) => (
+                          <Box component="strong" sx={{ fontWeight: 'bold', color: 'inherit' }}>
+                            {children}
+                          </Box>
+                        ),
+                        em: ({ children }) => (
+                          <Box component="em" sx={{ fontStyle: 'italic', color: 'inherit' }}>
+                            {children}
+                          </Box>
+                        ),
+                        code: ({ children }) => (
+                          <Box 
+                            component="code" 
+                            sx={{ 
+                              bgcolor: 'rgba(0,0,0,0.05)',
+                              padding: '2px 4px',
+                              borderRadius: '3px',
+                              fontFamily: 'monospace',
+                              fontSize: '0.85em',
+                              color: 'inherit',
+                            }}
+                          >
+                            {children}
+                          </Box>
+                        ),
+                        ul: ({ children }) => (
+                          <Box component="ul" sx={{ margin: '8px 0', paddingLeft: '20px' }}>
+                            {children}
+                          </Box>
+                        ),
+                        ol: ({ children }) => (
+                          <Box component="ol" sx={{ margin: '8px 0', paddingLeft: '20px' }}>
+                            {children}
+                          </Box>
+                        ),
+                        li: ({ children }) => (
+                          <Box 
+                            component="li" 
+                            sx={{ 
+                              fontSize: '0.875rem',
+                              lineHeight: 1.4,
+                              marginBottom: '4px',
+                            }}
+                          >
+                            {children}
+                          </Box>
+                        ),
+                        blockquote: ({ children }) => (
+                          <Box 
+                            component="blockquote" 
+                            sx={{ 
+                              borderLeft: '3px solid #2da58e',
+                              paddingLeft: '12px',
+                              margin: '8px 0',
+                              fontStyle: 'italic',
+                              opacity: 0.8,
+                            }}
+                          >
+                            {children}
+                          </Box>
+                        ),
+                        h1: ({ children }) => (
+                          <Typography variant="h6" sx={{ fontWeight: 'bold', margin: '8px 0 4px 0', fontSize: '1rem' }}>
+                            {children}
+                          </Typography>
+                        ),
+                        h2: ({ children }) => (
+                          <Typography variant="subtitle1" sx={{ fontWeight: 'bold', margin: '6px 0 3px 0', fontSize: '0.9rem' }}>
+                            {children}
+                          </Typography>
+                        ),
+                        h3: ({ children }) => (
+                          <Typography variant="subtitle2" sx={{ fontWeight: 'bold', margin: '4px 0 2px 0', fontSize: '0.85rem' }}>
+                            {children}
+                          </Typography>
+                        ),
+                      }}
+                    >
+                      {msg.text}
+                    </ReactMarkdown>
+                  ) : (
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        whiteSpace: 'pre-wrap', // Preserve newlines and wrap text
+                        wordBreak: 'break-word', // Handle long words
+                        fontFamily: 'inherit', // Use system font that supports unicode
+                        fontSize: '0.875rem',
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {msg.text}
+                    </Typography>
+                  )}
                   
                   {/* Streaming indicator for bot messages */}
                   {msg.sender === 'bot' && streamingMessageId === msg.id && (
@@ -671,57 +923,165 @@ const ChatPopup: React.FC = () => {
           </Box>
         </DialogContent>
 
-        <DialogActions sx={{ p: 1.5, bgcolor: '#e0f0ed' }}>
-          <TextField 
-            inputRef={textFieldRef}
-            fullWidth
-            variant="outlined"
-            size="small"
-            placeholder="Type your message... (Enter to send, Shift+Enter for new line, ↑↓ for history)"
-            value={message}
-            onChange={(e) => {
-              setMessage(e.target.value);
-              setHistoryIndex(-1); // Reset history navigation when typing
-            }}
-            disabled={isLoading}
-            onKeyDown={handleKeyDown}
-            multiline
-            maxRows={4}
-            sx={{
-              bgcolor: '#fff',
-              borderRadius: theme.shape.borderRadius,
-              '& .MuiOutlinedInput-root': {
+        <DialogActions sx={{ p: 1.5, bgcolor: '#e0f0ed', flexWrap: 'nowrap' }}>
+          <Box sx={{ display: 'flex', alignItems: 'flex-end', width: '100%', gap: 1 }}>
+            <TextField 
+              inputRef={textFieldRef}
+              fullWidth
+              variant="outlined"
+              size="small"
+              placeholder="Type your message... (Enter to send, Shift+Enter for new line, ↑↓ for history)"
+              value={message}
+              onChange={(e) => {
+                setMessage(e.target.value);
+                setHistoryIndex(-1); // Reset history navigation when typing
+              }}
+              disabled={isLoading}
+              onKeyDown={handleKeyDown}
+              multiline
+              maxRows={4}
+              sx={{
+                bgcolor: '#fff',
                 borderRadius: theme.shape.borderRadius,
-                fontFamily: 'inherit', // Ensure unicode support
-              },
-              '& .MuiInputBase-input': {
-                fontFamily: 'inherit', // Ensure unicode support
-              }
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: theme.shape.borderRadius,
+                  fontFamily: 'inherit', // Ensure unicode support
+                },
+                '& .MuiInputBase-input': {
+                  fontFamily: 'inherit', // Ensure unicode support
+                }
+              }}
+              inputProps={{
+                style: {
+                  unicodeBidi: 'plaintext', // Better unicode text handling
+                }
+              }}
+            />
+            
+            <IconButton 
+              ref={emojiButtonRef}
+              onClick={handleEmojiPickerOpen}
+              disabled={isLoading}
+              sx={{
+                color: '#2da58e',
+                '&:hover': {
+                  bgcolor: 'rgba(45, 165, 142, 0.1)',
+                },
+                '&.Mui-disabled': {
+                  color: theme.palette.action.disabled,
+                }
+              }}
+              title="Insert emoji"
+            >
+              <EmojiEmotionsIcon />
+            </IconButton>
+            
+            <IconButton 
+              color="primary"
+              onClick={handleSendMessage} 
+              disabled={!message.trim() || isLoading}
+              sx={{
+                bgcolor: '#2da58e',
+                color: '#fff',
+                '&:hover': {
+                  bgcolor: '#22796a',
+                },
+                '&.Mui-disabled': {
+                  bgcolor: theme.palette.action.disabledBackground,
+                }
+              }}
+            >
+              <SendIcon />
+            </IconButton>
+          </Box>
+          
+          {/* Emoji Picker Popover */}
+          <Popover
+            open={isEmojiPickerOpen}
+            anchorEl={emojiPickerAnchor}
+            onClose={handleEmojiPickerClose}
+            anchorOrigin={{
+              vertical: 'top',
+              horizontal: 'center',
             }}
-            inputProps={{
-              style: {
-                unicodeBidi: 'plaintext', // Better unicode text handling
-              }
+            transformOrigin={{
+              vertical: 'bottom',
+              horizontal: 'center',
             }}
-          />
-          <IconButton 
-            color="primary"
-            onClick={handleSendMessage} 
-            disabled={!message.trim() || isLoading}
-            sx={{
-              ml: 1,
-              bgcolor: '#2da58e',
-              color: '#fff',
-              '&:hover': {
-                bgcolor: '#22796a',
-              },
-              '&.Mui-disabled': {
-                bgcolor: theme.palette.action.disabledBackground,
+            PaperProps={{
+              sx: {
+                width: 320,
+                maxHeight: 400,
+                borderRadius: 2,
+                boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+                border: '1px solid rgba(45, 165, 142, 0.2)',
               }
             }}
           >
-            <SendIcon />
-          </IconButton>
+            <Box sx={{ p: 2 }}>
+              {/* Category tabs */}
+              <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
+                <Stack direction="row" spacing={1} sx={{ overflowX: 'auto', pb: 1 }}>
+                  {EMOJI_CATEGORIES.map((category, index) => (
+                    <Button
+                      key={category.name}
+                      size="small"
+                      variant={selectedEmojiCategory === index ? 'contained' : 'text'}
+                      onClick={() => setSelectedEmojiCategory(index)}
+                      sx={{
+                        minWidth: 'auto',
+                        px: 2,
+                        py: 0.5,
+                        fontSize: '0.75rem',
+                        bgcolor: selectedEmojiCategory === index ? '#2da58e' : 'transparent',
+                        color: selectedEmojiCategory === index ? '#fff' : '#2da58e',
+                        '&:hover': {
+                          bgcolor: selectedEmojiCategory === index ? '#22796a' : 'rgba(45, 165, 142, 0.1)',
+                        },
+                        textTransform: 'none',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {category.name}
+                    </Button>
+                  ))}
+                </Stack>
+              </Box>
+              
+              {/* Emoji grid */}
+              <Box sx={{ maxHeight: 280, overflowY: 'auto' }}>
+                <Box 
+                  sx={{ 
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(6, 1fr)',
+                    gap: 0.5,
+                  }}
+                >
+                  {EMOJI_CATEGORIES[selectedEmojiCategory].emojis.map((emoji, index) => (
+                    <ButtonBase
+                      key={index}
+                      onClick={() => handleEmojiSelect(emoji)}
+                      sx={{
+                        width: '100%',
+                        height: 40,
+                        borderRadius: 1,
+                        fontSize: '1.5rem',
+                        '&:hover': {
+                          bgcolor: 'rgba(45, 165, 142, 0.1)',
+                        },
+                        '&:active': {
+                          bgcolor: 'rgba(45, 165, 142, 0.2)',
+                        },
+                        transition: 'background-color 0.2s ease',
+                      }}
+                    >
+                      {emoji}
+                    </ButtonBase>
+                  ))}
+                </Box>
+              </Box>
+            </Box>
+          </Popover>
         </DialogActions>
       </Dialog>
     </>

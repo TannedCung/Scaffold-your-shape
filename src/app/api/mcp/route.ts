@@ -365,12 +365,13 @@ const toolHandlers = {
       const today = now.toISOString().split('T')[0];
       
       // Check current streak
-      let checkDate = new Date(today);
-      for (const activityDate of activityDates) {
+      const baseDate = new Date(today);
+      for (let dayOffset = 0; dayOffset < activityDates.length; dayOffset++) {
+        const checkDate = new Date(baseDate);
+        checkDate.setDate(baseDate.getDate() - dayOffset);
         const actDate = checkDate.toISOString().split('T')[0];
         if (activityDates.includes(actDate)) {
           currentStreak++;
-          checkDate.setDate(checkDate.getDate() - 1);
         } else {
           break;
         }
