@@ -135,9 +135,9 @@ export async function createActivity(activity: Omit<Activity, 'id' | 'created_at
 }
 
 // Update activity (Update)
-export async function updateActivity(activity: Activity & { notes?: string, location?: string }): Promise<Activity> {
+export async function updateActivity(activityId: string, updateData: Partial<Activity> & { notes?: string, location?: string, updated_at?: string }): Promise<Activity> {
   try {
-    const { data, error } = await activityApi.update(activity.id, activity);
+    const { data, error } = await activityApi.update(activityId, updateData);
     
     if (error) {
       throw new Error(error);
