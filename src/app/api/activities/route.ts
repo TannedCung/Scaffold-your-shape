@@ -49,9 +49,12 @@ export async function POST(request: Request) {
 
     const body = await request.json();
 
+    // Remove userId from body if it exists and ensure proper field mapping
+    const { userId, ...cleanBody } = body;
+
     const { data: activity, error } = await supabase
       .from('activities')
-      .insert([{ ...body, user_id: session.user.id }])
+      .insert([{ ...cleanBody, user_id: session.user.id }])
       .select()
       .single();
 
