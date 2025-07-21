@@ -95,7 +95,17 @@ const unitOptions = [
   { value: 'calories', label: 'Calories' },
 ];
 
-export default function ActivityEditDialog({ open, activity, onClose }: { open: boolean, activity: Activity | null, onClose: () => void }) {
+export default function ActivityEditDialog({ 
+  open, 
+  activity, 
+  onClose, 
+  onSuccess 
+}: { 
+  open: boolean, 
+  activity: Activity | null, 
+  onClose: () => void,
+  onSuccess?: () => void 
+}) {
   const { user } = useUser();
   const theme = useTheme();
   const [tabValue, setTabValue] = useState(0);
@@ -175,6 +185,7 @@ export default function ActivityEditDialog({ open, activity, onClose }: { open: 
       await updateActivity(activity.id, updateData);
       
       setSuccess(true);
+      onSuccess?.(); // Optional callback for parent component
       setTimeout(() => {
         onClose();
       }, 1000);

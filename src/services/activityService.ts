@@ -9,6 +9,7 @@ import {
   ActivityWithDetails
 } from '@/types';
 import { activityApi } from '@/lib/api';
+import { notifyActivityUpdate } from '@/utils/activityEvents';
 
 // Search activities by query (new function)
 export async function searchActivities(query: string, limit: number = 10): Promise<Activity[]> {
@@ -113,11 +114,15 @@ export async function fetchActivityById(id: string): Promise<Activity | null> {
 
 // Create activity (Create)
 export async function createActivity(activity: Omit<Activity, 'id' | 'created_at' | 'updatedAt'> & { 
+  userId?: string;
   notes?: string, 
   location?: string 
 }): Promise<Activity> {
   try {
-    const { data, error } = await activityApi.create(activity);
+    // Remove userId since the API will set user_id from the session
+    const { userId, ...activityData } = activity;
+    
+    const { data, error } = await activityApi.create(activityData);
     
     if (error) {
       throw new Error(error);
@@ -127,6 +132,9 @@ export async function createActivity(activity: Omit<Activity, 'id' | 'created_at
       throw new Error('No data returned from create activity');
     }
 
+    // Trigger global refresh event
+    notifyActivityUpdate();
+    
     return data;
   } catch (error) {
     console.error('Error creating activity:', error);
@@ -147,6 +155,9 @@ export async function updateActivity(activityId: string, updateData: Partial<Act
       throw new Error('No data returned from update activity');
     }
 
+    // Trigger global refresh event
+    notifyActivityUpdate();
+
     return data;
   } catch (error) {
     console.error('Error updating activity:', error);
@@ -162,6 +173,9 @@ export async function deleteActivity(activityId: string): Promise<void> {
     if (error) {
       throw new Error(error);
     }
+
+    // Trigger global refresh event
+    notifyActivityUpdate();
   } catch (error) {
     console.error('Error deleting activity:', error);
     throw error;
