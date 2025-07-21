@@ -25,6 +25,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { updateActivity } from '@/services/activityService';
 import { useUser } from '@/hooks/useUser';
 import { SportType, SportIconMap, SportColorMap } from '@/types';
+import { useTheme } from '@mui/material/styles';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -96,6 +97,7 @@ const unitOptions = [
 
 export default function ActivityEditDialog({ open, activity, onClose }: { open: boolean, activity: Activity | null, onClose: () => void }) {
   const { user } = useUser();
+  const theme = useTheme();
   const [tabValue, setTabValue] = useState(0);
   
   // Basic activity fields
@@ -158,9 +160,8 @@ export default function ActivityEditDialog({ open, activity, onClose }: { open: 
     setSuccess(false);
     
     try {
-      await updateActivity({
-        id: activity.id,
-        userId: activity.userId,
+      // Send only the fields that should be updated, using database field names
+      const updateData = {
         type,
         name: name || type.charAt(0).toUpperCase() + type.slice(1),
         date,
@@ -168,9 +169,10 @@ export default function ActivityEditDialog({ open, activity, onClose }: { open: 
         unit,
         location,
         notes: description,
-        created_at: activity.created_at,
-        updatedAt: new Date().toISOString(),
-      });
+        updated_at: new Date().toISOString(),
+      };
+
+      await updateActivity(activity.id, updateData);
       
       setSuccess(true);
       setTimeout(() => {
@@ -203,7 +205,7 @@ export default function ActivityEditDialog({ open, activity, onClose }: { open: 
       }}
     >
       <DialogTitle sx={{ 
-        bgcolor: '#3b82f6',
+        bgcolor: theme.palette.primary.main,
         color: 'white',
         display: 'flex',
         justifyContent: 'space-between',
@@ -352,9 +354,9 @@ export default function ActivityEditDialog({ open, activity, onClose }: { open: 
           disabled={loading || !isFormValid}
           startIcon={loading ? <CircularProgress size={20} /> : null}
           sx={{ 
-            bgcolor: '#3b82f6', 
+            bgcolor: theme.palette.primary.main, 
             '&:hover': { 
-              bgcolor: '#2563eb' 
+              bgcolor: theme.palette.primary.dark 
             } 
           }}
         >
