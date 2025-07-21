@@ -37,6 +37,7 @@ import { deleteActivity } from '@/services/activityService';
 import type { Activity } from '@/types';
 import { SportIconMap, SportColorMap, SportType } from '@/types';
 import { useRouter } from 'next/navigation';
+import { useSnackbar } from '@/contexts/SnackbarProvider';
 
 const MotionCard = motion(Card);
 
@@ -54,6 +55,7 @@ export default function ActivityList({
   error: propError 
 }: ActivityListProps) {
   const router = useRouter();
+  const { showSuccess, showError } = useSnackbar();
   
   // If activities are provided via props, use them, else fetch them
   const fetchedData = useActivities(userId);
@@ -110,9 +112,11 @@ export default function ActivityList({
     setDeleting(true);
     try {
       await deleteActivity(deleteId);
+      showSuccess('Activity deleted successfully');
       // Refresh will be triggered automatically by global event system
     } catch (error) {
       console.error('Error deleting activity:', error);
+      showError('Failed to delete activity. Please try again.');
     } finally {
       setDeleting(false);
       setDeleteId(null);

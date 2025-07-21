@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { activityApi } from '@/lib/api';
 import { Box, Button, TextField, Stack, Typography, MenuItem } from '@mui/material';
+import { useSnackbar } from '@/contexts/SnackbarProvider';
 
 const activityTypes = [
   { value: 'run', label: 'Run' },
@@ -14,6 +15,7 @@ const activityTypes = [
 ];
 
 export default function CreateActivityForm() {
+  const { showSuccess, showError } = useSnackbar();
   const [type, setType] = useState('run');
   const [distance, setDistance] = useState('');
   const [duration, setDuration] = useState('');
@@ -21,13 +23,9 @@ export default function CreateActivityForm() {
   const [location, setLocation] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
 
   const handleCreate = async () => {
     setLoading(true);
-    setError(null);
-    setSuccess(false);
     try {
       const { error } = await activityApi.create({
         type,
@@ -40,7 +38,7 @@ export default function CreateActivityForm() {
       
       if (error) throw new Error(error);
       
-      setSuccess(true);
+      showSuccess('Activity created successfully!');
       setType('run');
       setDistance('');
       setDuration('');
@@ -48,7 +46,7 @@ export default function CreateActivityForm() {
       setLocation('');
       setNotes('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create activity');
+      showError(err instanceof Error ? err.message : 'Failed to create activity');
     } finally {
       setLoading(false);
     }
@@ -69,8 +67,6 @@ export default function CreateActivityForm() {
         <Button onClick={handleCreate} disabled={loading || !type || !date} variant="contained" sx={{ bgcolor: '#2da58e', color: '#fff', ':hover': { bgcolor: '#22796a' }, borderRadius: 1, textTransform: 'none' }}>
           {loading ? 'Adding...' : 'Add Activity'}
         </Button>
-        {success && <Typography color="success.main">Activity added!</Typography>}
-        {error && <Typography color="error.main">{error}</Typography>}
       </Stack>
     </Box>
   );

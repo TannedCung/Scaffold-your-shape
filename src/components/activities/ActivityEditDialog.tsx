@@ -26,6 +26,7 @@ import { updateActivity } from '@/services/activityService';
 import { useUser } from '@/hooks/useUser';
 import { SportType, SportIconMap, SportColorMap } from '@/types';
 import { useTheme } from '@mui/material/styles';
+import { useSnackbar } from '@/contexts/SnackbarProvider';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -108,6 +109,7 @@ export default function ActivityEditDialog({
 }) {
   const { user } = useUser();
   const theme = useTheme();
+  const { showSuccess, showError } = useSnackbar();
   const [tabValue, setTabValue] = useState(0);
   
   // Basic activity fields
@@ -122,8 +124,6 @@ export default function ActivityEditDialog({
   const [location, setLocation] = useState('');
   
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -156,8 +156,6 @@ export default function ActivityEditDialog({
       }
       
       // Reset state
-      setError(null);
-      setSuccess(false);
       setTabValue(0);
     }
   }, [activity]);
@@ -166,8 +164,6 @@ export default function ActivityEditDialog({
     if (!activity || !user) return;
     
     setLoading(true);
-    setError(null);
-    setSuccess(false);
     
     try {
       // Send only the fields that should be updated, using database field names
@@ -184,16 +180,14 @@ export default function ActivityEditDialog({
 
       await updateActivity(activity.id, updateData);
       
-      setSuccess(true);
+      showSuccess('Activity updated successfully!');
       onSuccess?.(); // Optional callback for parent component
-      setTimeout(() => {
-        onClose();
-      }, 1000);
+      onClose();
     } catch (err) {
       if (err instanceof Error) {
-        setError(err.message);
+        showError(err.message);
       } else {
-        setError('An unknown error occurred');
+        showError('An unknown error occurred');
       }
     } finally {
       setLoading(false);
@@ -246,17 +240,6 @@ export default function ActivityEditDialog({
         <Tab label="Details" />
       </Tabs>
       <DialogContent>
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-        {success && (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            Activity updated successfully!
-          </Alert>
-        )}
-        
         <TabPanel value={tabValue} index={0}>
           <Stack spacing={2}>
             <TextField

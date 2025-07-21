@@ -3,12 +3,14 @@ import { clubApi } from '@/lib/api';
 import { Box, Button, TextField, Stack, Typography, Switch, FormControlLabel, Input, CircularProgress } from '@mui/material';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
+import { useSnackbar } from '@/contexts/SnackbarProvider';
 
 interface CreateClubFormProps {
   onSuccess?: () => void;
 }
 
 export default function CreateClubForm({ onSuccess }: CreateClubFormProps) {
+  const { showSuccess, showError } = useSnackbar();
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -43,15 +45,11 @@ export default function CreateClubForm({ onSuccess }: CreateClubFormProps) {
   const [description, setDescription] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
 
   const { data: session } = useSession();
 
   const handleCreate = async () => {
     setLoading(true);
-    setError(null);
-    setSuccess(false);
     try {
       let backgroundImageUrl: string | null = null;
       if (imageFile) {
@@ -74,7 +72,7 @@ export default function CreateClubForm({ onSuccess }: CreateClubFormProps) {
 
       if (error) throw new Error(error);
 
-      setSuccess(true);
+      showSuccess('Club created successfully!');
       setName('');
       setDescription('');
       setIsPrivate(false);
@@ -82,7 +80,7 @@ export default function CreateClubForm({ onSuccess }: CreateClubFormProps) {
       setImagePreview(null);
       if (onSuccess) onSuccess();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create club');
+      showError(err instanceof Error ? err.message : 'Failed to create club');
     } finally {
       setLoading(false);
     }
@@ -141,8 +139,6 @@ export default function CreateClubForm({ onSuccess }: CreateClubFormProps) {
           <Button onClick={handleCreate} disabled={loading || !name} variant="contained" sx={{ bgcolor: '#2da58e', color: '#fff', ':hover': { bgcolor: '#22796a' }, borderRadius: 1, textTransform: 'none' }}>
             {loading ? 'Creating...' : 'Create'}
           </Button>
-          {success && <Typography color="success.main">Club created!</Typography>}
-          {error && <Typography color="error.main">{error}</Typography>}
         </Stack>
       </Box>
     </Box>

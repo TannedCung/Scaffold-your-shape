@@ -27,6 +27,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useUser } from '@/hooks/useUser';
 import { useSession } from 'next-auth/react';
 import { SportType, SportUnitMap, SportIconMap } from '@/types';
+import { useSnackbar } from '@/contexts/SnackbarProvider';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -81,6 +82,7 @@ export default function CreateActivityDialog({
 }) {
   const { data: session, status: sessionStatus } = useSession();
   const { user, loading: userLoading } = useUser();
+  const { showSuccess, showError } = useSnackbar();
   const [tabValue, setTabValue] = useState(0);
   
   // Basic activity fields
@@ -100,8 +102,6 @@ export default function CreateActivityDialog({
   const [location, setLocation] = useState('');
   
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
 
   // Combined authentication check
   const isAuthenticated = !!session?.user || !!user;
@@ -119,8 +119,6 @@ export default function CreateActivityDialog({
     setDate(new Date().toISOString().substring(0, 16));
     setDescription('');
     setLocation('');
-    setError(null);
-    setSuccess(false);
     setTabValue(0);
   };
 
@@ -132,12 +130,12 @@ export default function CreateActivityDialog({
   const handleCreate = async () => {
     // First check if user is authenticated at all
     if (!isAuthenticated && !isAuthLoading) {
-      setError('You must be logged in to create an activity');
+      showError('You must be logged in to create an activity');
       return;
     }
     
     if (isAuthLoading) {
-      setError('Please wait while we verify your login status...');
+      showError('Please wait while we verify your login status...');
       return;
     }
     
@@ -148,13 +146,11 @@ export default function CreateActivityDialog({
     
     if (!userId) {
       console.error('Missing user ID:', { session, user });
-      setError('Unable to determine your user ID. Please try refreshing the page.');
+      showError('Unable to determine your user ID. Please try refreshing the page.');
       return;
     }
     
     setLoading(true);
-    setError(null);
-    setSuccess(false);
     
     try {
       await createActivity({
@@ -168,17 +164,15 @@ export default function CreateActivityDialog({
         notes: description,
       });
       
-      setSuccess(true);
+      showSuccess('Activity added successfully!');
       onSuccess?.(); // Optional callback for parent component
-      setTimeout(() => {
-        handleClose();
-      }, 1000);
+      handleClose();
     } catch (err) {
       console.error('Error creating activity:', err);
       if (err instanceof Error) {
-        setError(err.message);
+        showError(err.message);
       } else {
-        setError('An unknown error occurred');
+        showError('An unknown error occurred');
       }
     } finally {
       setLoading(false);
@@ -231,17 +225,6 @@ export default function CreateActivityDialog({
         <Tab label="Details" />
       </Tabs>
       <DialogContent>
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-        {success && (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            Activity added successfully!
-          </Alert>
-        )}
-        
         <TabPanel value={tabValue} index={0}>
           <Stack spacing={2}>
             <FormControl fullWidth sx={{ mb: 2 }}>
