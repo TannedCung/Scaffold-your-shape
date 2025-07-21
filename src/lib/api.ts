@@ -97,7 +97,7 @@ export const activityApi = {
     body: JSON.stringify(data),
   }),
   update: (id: string, data: Partial<Activity>) => fetchApi<Activity>(`/api/activities/${id}`, {
-    method: 'PUT',
+    method: 'PATCH',
     body: JSON.stringify(data),
   }),
   delete: (id: string) => fetchApi<void>(`/api/activities/${id}`, {
