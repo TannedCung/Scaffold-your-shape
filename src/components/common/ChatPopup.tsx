@@ -607,13 +607,13 @@ const ChatPopup: React.FC = () => {
               aria-label="chat with AI assistant"
               onClick={handleToggle}
               sx={{
-                bgcolor: '#2da58e',
+                bgcolor: theme.palette.primary.main, // Use theme primary color
                 '&:hover': {
-                  bgcolor: '#22796a',
+                  bgcolor: theme.palette.primary.dark, // Use theme primary dark
                   transform: 'scale(1.05)',
                 },
                 transition: 'all 0.3s ease-in-out',
-                boxShadow: '0 4px 20px rgba(45, 165, 142, 0.3)',
+                boxShadow: `0 4px 20px ${theme.palette.primary.main}50`, // Theme-based shadow
                 '&::before': {
                   content: '""',
                   position: 'absolute',
@@ -622,7 +622,7 @@ const ChatPopup: React.FC = () => {
                   right: 0,
                   bottom: 0,
                   borderRadius: '50%',
-                  background: 'radial-gradient(circle, rgba(45, 165, 142, 0.3) 0%, transparent 70%)',
+                  background: `radial-gradient(circle, ${theme.palette.primary.main}30 0%, transparent 70%)`,
                   animation: !open ? 'chatbotPulse 3s ease-in-out infinite' : 'none',
                   zIndex: -1,
                 },
@@ -667,13 +667,13 @@ const ChatPopup: React.FC = () => {
             borderBottomRightRadius: 0,
             display: 'flex',
             flexDirection: 'column',
-            bgcolor: '#f7faf9', // Light background for the chat window
+            bgcolor: theme.palette.background.default, // Use theme background
           }
         }}
         TransitionProps={{ onEnter: () => { /* Optional: focus input */ } }}
       >
-        <DialogTitle sx={{ bgcolor: '#2da58e', color: '#fff', p: 2, display: 'flex', alignItems: 'center' }}>
-          <Avatar sx={{ bgcolor: '#fff', color: '#2da58e', mr: 1.5}}>
+        <DialogTitle sx={{ bgcolor: theme.palette.primary.main, color: '#fff', p: 2, display: 'flex', alignItems: 'center' }}>
+          <Avatar sx={{ bgcolor: '#fff', color: theme.palette.primary.main, mr: 1.5}}>
             <SmartToyIcon />
           </Avatar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 600 }}>
@@ -699,7 +699,7 @@ const ChatPopup: React.FC = () => {
                   elevation={0}
                   sx={{
                     p: 1.5,
-                    bgcolor: msg.sender === 'user' ? '#2da58e' : '#e0f0ed',
+                    bgcolor: msg.sender === 'user' ? theme.palette.primary.main : `${theme.palette.primary.main}10`,
                     color: msg.sender === 'user' ? '#fff' : theme.palette.text.primary,
                     borderRadius: msg.sender === 'user' ? '15px 15px 5px 15px' : '15px 15px 15px 5px',
                     maxWidth: '80%',
@@ -779,7 +779,7 @@ const ChatPopup: React.FC = () => {
                           <Box 
                             component="blockquote" 
                             sx={{ 
-                              borderLeft: '3px solid #2da58e',
+                              borderLeft: `3px solid ${theme.palette.primary.main}`,
                               paddingLeft: '12px',
                               margin: '8px 0',
                               fontStyle: 'italic',
@@ -833,7 +833,7 @@ const ChatPopup: React.FC = () => {
                         width: 8,
                         height: 8,
                         borderRadius: '50%',
-                        bgcolor: '#2da58e',
+                        bgcolor: theme.palette.primary.main,
                         animation: 'streamingPulse 1s infinite ease-in-out',
                         '@keyframes streamingPulse': {
                           '0%': { opacity: 0.3, transform: 'scale(1)' },
@@ -861,7 +861,7 @@ const ChatPopup: React.FC = () => {
                   elevation={0}
                   sx={{
                     p: 1.5,
-                    bgcolor: '#e0f0ed',
+                    bgcolor: `${theme.palette.primary.main}10`,
                     borderRadius: '15px 15px 15px 5px',
                     maxWidth: '80%',
                     boxShadow: '0 1px 2px rgba(0,0,0,0.07)'
@@ -874,7 +874,7 @@ const ChatPopup: React.FC = () => {
                           width: 6, 
                           height: 6, 
                           borderRadius: '50%', 
-                          bgcolor: '#2da58e',
+                          bgcolor: theme.palette.primary.main,
                           animation: 'typing 1.4s infinite ease-in-out',
                           animationDelay: '0s',
                           '@keyframes typing': {
@@ -888,7 +888,7 @@ const ChatPopup: React.FC = () => {
                           width: 6, 
                           height: 6, 
                           borderRadius: '50%', 
-                          bgcolor: '#2da58e',
+                          bgcolor: theme.palette.primary.main,
                           animation: 'typing 1.4s infinite ease-in-out',
                           animationDelay: '0.2s',
                           '@keyframes typing': {
@@ -902,7 +902,7 @@ const ChatPopup: React.FC = () => {
                           width: 6, 
                           height: 6, 
                           borderRadius: '50%', 
-                          bgcolor: '#2da58e',
+                          bgcolor: theme.palette.primary.main,
                           animation: 'typing 1.4s infinite ease-in-out',
                           animationDelay: '0.4s',
                           '@keyframes typing': {
@@ -923,7 +923,7 @@ const ChatPopup: React.FC = () => {
           </Box>
         </DialogContent>
 
-        <DialogActions sx={{ p: 1.5, bgcolor: '#e0f0ed', flexWrap: 'nowrap' }}>
+        <DialogActions sx={{ p: 1.5, bgcolor: `${theme.palette.primary.main}08`, flexWrap: 'nowrap' }}>
           <Box sx={{ display: 'flex', alignItems: 'flex-end', width: '100%', gap: 1 }}>
             <TextField 
               inputRef={textFieldRef}
@@ -963,9 +963,9 @@ const ChatPopup: React.FC = () => {
               onClick={handleEmojiPickerOpen}
               disabled={isLoading}
               sx={{
-                color: '#2da58e',
+                color: theme.palette.primary.main,
                 '&:hover': {
-                  bgcolor: 'rgba(45, 165, 142, 0.1)',
+                  bgcolor: `${theme.palette.primary.main}10`,
                 },
                 '&.Mui-disabled': {
                   color: theme.palette.action.disabled,
@@ -981,10 +981,10 @@ const ChatPopup: React.FC = () => {
               onClick={handleSendMessage} 
               disabled={!message.trim() || isLoading}
               sx={{
-                bgcolor: '#2da58e',
+                bgcolor: theme.palette.primary.main,
                 color: '#fff',
                 '&:hover': {
-                  bgcolor: '#22796a',
+                  bgcolor: theme.palette.primary.dark,
                 },
                 '&.Mui-disabled': {
                   bgcolor: theme.palette.action.disabledBackground,
@@ -1014,7 +1014,7 @@ const ChatPopup: React.FC = () => {
                 maxHeight: 400,
                 borderRadius: 2,
                 boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-                border: '1px solid rgba(45, 165, 142, 0.2)',
+                border: `1px solid ${theme.palette.primary.main}20`,
               }
             }}
           >
@@ -1033,10 +1033,10 @@ const ChatPopup: React.FC = () => {
                         px: 2,
                         py: 0.5,
                         fontSize: '0.75rem',
-                        bgcolor: selectedEmojiCategory === index ? '#2da58e' : 'transparent',
-                        color: selectedEmojiCategory === index ? '#fff' : '#2da58e',
+                        bgcolor: selectedEmojiCategory === index ? theme.palette.primary.main : 'transparent',
+                        color: selectedEmojiCategory === index ? '#fff' : theme.palette.primary.main,
                         '&:hover': {
-                          bgcolor: selectedEmojiCategory === index ? '#22796a' : 'rgba(45, 165, 142, 0.1)',
+                          bgcolor: selectedEmojiCategory === index ? theme.palette.primary.dark : `${theme.palette.primary.main}10`,
                         },
                         textTransform: 'none',
                         whiteSpace: 'nowrap',
@@ -1067,10 +1067,10 @@ const ChatPopup: React.FC = () => {
                         borderRadius: 1,
                         fontSize: '1.5rem',
                         '&:hover': {
-                          bgcolor: 'rgba(45, 165, 142, 0.1)',
+                          bgcolor: `${theme.palette.primary.main}10`,
                         },
                         '&:active': {
-                          bgcolor: 'rgba(45, 165, 142, 0.2)',
+                          bgcolor: `${theme.palette.primary.main}20`,
                         },
                         transition: 'background-color 0.2s ease',
                       }}
