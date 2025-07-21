@@ -3,6 +3,7 @@ import { fetchActivities } from '@/services/activityService';
 import type { Activity } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { useSession } from 'next-auth/react';
+import { subscribeToActivityUpdates } from '@/utils/activityEvents';
 
 export function useActivities(userId?: string) {
   const { data: session, status } = useSession();
@@ -49,7 +50,7 @@ export function useActivities(userId?: string) {
     let subscription: ReturnType<typeof supabase.channel> | undefined;
     if (effectiveUserId) {
       subscription = supabase
-        .channel('public:activities')
+        .channel(`public:activities:${effectiveUserId}`)
         .on('postgres_changes', {
           event: '*',
           schema: 'public',
@@ -57,16 +58,24 @@ export function useActivities(userId?: string) {
           filter: `user_id=eq.${effectiveUserId}`
         }, () => {
           // Reload activities when changes happen
+          console.log('Supabase real-time: Activity change detected');
           loadActivities();
         })
         .subscribe();
     }
 
-    // Cleanup subscription
+    // Subscribe to global activity events (fallback for manual triggers)
+    const unsubscribeGlobalEvents = subscribeToActivityUpdates(() => {
+      console.log('Global event: Activity update triggered');
+      loadActivities();
+    });
+
+    // Cleanup subscriptions
     return () => {
       if (subscription) {
         subscription.unsubscribe();
       }
+      unsubscribeGlobalEvents();
     };
   }, [effectiveUserId, status, loadActivities]);
 

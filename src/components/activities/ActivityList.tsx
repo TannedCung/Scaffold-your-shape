@@ -61,6 +61,7 @@ export default function ActivityList({
   const activities = propActivities || fetchedData.activities;
   const loading = propLoading !== undefined ? propLoading : fetchedData.loading;
   const error = propError !== undefined ? propError : fetchedData.error;
+  const refresh = fetchedData.refresh;
   
   const [editActivity, setEditActivity] = useState<Activity | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -109,7 +110,7 @@ export default function ActivityList({
     setDeleting(true);
     try {
       await deleteActivity(deleteId);
-      // The list will be refreshed automatically due to real-time subscription
+      // Refresh will be triggered automatically by global event system
     } catch (error) {
       console.error('Error deleting activity:', error);
     } finally {
@@ -287,7 +288,8 @@ export default function ActivityList({
       <ActivityEditDialog 
         open={!!editActivity} 
         activity={editActivity} 
-        onClose={() => setEditActivity(null)} 
+        onClose={() => setEditActivity(null)}
+        onSuccess={refresh}
       />
       
       {deleteId && (

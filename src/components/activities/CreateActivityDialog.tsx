@@ -70,7 +70,15 @@ const formatActivityType = (type: string): string => {
   return type.replace(/([A-Z])/g, ' $1').trim(); // Add spaces before capital letters
 };
 
-export default function CreateActivityDialog({ open, onClose }: { open: boolean, onClose: () => void }) {
+export default function CreateActivityDialog({ 
+  open, 
+  onClose, 
+  onSuccess 
+}: { 
+  open: boolean, 
+  onClose: () => void,
+  onSuccess?: () => void 
+}) {
   const { data: session, status: sessionStatus } = useSession();
   const { user, loading: userLoading } = useUser();
   const [tabValue, setTabValue] = useState(0);
@@ -161,6 +169,7 @@ export default function CreateActivityDialog({ open, onClose }: { open: boolean,
       });
       
       setSuccess(true);
+      onSuccess?.(); // Optional callback for parent component
       setTimeout(() => {
         handleClose();
       }, 1000);
