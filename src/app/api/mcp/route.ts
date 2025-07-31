@@ -445,7 +445,7 @@ const availableTools = [
       properties: {
         query: {
           type: 'string',
-          description: 'Search query for activity names (e.g., "morning run", "yoga session", "bike ride")',
+          description: 'Search query for activity names (e.g., "morning run", "yoga session", "bike ride"). Leave empty to get all activities.',
         },
         limit: {
           type: 'number',
@@ -530,7 +530,7 @@ const availableTools = [
       properties: {
         query: {
           type: 'string',
-          description: 'Search query for challenge titles or descriptions (e.g., "running", "weight loss", "monthly")',
+          description: 'Search query for challenge titles or descriptions (e.g., "running", "weight loss", "monthly"). Leave empty to get all challenges.',
         },
         limit: {
           type: 'number',
@@ -566,7 +566,7 @@ const availableTools = [
       properties: {
         query: {
           type: 'string',
-          description: 'Search query for club names or descriptions (e.g., "running club", "fitness", "cycling")',
+          description: 'Search query for club names or descriptions (e.g., "running club", "fitness", "cycling"). Leave empty to get all clubs.',
         },
         limit: {
           type: 'number',
@@ -596,7 +596,7 @@ const availableTools = [
   },
   {
     name: 'get_user_stats',
-    description: 'Get comprehensive and detailed statistics for a user including: activity summaries (total count, distance in meters, time in minutes, calories, reps), activity breakdowns by type and unit, average values per unit, recent activity trends (last week/month), activity streaks (current and longest), challenge participation stats with completion rates, club memberships count, and most recent activity details. Provides a complete overview of user engagement, progress, and activity patterns. Sample request: {"userId": "user123"}',
+    description: 'Get statistics for a user of all time including: activity summaries (total count, distance in meters, time in minutes, calories, reps), activity breakdowns by type and unit, average values per unit, recent activity trends (last week/month), activity streaks (current and longest), challenge participation stats with completion rates, club memberships count, and most recent activity details. Provides a complete overview of user engagement, progress, and activity patterns. Sample request: {"userId": "user123"}',
     inputSchema: {
       type: 'object',
       properties: {
