@@ -72,9 +72,9 @@ export function useClubDetail(clubId: string) {
         mapClubMemberDbToClubMember(memberDb)
       );
 
-      // Calculate admin and member counts
+      // Calculate admin count from the fetched members (limited to 100)
+      // Note: membersList is limited to 100 members for UI performance
       const adminCount = membersList.filter(member => member.role === 'admin').length;
-      const actualMemberCount = membersList.length;
 
       const enrichedClub: ClubDetailData = {
         id: clubDataTyped.id,
@@ -83,7 +83,7 @@ export function useClubDetail(clubId: string) {
         creatorId: clubDataTyped.creatorId,
         imageUrl: clubDataTyped.imageUrl,
         backgroundImageUrl: clubDataTyped.backgroundImageUrl,
-        memberCount: actualMemberCount,
+        memberCount: clubDataTyped.memberCount, // Use accurate database count, not membersList.length
         isPrivate: clubDataTyped.isPrivate,
         created_at: clubDataTyped.created_at,
         updatedAt: clubDataTyped.updatedAt,

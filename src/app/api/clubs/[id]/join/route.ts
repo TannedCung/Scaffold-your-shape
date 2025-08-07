@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { supabase } from '@/lib/supabase';
 import { authOptions } from '@/lib/auth';
+import { updateClubMemberCount } from '@/utils/clubMemberCount';
 
 export async function POST(
   request: Request,
@@ -57,13 +58,10 @@ export async function POST(
       return NextResponse.json({ error: insertError.message }, { status: 500 });
     }
 
-    // Update club member count
-    const { error: updateError } = await supabase.rpc('increment_club_member_count', {
-      club_id: clubId
-    });
-
-    if (updateError) {
-      console.error('Failed to update member count:', updateError);
+    // Update club member count by counting actual members
+    const { success, error: countUpdateError } = await updateClubMemberCount(clubId);
+    if (!success) {
+      console.error('Failed to update member count:', countUpdateError);
       // Don't fail the request if count update fails
     }
 
@@ -129,13 +127,10 @@ export async function DELETE(
       return NextResponse.json({ error: deleteError.message }, { status: 500 });
     }
 
-    // Update club member count
-    const { error: updateError } = await supabase.rpc('decrement_club_member_count', {
-      club_id: clubId
-    });
-
-    if (updateError) {
-      console.error('Failed to update member count:', updateError);
+    // Update club member count by counting actual members
+    const { success, error: countUpdateError } = await updateClubMemberCount(clubId);
+    if (!success) {
+      console.error('Failed to update member count:', countUpdateError);
       // Don't fail the request if count update fails
     }
 
