@@ -485,6 +485,12 @@ export interface ClubMemberDb {
   user_id: string;
   role: 'admin' | 'member';
   joined_at: string;
+  profiles?: {
+    id: string;
+    name: string;
+    email?: string;
+    avatar_url?: string | null;
+  } | null; // Optional profile details when populated via join
 }
 
 export interface ClubMember {
@@ -498,13 +504,32 @@ export interface ClubMember {
 }
 
 export function mapClubMemberDbToClubMember(db: ClubMemberDb): ClubMember {
-  return {
+  const member: ClubMember = {
     id: db.id,
     clubId: db.club_id,
     userId: db.user_id,
     role: db.role,
     joinedAt: db.joined_at,
   };
+
+  // Map the profiles data to the profile property if it exists
+  if (db.profiles) {
+    member.profile = {
+      id: db.profiles.id,
+      email: db.profiles.email || '',
+      name: db.profiles.name,
+      avatar_url: db.profiles.avatar_url ?? undefined,
+      bio: undefined,
+      strava_id: undefined,
+      strava_access_token: undefined,
+      strava_refresh_token: undefined,
+      strava_token_expires_at: undefined,
+      created_at: undefined,
+      updated_at: undefined,
+    };
+  }
+
+  return member;
 }
 
 // Challenge types
