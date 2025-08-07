@@ -97,7 +97,7 @@ export default function ClubCardWithMembership({
       >
         {/* Club background image with signed URL support */}
         <Box sx={{ position: 'relative' }}>
-          <ClubCardImage imageUrl={club.backgroundImageUrl || '/club-wallpaper-placeholder.png'} alt={club.name} />
+          <ClubCardImage imageUrl={club.backgroundImageUrl || '/images/club-wallpaper-placeholder.png'} alt={club.name} />
           {isMember && (
             <Box
               sx={{

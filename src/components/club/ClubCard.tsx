@@ -37,7 +37,7 @@ export default function ClubCard({ club }: ClubCardProps) {
         }}
       >
         {/* Club background image with signed URL support */}
-        <ClubCardImage imageUrl={club.backgroundImageUrl || '/club-wallpaper-placeholder.png'} alt={club.name} />
+        <ClubCardImage imageUrl={club.backgroundImageUrl || '/images/club-wallpaper-placeholder.png'} alt={club.name} />
         <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
             <Typography variant="h6" component="div" fontWeight="bold">

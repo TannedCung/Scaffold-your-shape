@@ -56,7 +56,7 @@ export default function ClubCardImage({ imageUrl, alt }: ClubCardImageProps) {
     <CardMedia
       component="img"
       height="140"
-      image={signedUrl || '/club-wallpaper-placeholder.png'}
+      image={signedUrl || '/images/club-wallpaper-placeholder.png'}
       alt={alt}
       sx={{ bgcolor: '#e0f7f3' }}
     />
