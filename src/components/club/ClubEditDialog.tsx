@@ -20,7 +20,17 @@ import {
 import { CloudUpload as CloudUploadIcon, PhotoCamera as PhotoCameraIcon } from '@mui/icons-material';
 import Image from 'next/image';
 
-export default function ClubEditDialog({ open, club, onClose }: { open: boolean, club: Club | null, onClose: () => void }) {
+export default function ClubEditDialog({ 
+  open, 
+  club, 
+  onClose,
+  onSuccess 
+}: { 
+  open: boolean; 
+  club: Club | null; 
+  onClose: () => void;
+  onSuccess?: () => void;
+}) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
@@ -93,8 +103,17 @@ export default function ClubEditDialog({ open, club, onClose }: { open: boolean,
 
       // Upload new background image if one was selected
       if (backgroundImage) {
+        console.log('Uploading new background image...');
         backgroundImageUrl = await uploadImageToR2(backgroundImage);
+        console.log('Upload successful, new key:', backgroundImageUrl);
       }
+
+      console.log('Updating club with data:', { 
+        name, 
+        description, 
+        isPrivate: isPrivate,
+        backgroundImageUrl
+      });
 
       const { error } = await clubApi.update(club.id, { 
         name, 
@@ -103,15 +122,23 @@ export default function ClubEditDialog({ open, club, onClose }: { open: boolean,
         backgroundImageUrl
       });
       
-      if (error) throw new Error(error);
+      if (error) {
+        console.error('Club update error:', error);
+        throw new Error(error);
+      }
+      
+      console.log('Club updated successfully');
       setSuccess(true);
       
-      // Refresh the page to reflect changes
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      // Call success callback to refresh data
+      if (onSuccess) {
+        onSuccess();
+      }
       
-      onClose();
+      // Close dialog after a short delay to show success message
+      setTimeout(() => {
+        onClose();
+      }, 1000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update club');
     } finally {

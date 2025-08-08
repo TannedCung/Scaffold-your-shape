@@ -262,7 +262,8 @@ export default function ClubDetailContent({ clubId }: ClubDetailContentProps) {
     updateMemberRole,
     removeMember,
     canManageMembers,
-    canEditClub
+    canEditClub,
+    refresh
   } = useClubDetail(clubId);
 
   const [memberMenuAnchor, setMemberMenuAnchor] = useState<null | HTMLElement>(null);
@@ -443,6 +444,7 @@ export default function ClubDetailContent({ clubId }: ClubDetailContentProps) {
         open={editDialogOpen}
         club={club}
         onClose={handleEditDialogClose}
+        onSuccess={refresh}
       />
     </Box>
   );

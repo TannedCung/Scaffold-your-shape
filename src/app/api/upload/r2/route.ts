@@ -38,10 +38,15 @@ export async function POST(req: NextRequest) {
       ContentType: file.type,
       ACL: 'public-read',
     }));
-    // Generate a TTL link (signed URL) valid for 24h
+    
+    // Return both the key (for database storage) and URL (for immediate display)
     const url = `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${key}`;
-    return NextResponse.json({ url });
+    return NextResponse.json({ 
+      key,  // For storing in database
+      url   // For immediate preview/display
+    });
   } catch (e) {
+    console.error('R2 upload error:', e);
     return NextResponse.json({ error: 'Failed to upload to R2', details: String(e) }, { status: 500 });
   }
 }
