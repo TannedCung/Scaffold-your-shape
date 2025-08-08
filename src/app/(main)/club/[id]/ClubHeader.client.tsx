@@ -1,14 +1,56 @@
 "use client";
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, CircularProgress } from '@mui/material';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import ClubCardImage from '@/components/club/ClubCardImage';
 import React, { useRef, useEffect, useState } from 'react';
 import { Club } from '@/types';
+import Image from 'next/image';
+
+// Helper: Returns true if URL looks like an R2 object key or URL
+function isR2Url(url?: string | null) {
+  if (!url) return false;
+  // Accept both direct R2 URLs and keys (e.g. club-backgrounds/uuid.jpg)
+  return url.startsWith('http') || url.startsWith('club-backgrounds/');
+}
 
 export default function ClubHeader({ club }: { club: Club }) {
   const bgRef = useRef<HTMLDivElement>(null);
   const [offset, setOffset] = useState(0);
+  const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const [imageLoading, setImageLoading] = useState(false);
+
+  // Handle signed URL fetching for R2 images
+  useEffect(() => {
+    let ignore = false;
+    if (isR2Url(club.backgroundImageUrl)) {
+      setImageLoading(true);
+      // If it's a key, not a full URL, extract the key
+      const key = club.backgroundImageUrl!.startsWith('http') 
+        ? club.backgroundImageUrl!.split('/').slice(-2).join('/') 
+        : club.backgroundImageUrl;
+      
+      fetch('/api/r2/signed-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key }),
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (!ignore && data.url) setSignedUrl(data.url);
+        })
+        .catch(() => {
+          if (!ignore) setSignedUrl(null);
+        })
+        .finally(() => {
+          if (!ignore) setImageLoading(false);
+        });
+    } else {
+      setSignedUrl(club.backgroundImageUrl || null);
+    }
+    return () => {
+      ignore = true;
+    };
+  }, [club.backgroundImageUrl]);
 
   useEffect(() => {
     function handleScroll() {
@@ -62,26 +104,71 @@ export default function ClubHeader({ club }: { club: Club }) {
           overflow: 'hidden',
           pointerEvents: 'none',
         }}>
-          <Box
-            sx={{
+          {imageLoading ? (
+            <Box sx={{
               width: '100%',
               height: '120%',
-              position: 'absolute',
-              top: `-${offset * 20}%`,
-              left: 0,
-              opacity: 0.22,
-              filter: 'blur(1px) saturate(1.1)',
-              transition: 'top 0.2s cubic-bezier(0.4,0,0.2,1)',
-              borderRadius: 3,
-              overflow: 'hidden',
-              willChange: 'top',
-            }}
-          >
-            <ClubCardImage
-              imageUrl={club.backgroundImageUrl}
-              alt={`${club.name} cover`}
-            />
-          </Box>
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              bgcolor: '#e0f7f3'
+            }}>
+              <CircularProgress size={32} sx={{ color: '#2da58e' }} />
+            </Box>
+          ) : signedUrl ? (
+            <Box
+              sx={{
+                width: '100%',
+                height: '120%',
+                position: 'absolute',
+                top: `-${offset * 10}%`,
+                left: 0,
+                opacity: 0.22,
+                filter: 'blur(1px) saturate(1.1)',
+                transition: 'top 0.2s cubic-bezier(0.4,0,0.2,1)',
+                borderRadius: 3,
+                overflow: 'hidden',
+                willChange: 'top',
+              }}
+            >
+              <Image
+                src={signedUrl}
+                alt={`${club.name} cover`}
+                fill
+                style={{
+                  objectFit: 'cover',
+                  objectPosition: 'center',
+                }}
+                priority
+              />
+            </Box>
+          ) : (
+            <Box
+              sx={{
+                width: '100%',
+                height: '100%',
+                position: 'absolute',
+                top: `-${offset * 10}%`,
+                left: 0,
+                opacity: 0.22,
+                filter: 'blur(1px) saturate(1.1)',
+                transition: 'top 0.2s cubic-bezier(0.4,0,0.2,1)',
+                borderRadius: 3,
+                overflow: 'hidden',
+                willChange: 'top',
+              }}
+            >
+              <Image
+                src="/images/club-wallpaper-placeholder.png"
+                alt={`${club.name} cover`}
+                fill
+                style={{
+                  objectFit: 'cover',
+                  objectPosition: 'center',
+                }}
+              />
+            </Box>
+          )}
           <Box sx={{
             position: 'absolute',
             top: 0,
