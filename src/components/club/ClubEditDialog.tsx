@@ -2,13 +2,32 @@
 import type { Club } from '@/types';
 import { clubApi } from '@/lib/api';
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Stack, Typography, Switch, FormControlLabel } from '@mui/material';
+import { 
+  Dialog, 
+  DialogTitle, 
+  DialogContent, 
+  DialogActions, 
+  Button, 
+  TextField, 
+  Stack, 
+  Typography, 
+  Switch, 
+  FormControlLabel,
+  Box,
+  Input,
+  CircularProgress
+} from '@mui/material';
+import { CloudUpload as CloudUploadIcon, PhotoCamera as PhotoCameraIcon } from '@mui/icons-material';
+import Image from 'next/image';
 
 export default function ClubEditDialog({ open, club, onClose }: { open: boolean, club: Club | null, onClose: () => void }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
+  const [backgroundImage, setBackgroundImage] = useState<File | null>(null);
+  const [backgroundImagePreview, setBackgroundImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
@@ -17,24 +36,81 @@ export default function ClubEditDialog({ open, club, onClose }: { open: boolean,
       setName(club.name || '');
       setDescription(club.description || '');
       setIsPrivate(club.isPrivate || false);
+      setBackgroundImagePreview(club.backgroundImageUrl || null);
+      setBackgroundImage(null);
       setError(null);
       setSuccess(false);
     }
   }, [club]);
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setBackgroundImage(file);
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setBackgroundImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadImageToR2 = async (file: File) => {
+    try {
+      setUploadingImage(true);
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', 'club-backgrounds');
+
+      const response = await fetch('/api/upload/r2', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload image');
+      }
+
+      const data = await response.json();
+      return data.key; // Returns the R2 key
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      throw error;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!club) return;
     setLoading(true);
     setError(null);
     setSuccess(false);
+    
     try {
+      let backgroundImageUrl = club.backgroundImageUrl;
+
+      // Upload new background image if one was selected
+      if (backgroundImage) {
+        backgroundImageUrl = await uploadImageToR2(backgroundImage);
+      }
+
       const { error } = await clubApi.update(club.id, { 
         name, 
         description, 
-        isPrivate: isPrivate 
+        isPrivate: isPrivate,
+        backgroundImageUrl
       });
+      
       if (error) throw new Error(error);
       setSuccess(true);
+      
+      // Refresh the page to reflect changes
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update club');
@@ -44,20 +120,176 @@ export default function ClubEditDialog({ open, club, onClose }: { open: boolean,
   };
 
   return (
-    <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Edit Club</DialogTitle>
-      <DialogContent>
-        <Stack spacing={2} sx={{ mt: 1 }}>
-          <TextField label="Name" value={name} onChange={e => setName(e.target.value)} size="small" fullWidth />
-          <TextField label="Description" value={description} onChange={e => setDescription(e.target.value)} size="small" fullWidth multiline minRows={2} />
-          <FormControlLabel control={<Switch checked={isPrivate} onChange={e => setIsPrivate(e.target.checked)} color="primary" />} label="Private Club" />
-          {success && <Typography color="success.main">Saved!</Typography>}
-          {error && <Typography color="error.main">{error}</Typography>}
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle sx={{ borderBottom: '1px solid #e0e0e0', pb: 2 }}>
+        Edit Club
+      </DialogTitle>
+      <DialogContent sx={{ pt: 3 }}>
+        <Stack spacing={3}>
+          {/* Basic Information */}
+          <Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#2da58e' }}>
+              Basic Information
+            </Typography>
+            <Stack spacing={2}>
+              <TextField 
+                label="Club Name *" 
+                value={name} 
+                onChange={e => setName(e.target.value)} 
+                fullWidth
+                required
+                error={!name}
+                helperText={!name ? 'Club name is required' : ''}
+              />
+              <TextField 
+                label="Description *" 
+                value={description} 
+                onChange={e => setDescription(e.target.value)} 
+                fullWidth 
+                multiline 
+                minRows={3}
+                required
+                error={!description}
+                helperText={!description ? 'Description is required' : ''}
+              />
+            </Stack>
+          </Box>
+
+          {/* Background Image */}
+          <Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#2da58e' }}>
+              Background Image
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {/* Current/Preview Image */}
+              {backgroundImagePreview && (
+                <Box sx={{ 
+                  position: 'relative', 
+                  width: '100%', 
+                  height: 200, 
+                  borderRadius: 2, 
+                  overflow: 'hidden',
+                  border: '2px solid #e0e0e0'
+                }}>
+                  <Image
+                    src={backgroundImagePreview}
+                    alt="Club background preview"
+                    fill
+                    style={{ objectFit: 'cover' }}
+                  />
+                </Box>
+              )}
+
+              {/* Upload Button */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <input
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  id="background-image-upload"
+                  type="file"
+                  onChange={handleImageUpload}
+                />
+                <label htmlFor="background-image-upload">
+                  <Button
+                    variant="outlined"
+                    component="span"
+                    startIcon={uploadingImage ? <CircularProgress size={16} /> : <PhotoCameraIcon />}
+                    disabled={uploadingImage}
+                    sx={{ 
+                      borderColor: '#2da58e', 
+                      color: '#2da58e',
+                      '&:hover': { 
+                        borderColor: '#1b7d6b', 
+                        bgcolor: 'rgba(45, 165, 142, 0.04)' 
+                      }
+                    }}
+                  >
+                    {uploadingImage ? 'Uploading...' : 'Choose Background Image'}
+                  </Button>
+                </label>
+                <Typography variant="body2" color="text.secondary">
+                  Recommended: 1200x400px or larger
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+
+          {/* Privacy Settings */}
+          <Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#2da58e' }}>
+              Privacy Settings
+            </Typography>
+            <FormControlLabel 
+              control={
+                <Switch 
+                  checked={isPrivate} 
+                  onChange={e => setIsPrivate(e.target.checked)} 
+                  sx={{
+                    '& .MuiSwitch-switchBase.Mui-checked': {
+                      color: '#2da58e',
+                    },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                      backgroundColor: '#2da58e',
+                    },
+                  }}
+                />
+              } 
+              label={
+                <Box>
+                  <Typography variant="body1" fontWeight={500}>
+                    Private Club
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Only members can see club content and activities
+                  </Typography>
+                </Box>
+              }
+            />
+          </Box>
+
+          {/* Status Messages */}
+          {success && (
+            <Typography color="success.main" sx={{ textAlign: 'center', fontWeight: 600 }}>
+              ✓ Club updated successfully!
+            </Typography>
+          )}
+          {error && (
+            <Typography color="error.main" sx={{ textAlign: 'center' }}>
+              {error}
+            </Typography>
+          )}
         </Stack>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={loading}>Cancel</Button>
-        <Button onClick={handleSave} disabled={loading || !name} variant="contained" sx={{ bgcolor: '#2da58e', color: '#fff', ':hover': { bgcolor: '#22796a' } }}>{loading ? 'Saving...' : 'Save'}</Button>
+      <DialogActions sx={{ borderTop: '1px solid #e0e0e0', pt: 2, px: 3, pb: 3 }}>
+        <Button 
+          onClick={onClose} 
+          disabled={loading || uploadingImage}
+          sx={{ px: 3 }}
+        >
+          Cancel
+        </Button>
+        <Button 
+          onClick={handleSave} 
+          disabled={loading || uploadingImage || !name || !description} 
+          variant="contained" 
+          sx={{ 
+            bgcolor: '#2da58e', 
+            color: '#fff', 
+            px: 4,
+            fontWeight: 600,
+            '&:hover': { bgcolor: '#22796a' },
+            '&:disabled': { bgcolor: '#e0e0e0' }
+          }}
+        >
+          {loading ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <CircularProgress size={16} color="inherit" />
+              Saving...
+            </Box>
+          ) : (
+            'Save Changes'
+          )}
+        </Button>
       </DialogActions>
     </Dialog>
   );

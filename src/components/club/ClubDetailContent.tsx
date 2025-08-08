@@ -43,6 +43,8 @@ import {
 } from '@mui/icons-material';
 import { useClubDetail } from '@/hooks/useClubDetail';
 import { formatDistanceToNow } from 'date-fns';
+import ClubEditDialog from './ClubEditDialog';
+import { ClubMember } from '@/types';
 
 interface ClubDetailContentProps {
   clubId: string;
@@ -162,13 +164,15 @@ function ClubActions({
   onJoinClub, 
   onLeaveClub, 
   actionLoading, 
-  canEditClub 
+  canEditClub,
+  onEditClub
 }: { 
   isMember: boolean;
   onJoinClub: () => void;
   onLeaveClub: () => void;
   actionLoading: boolean;
   canEditClub: boolean;
+  onEditClub: () => void;
 }) {
   return (
     <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
@@ -188,6 +192,7 @@ function ClubActions({
             <Button
               variant="outlined"
               startIcon={<EditIcon />}
+              onClick={onEditClub}
               disabled={actionLoading}
               sx={{ borderColor: '#2da58e', color: '#2da58e', fontWeight: 700, px: 4, py: 1.5, borderRadius: 2, ':hover': { bgcolor: '#e0f7f3' } }}
             >
@@ -268,6 +273,8 @@ export default function ClubDetailContent({ clubId }: ClubDetailContentProps) {
     message: string;
     action: () => void;
   }>({ open: false, title: '', message: '', action: () => {} });
+  
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const handleMemberMenuOpen = (event: React.MouseEvent<HTMLElement>, memberId: string) => {
     setMemberMenuAnchor(event.currentTarget);
@@ -352,6 +359,14 @@ export default function ClubDetailContent({ clubId }: ClubDetailContentProps) {
     });
   };
 
+  const handleEditClub = () => {
+    setEditDialogOpen(true);
+  };
+
+  const handleEditDialogClose = () => {
+    setEditDialogOpen(false);
+  };
+
   if (loading || !club) {
     return null; // Loading and error handling is done in the wrapper component
   }
@@ -372,6 +387,7 @@ export default function ClubDetailContent({ clubId }: ClubDetailContentProps) {
         onLeaveClub={handleLeaveClub}
         actionLoading={actionLoading}
         canEditClub={canEditClub()}
+        onEditClub={handleEditClub}
       />
       <ClubFinisherBadge />
       <ClubOverview description={club.description} />
@@ -421,6 +437,13 @@ export default function ClubDetailContent({ clubId }: ClubDetailContentProps) {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Club Edit Dialog */}
+      <ClubEditDialog 
+        open={editDialogOpen}
+        club={club}
+        onClose={handleEditDialogClose}
+      />
     </Box>
   );
 } 
