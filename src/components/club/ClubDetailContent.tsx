@@ -446,6 +446,7 @@ export default function ClubDetailContent({ clubId }: ClubDetailContentProps) {
         onClose={handleEditDialogClose}
         onSuccess={refresh}
         userRole={club?.userMembership?.role}
+        members={club?.membersList}
       />
     </Box>
   );
