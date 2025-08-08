@@ -69,19 +69,60 @@ export default function ClubEditDialog({
   const [memberMenuAnchor, setMemberMenuAnchor] = useState<null | HTMLElement>(null);
   const [selectedMember, setSelectedMember] = useState<ClubMember | null>(null);
   const [memberActionLoading, setMemberActionLoading] = useState(false);
+  const [loadingCurrentImage, setLoadingCurrentImage] = useState(false);
   
   const isAdmin = userRole === 'admin';
   const canEdit = isAdmin;
+
+  // Helper: Returns true if URL looks like an R2 object key or URL
+  const isR2Url = (url?: string | null) => {
+    if (!url) return false;
+    return url.startsWith('http') || url.startsWith('club-backgrounds/');
+  };
 
   useEffect(() => {
     if (club) {
       setName(club.name || '');
       setDescription(club.description || '');
       setIsPrivate(club.isPrivate || false);
-      setBackgroundImagePreview(club.backgroundImageUrl || null);
       setBackgroundImage(null);
       setError(null);
       setSuccess(false);
+
+      // Handle background image URL
+      if (club.backgroundImageUrl) {
+        if (isR2Url(club.backgroundImageUrl)) {
+          setLoadingCurrentImage(true);
+          // If it's a key, not a full URL, extract the key
+          const key = club.backgroundImageUrl.startsWith('http') 
+            ? club.backgroundImageUrl.split('/').slice(-2).join('/') 
+            : club.backgroundImageUrl;
+          
+          fetch('/api/r2/signed-url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key }),
+          })
+            .then(res => res.json())
+            .then(data => {
+              if (data.url) {
+                setBackgroundImagePreview(data.url);
+              } else {
+                setBackgroundImagePreview(null);
+              }
+            })
+            .catch(() => {
+              setBackgroundImagePreview(null);
+            })
+            .finally(() => {
+              setLoadingCurrentImage(false);
+            });
+        } else {
+          setBackgroundImagePreview(club.backgroundImageUrl);
+        }
+      } else {
+        setBackgroundImagePreview(null);
+      }
     }
   }, [club]);
 
@@ -328,7 +369,25 @@ export default function ClubEditDialog({
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {/* Current/Preview Image */}
-              {backgroundImagePreview && (
+              {loadingCurrentImage ? (
+                <Box sx={{ 
+                  position: 'relative', 
+                  width: '100%', 
+                  height: 200, 
+                  borderRadius: 2, 
+                  overflow: 'hidden',
+                  border: '2px solid #e0e0e0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  bgcolor: '#f5f5f5'
+                }}>
+                  <CircularProgress size={32} sx={{ color: '#2da58e' }} />
+                  <Typography variant="body2" sx={{ ml: 2, color: '#666' }}>
+                    Loading current image...
+                  </Typography>
+                </Box>
+              ) : backgroundImagePreview ? (
                 <Box sx={{ 
                   position: 'relative', 
                   width: '100%', 
@@ -344,7 +403,7 @@ export default function ClubEditDialog({
                     style={{ objectFit: 'cover' }}
                   />
                 </Box>
-              )}
+              ) : null}
 
               {/* Upload Button */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
