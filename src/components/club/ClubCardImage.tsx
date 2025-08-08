@@ -49,16 +49,33 @@ export default function ClubCardImage({ imageUrl, alt }: ClubCardImageProps) {
 
   // Show loading spinner while fetching signed URL
   if (loading) {
-    return <CardMedia component="div" sx={{ height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#e0f7f3' }}><CircularProgress size={24} color="inherit" /></CardMedia>;
+    return (
+      <CardMedia 
+        component="div" 
+        sx={{ 
+          height: 220, 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          bgcolor: '#e0f7f3' 
+        }}
+      >
+        <CircularProgress size={24} color="inherit" />
+      </CardMedia>
+    );
   }
 
   return (
     <CardMedia
       component="img"
-      height="140"
       image={signedUrl || '/images/club-wallpaper-placeholder.png'}
       alt={alt}
-      sx={{ bgcolor: '#e0f7f3' }}
+      sx={{ 
+        height: 220,
+        width: '100%',
+        objectFit: 'cover',
+        bgcolor: '#e0f7f3'
+      }}
     />
   );
 }
