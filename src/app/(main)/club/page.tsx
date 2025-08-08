@@ -26,6 +26,7 @@ import ClubList from '@/components/club/ClubList';
 import { motion } from 'framer-motion';
 import { containerVariants, fadeInUp } from '@/utils/animations';
 import { useClubs } from '@/hooks/useClubs';
+import { useUserClubs } from '@/hooks/useUserClubs';
 
 // Create motion components
 const MotionBox = motion(Box);
@@ -34,13 +35,21 @@ const MotionButton = motion(Button);
 
 export default function ClubPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentTab, setCurrentTab] = useState(0);
   const { clubs, loading, error } = useClubs();
+  const { userClubs, loading: userLoading, error: userError } = useUserClubs();
   const [createOpen, setCreateOpen] = useState(false);
 
   // Filter clubs based on search term
   const filteredClubs = clubs.filter(club =>
     club.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     club.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Filter user clubs based on search term
+  const filteredUserClubs = userClubs.filter(membership =>
+    membership.club?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    membership.club?.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -96,7 +105,6 @@ export default function ClubPage() {
             <CreateClubForm onSuccess={() => { setCreateOpen(false); window.location.reload(); }} />
           </DialogContent>
         </Dialog>
-        <ClubList />
 
         {/* Tabs */}
         <MotionBox 
@@ -106,7 +114,8 @@ export default function ClubPage() {
           transition={{ delay: 0.3, duration: 0.4 }}
         >
           <Tabs 
-            value={0}
+            value={currentTab}
+            onChange={(e, newValue) => setCurrentTab(newValue)}
             TabIndicatorProps={{
               style: {
                 backgroundColor: '#2da58e',
@@ -124,7 +133,6 @@ export default function ClubPage() {
           >
             <Tab label="Discover" />
             <Tab label="My Clubs" />
-            <Tab label="Recently Active" />
           </Tabs>
           <Divider />
         </MotionBox>
@@ -156,33 +164,122 @@ export default function ClubPage() {
           />
         </MotionBox>
 
-        {/* Clubs Grid */}
-        <MotionBox 
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          sx={{ 
-            display: 'grid', 
-            gridTemplateColumns: { 
-              xs: '1fr', 
-              sm: 'repeat(2, 1fr)', 
-              md: 'repeat(3, 1fr)' 
-            },
-            gap: 3,
-            pb: 5
-          }}
-        >
-          {loading && <Typography>Loading...</Typography>}
-          {error && <Typography color="error">{error}</Typography>}
-          {filteredClubs.map((club) => (
-            <Box
-              key={club.id}
-              sx={{ height: '100%' }}
-            >
-              <ClubCard club={club} />
-            </Box>
-          ))}
-        </MotionBox>
+        {/* Tab Content */}
+        {currentTab === 0 && (
+          <MotionBox 
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            sx={{ 
+              display: 'grid', 
+              gridTemplateColumns: { 
+                xs: '1fr', 
+                sm: 'repeat(2, 1fr)', 
+                md: 'repeat(3, 1fr)' 
+              },
+              gridAutoRows: '1fr', // Force equal row heights
+              gap: 3,
+              pb: 5
+            }}
+          >
+            {loading && <Typography>Loading...</Typography>}
+            {error && <Typography color="error">{error}</Typography>}
+            {!loading && !error && filteredClubs.length === 0 && (
+              <Box sx={{ gridColumn: '1 / -1', textAlign: 'center', py: 6 }}>
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  No clubs found
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {searchTerm ? 'Try adjusting your search terms' : 'Be the first to create a club!'}
+                </Typography>
+              </Box>
+            )}
+            {filteredClubs.map((club) => (
+              <Box
+                key={club.id}
+                sx={{ 
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '100%'
+                }}
+              >
+                <ClubCard club={club} />
+              </Box>
+            ))}
+          </MotionBox>
+        )}
+
+        {/* My Clubs Tab */}
+        {currentTab === 1 && (
+          <MotionBox 
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            sx={{ 
+              display: 'grid', 
+              gridTemplateColumns: { 
+                xs: '1fr', 
+                sm: 'repeat(2, 1fr)', 
+                md: 'repeat(3, 1fr)' 
+              },
+              gridAutoRows: '1fr', // Force equal row heights
+              gap: 3,
+              pb: 5
+            }}
+          >
+            {userLoading && <Typography>Loading your clubs...</Typography>}
+            {userError && <Typography color="error">{userError}</Typography>}
+            {!userLoading && !userError && filteredUserClubs.length === 0 && (
+              <Box sx={{ gridColumn: '1 / -1', textAlign: 'center', py: 6 }}>
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  {searchTerm ? 'No matching clubs found' : 'You haven\'t joined any clubs yet'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  {searchTerm ? 'Try adjusting your search terms' : 'Join clubs to connect with the community and share your fitness journey'}
+                </Typography>
+                {!searchTerm && (
+                  <MotionButton 
+                    variant="outlined" 
+                    sx={{ 
+                      mt: 2,
+                      borderColor: '#2da58e',
+                      color: '#2da58e',
+                      '&:hover': {
+                        borderColor: '#1b7d6b',
+                        bgcolor: 'rgba(45, 165, 142, 0.04)'
+                      }
+                    }}
+                    onClick={() => setCurrentTab(0)}
+                  >
+                    Discover Clubs
+                  </MotionButton>
+                )}
+              </Box>
+            )}
+            {filteredUserClubs.map((membership) => (
+              membership.club && (
+                <Box
+                  key={membership.id}
+                  sx={{ 
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: '100%'
+                  }}
+                >
+                  <ClubCard 
+                    club={membership.club} 
+                    userMembership={membership}
+                    showMembershipActions={true}
+                    onMembershipChange={() => {
+                      // Refresh the user clubs data
+                      window.location.reload();
+                    }}
+                  />
+                </Box>
+              )
+            ))}
+          </MotionBox>
+        )}
       </Container>
     </MainLayout>
   );

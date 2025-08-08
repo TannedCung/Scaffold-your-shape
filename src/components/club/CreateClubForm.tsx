@@ -1,6 +1,25 @@
 import React, { useState } from 'react';
 import { clubApi } from '@/lib/api';
-import { Box, Button, TextField, Stack, Typography, Switch, FormControlLabel, Input, CircularProgress } from '@mui/material';
+import {
+  Box,
+  Button,
+  TextField,
+  Stack,
+  Typography,
+  Switch,
+  FormControlLabel,
+  Input,
+  CircularProgress,
+  Divider,
+  IconButton,
+  Tooltip
+} from '@mui/material';
+import {
+  PhotoCamera as PhotoCameraIcon,
+  Group as GroupIcon,
+  Lock as LockIcon,
+  Public as PublicIcon
+} from '@mui/icons-material';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { useSnackbar } from '@/contexts/SnackbarProvider';
@@ -87,60 +106,230 @@ export default function CreateClubForm({ onSuccess }: CreateClubFormProps) {
   };
 
   return (
-    <Box sx={{ p: 0, bgcolor: '#f8fafc', borderRadius: 2, boxShadow: 0, border: '1px solid #e0e0e0', maxWidth: 400, overflow: 'hidden' }}>
-      {/* Wallpaper-style background image */}
-      <Box sx={{ position: 'relative', width: '100%', height: 140, bgcolor: '#e0f7f3', mb: 2 }}>
-        <Image
-          src={imagePreview || '/images/club-wallpaper-placeholder.png'}
-          alt="Background Preview"
-          width={400}
-          height={140}
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          priority
-        />
-        <label htmlFor="club-bg-upload">
-          <Input
-            id="club-bg-upload"
-            type="file"
-            inputProps={{ accept: 'image/*' }}
-            onChange={handleImageChange}
-            sx={{ display: 'none' }}
-          />
-          <Button
-            variant="contained"
-            component="span"
-            size="small"
-            sx={{
-              position: 'absolute',
-              right: 12,
-              bottom: 12,
-              minWidth: 0,
-              p: 1,
-              bgcolor: '#2da58e',
-              color: '#fff',
-              borderRadius: 2,
-              boxShadow: 1,
-              textTransform: 'none',
-              fontWeight: 500,
-              ':hover': { bgcolor: '#22796a' }
-            }}
-            aria-label="Upload background image"
-          >
-            {uploading ? <CircularProgress size={18} color="inherit" /> : 'Upload'}
-          </Button>
-        </label>
+    <>
+      {/* Cover Image Section */}
+      <Box sx={{ position: 'relative', height: 240, bgcolor: '#f0f9f6' }}>
+    <Image
+      src={imagePreview || '/images/club-wallpaper-placeholder.png'}
+      alt="Club Cover"
+      // Full width and height
+      fill
+      style={{
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover',
+        filter: imagePreview ? 'none' : 'opacity(0.7)'
+      }}
+      priority
+    />
+
+{/* Upload Button Overlay */ }
+<Box sx={{
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  background: imagePreview ? 'rgba(0,0,0,0.3)' : 'rgba(45, 165, 142, 0.1)',
+  opacity: imagePreview ? 0 : 1,
+  transition: 'opacity 0.3s ease',
+  '&:hover': { opacity: 1 }
+}}>
+  <label htmlFor="club-bg-upload" style={{ cursor: 'pointer' }}>
+    <Input
+      id="club-bg-upload"
+      type="file"
+      inputProps={{ accept: 'image/*' }}
+      onChange={handleImageChange}
+      sx={{ display: 'none' }}
+    />
+    <Tooltip title="Upload cover image" placement="top">
+      <IconButton
+        component="span"
+        sx={{
+          bgcolor: 'rgba(255,255,255,0.9)',
+          color: '#2da58e',
+          '&:hover': { bgcolor: 'white', transform: 'scale(1.05)' },
+          transition: 'all 0.2s ease',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+        }}
+      >
+        {uploading ? (
+          <CircularProgress size={24} sx={{ color: '#2da58e' }} />
+        ) : (
+          <PhotoCameraIcon />
+        )}
+      </IconButton>
+    </Tooltip>
+  </label>
+</Box>
       </Box>
-      <Box sx={{ px: 3, pb: 3 }}>
-        <Typography variant="h6" sx={{ color: '#2da58e', mb: 2 }}>Create Club</Typography>
-        <Stack spacing={2}>
-          <TextField label="Name" value={name} onChange={e => setName(e.target.value)} size="small" fullWidth />
-          <TextField label="Description" value={description} onChange={e => setDescription(e.target.value)} size="small" fullWidth multiline minRows={2} />
-          <FormControlLabel control={<Switch checked={isPrivate} onChange={event => setIsPrivate(event.target.checked)} color="primary" />} label="Private Club" />
-          <Button onClick={handleCreate} disabled={loading || !name} variant="contained" sx={{ bgcolor: '#2da58e', color: '#fff', ':hover': { bgcolor: '#22796a' }, borderRadius: 1, textTransform: 'none' }}>
-            {loading ? 'Creating...' : 'Create'}
+
+      {/* Form Content */}
+      <Box sx={{ p: 3 }}>
+        <Stack spacing={3}>
+          {/* Required Fields Notice */}
+          <Box sx={{
+            bgcolor: '#f0f9f6',
+            p: 2,
+            borderRadius: 2,
+            border: '1px solid #e0f2e9'
+          }}>
+            <Typography variant="body2" sx={{ color: '#1d8b73', fontWeight: 500 }}>
+              * Required fields
+            </Typography>
+          </Box>
+
+          {/* Club Name */}
+          <TextField
+            label={
+              <Box component="span">
+                Club Name <Box component="span" sx={{ color: '#d32f2f' }}>*</Box>
+              </Box>
+            }
+            value={name}
+            onChange={e => setName(e.target.value)}
+            fullWidth
+            required
+            variant="outlined"
+            placeholder="Enter your club name"
+            error={!name && name !== ''}
+            helperText={!name && name !== '' ? 'Club name is required' : ''}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                '&:hover fieldset': { borderColor: '#2da58e' },
+                '&.Mui-focused fieldset': { borderColor: '#2da58e' }
+              },
+              '& .MuiInputLabel-root.Mui-focused': { color: '#2da58e' }
+            }}
+          />
+
+          {/* Club Description */}
+          <TextField
+            label={
+              <Box component="span">
+                Description <Box component="span" sx={{ color: '#d32f2f' }}>*</Box>
+              </Box>
+            }
+            value={description}
+            onChange={e => setDescription(e.target.value)}
+            fullWidth
+            required
+            multiline
+            rows={3}
+            variant="outlined"
+            placeholder="Describe your club's purpose and activities"
+            error={!description && description !== ''}
+            helperText={!description && description !== '' ? 'Description is required' : 'Tell members what your club is about'}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                '&:hover fieldset': { borderColor: '#2da58e' },
+                '&.Mui-focused fieldset': { borderColor: '#2da58e' }
+              },
+              '& .MuiInputLabel-root.Mui-focused': { color: '#2da58e' }
+            }}
+          />
+
+          <Divider sx={{ borderColor: '#e0f2e9' }} />
+
+          {/* Privacy Setting */}
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 2, color: '#1d8b73', fontWeight: 600 }}>
+              Privacy Settings
+            </Typography>
+            <Box sx={{
+              border: '1px solid #e0f2e9',
+              borderRadius: 2,
+              p: 2,
+              bgcolor: isPrivate ? '#fef7f0' : '#f0f9f6'
+            }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={isPrivate}
+                    onChange={event => setIsPrivate(event.target.checked)}
+                    sx={{
+                      '& .MuiSwitch-switchBase.Mui-checked': { color: '#2da58e' },
+                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: '#2da58e' }
+                    }}
+                  />
+                }
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    {isPrivate ? <LockIcon fontSize="small" /> : <PublicIcon fontSize="small" />}
+                    <Box>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        {isPrivate ? 'Private Club' : 'Public Club'}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                        {isPrivate
+                          ? 'Members need approval to join'
+                          : 'Anyone can join instantly'
+                        }
+                      </Typography>
+                    </Box>
+                  </Box>
+                }
+                sx={{ m: 0, width: '100%' }}
+              />
+            </Box>
+          </Box>
+
+          {/* Create Button */}
+          <Button
+            onClick={handleCreate}
+            disabled={loading || !name.trim() || !description.trim()}
+            variant="contained"
+            size="large"
+            fullWidth
+            sx={{
+              bgcolor: '#2da58e',
+              color: 'white',
+              py: 1.5,
+              borderRadius: 2,
+              textTransform: 'none',
+              fontSize: '1rem',
+              fontWeight: 600,
+              boxShadow: '0 4px 12px rgba(45, 165, 142, 0.3)',
+              '&:hover': {
+                bgcolor: '#1d8b73',
+                boxShadow: '0 6px 16px rgba(45, 165, 142, 0.4)',
+                transform: 'translateY(-1px)'
+              },
+              '&:disabled': {
+                bgcolor: '#e0e0e0',
+                color: '#9e9e9e',
+                boxShadow: 'none'
+              },
+              transition: 'all 0.2s ease'
+            }}
+          >
+            {loading ? (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <CircularProgress size={20} color="inherit" />
+                Creating Club...
+              </Box>
+            ) : (
+              'Create Club'
+            )}
           </Button>
+
+          {/* Helper Text */}
+          <Typography
+            variant="caption"
+            sx={{
+              textAlign: 'center',
+              color: 'text.secondary',
+              px: 2
+            }}
+          >
+            By creating a club, you become the admin and can manage members and settings.
+          </Typography>
         </Stack>
       </Box>
-    </Box>
+    </>
   );
 }
