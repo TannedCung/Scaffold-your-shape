@@ -24,12 +24,14 @@ export default function ClubEditDialog({
   open, 
   club, 
   onClose,
-  onSuccess 
+  onSuccess,
+  userRole
 }: { 
   open: boolean; 
   club: Club | null; 
   onClose: () => void;
   onSuccess?: () => void;
+  userRole?: 'admin' | 'member' | null;
 }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -40,6 +42,9 @@ export default function ClubEditDialog({
   const [uploadingImage, setUploadingImage] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  
+  const isAdmin = userRole === 'admin';
+  const canEdit = isAdmin;
 
   useEffect(() => {
     if (club) {
@@ -153,6 +158,23 @@ export default function ClubEditDialog({
       </DialogTitle>
       <DialogContent sx={{ pt: 3 }}>
         <Stack spacing={3}>
+          {/* Permission Notice */}
+          {!canEdit && (
+            <Box sx={{
+              bgcolor: '#fff3cd',
+              border: '1px solid #ffeaa7',
+              borderRadius: 2,
+              p: 2,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
+            }}>
+              <Typography variant="body2" sx={{ color: '#856404', fontWeight: 500 }}>
+                ⚠️ Only club administrators can edit club information
+              </Typography>
+            </Box>
+          )}
+
           {/* Basic Information */}
           <Box>
             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#2da58e' }}>
@@ -165,8 +187,9 @@ export default function ClubEditDialog({
                 onChange={e => setName(e.target.value)} 
                 fullWidth
                 required
-                error={!name}
-                helperText={!name ? 'Club name is required' : ''}
+                disabled={!canEdit}
+                error={!name && canEdit}
+                helperText={!canEdit ? 'Editing requires admin privileges' : (!name ? 'Club name is required' : '')}
               />
               <TextField 
                 label="Description *" 
@@ -176,8 +199,9 @@ export default function ClubEditDialog({
                 multiline 
                 minRows={3}
                 required
-                error={!description}
-                helperText={!description ? 'Description is required' : ''}
+                disabled={!canEdit}
+                error={!description && canEdit}
+                helperText={!canEdit ? 'Editing requires admin privileges' : (!description ? 'Description is required' : '')}
               />
             </Stack>
           </Box>
@@ -215,23 +239,28 @@ export default function ClubEditDialog({
                   id="background-image-upload"
                   type="file"
                   onChange={handleImageUpload}
+                  disabled={!canEdit}
                 />
                 <label htmlFor="background-image-upload">
                   <Button
                     variant="outlined"
                     component="span"
                     startIcon={uploadingImage ? <CircularProgress size={16} /> : <PhotoCameraIcon />}
-                    disabled={uploadingImage}
+                    disabled={uploadingImage || !canEdit}
                     sx={{ 
-                      borderColor: '#2da58e', 
-                      color: '#2da58e',
-                      '&:hover': { 
+                      borderColor: canEdit ? '#2da58e' : '#ccc', 
+                      color: canEdit ? '#2da58e' : '#999',
+                      '&:hover': canEdit ? { 
                         borderColor: '#1b7d6b', 
                         bgcolor: 'rgba(45, 165, 142, 0.04)' 
+                      } : {},
+                      '&:disabled': {
+                        borderColor: '#ccc',
+                        color: '#999'
                       }
                     }}
                   >
-                    {uploadingImage ? 'Uploading...' : 'Choose Background Image'}
+                    {uploadingImage ? 'Uploading...' : (canEdit ? 'Choose Background Image' : 'Admin Required')}
                   </Button>
                 </label>
                 <Typography variant="body2" color="text.secondary">
@@ -251,12 +280,13 @@ export default function ClubEditDialog({
                 <Switch 
                   checked={isPrivate} 
                   onChange={e => setIsPrivate(e.target.checked)} 
+                  disabled={!canEdit}
                   sx={{
                     '& .MuiSwitch-switchBase.Mui-checked': {
-                      color: '#2da58e',
+                      color: canEdit ? '#2da58e' : '#ccc',
                     },
                     '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                      backgroundColor: '#2da58e',
+                      backgroundColor: canEdit ? '#2da58e' : '#ccc',
                     },
                   }}
                 />
@@ -297,15 +327,15 @@ export default function ClubEditDialog({
         </Button>
         <Button 
           onClick={handleSave} 
-          disabled={loading || uploadingImage || !name || !description} 
+          disabled={loading || uploadingImage || !name || !description || !canEdit} 
           variant="contained" 
           sx={{ 
-            bgcolor: '#2da58e', 
-            color: '#fff', 
+            bgcolor: canEdit ? '#2da58e' : '#e0e0e0', 
+            color: canEdit ? '#fff' : '#999', 
             px: 4,
             fontWeight: 600,
-            '&:hover': { bgcolor: '#22796a' },
-            '&:disabled': { bgcolor: '#e0e0e0' }
+            '&:hover': canEdit ? { bgcolor: '#22796a' } : {},
+            '&:disabled': { bgcolor: '#e0e0e0', color: '#999' }
           }}
         >
           {loading ? (
@@ -313,8 +343,10 @@ export default function ClubEditDialog({
               <CircularProgress size={16} color="inherit" />
               Saving...
             </Box>
-          ) : (
+          ) : canEdit ? (
             'Save Changes'
+          ) : (
+            'Admin Access Required'
           )}
         </Button>
       </DialogActions>

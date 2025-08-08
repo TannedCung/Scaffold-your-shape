@@ -196,7 +196,8 @@ export function useClubDetail(clubId: string) {
   };
 
   const canEditClub = () => {
-    return club?.userMembership?.role === 'admin' || club?.creatorId === session?.user?.id;
+    // Only club admins are allowed to edit club information
+    return club?.userMembership?.role === 'admin';
   };
 
   return {

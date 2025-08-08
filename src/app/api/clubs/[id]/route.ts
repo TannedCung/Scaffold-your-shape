@@ -103,7 +103,7 @@ export async function PUT(
     const userId = session.user.id;
     const updateData = await request.json();
 
-    // Check if user has permission to edit (admin or creator)
+    // Check if user has permission to edit (admin only)
     const { data: membership, error: membershipError } = await supabase
       .from('club_members')
       .select('role')
@@ -111,21 +111,14 @@ export async function PUT(
       .eq('user_id', userId)
       .single();
 
-    const { data: club, error: clubError } = await supabase
-      .from('clubs')
-      .select('creator_id')
-      .eq('id', clubId)
-      .single();
-
-    if (clubError || !club) {
-      return NextResponse.json({ error: 'Club not found' }, { status: 404 });
+    if (membershipError || !membership) {
+      return NextResponse.json({ error: 'You must be a member of this club' }, { status: 403 });
     }
 
-    const isCreator = club.creator_id === userId;
-    const isAdmin = membership && membership.role === 'admin';
+    const isAdmin = membership.role === 'admin';
 
-    if (!isCreator && !isAdmin) {
-      return NextResponse.json({ error: 'Only club admins can edit club details' }, { status: 403 });
+    if (!isAdmin) {
+      return NextResponse.json({ error: 'Only club administrators can edit club details' }, { status: 403 });
     }
 
     // Convert camelCase to snake_case for database
