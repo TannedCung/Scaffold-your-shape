@@ -1,4 +1,4 @@
-import { Profile, Activity, ActivityPointConversion, Club, Challenge, ActivityWithDetails, ChallengeDb, ClubDb, ChallengeParticipant, ChallengeLeaderboard, ClubMember } from '@/types';
+import { Profile, Activity, ActivityPointConversion, Club, Challenge, ActivityWithDetails, ChallengeDb, ClubDb, ChallengeParticipant, ChallengeLeaderboard, ClubMember, LeaderboardResult } from '@/types';
 
 interface ApiResponse<T> {
   data?: T;
@@ -239,4 +239,28 @@ export const challengeApi = {
     }),
   getMyParticipations: () => 
     fetchApi<ChallengeParticipant[]>('/api/challenges/my-participations'),
+};
+
+// Leaderboard API functions
+export const leaderboardApi = {
+  getClubLeaderboard: (clubId: string, params?: { 
+    activityType?: string; 
+    limit?: number; 
+    offset?: number; 
+    rebuild?: boolean; 
+  }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.activityType) searchParams.set('activityType', params.activityType);
+    if (params?.limit) searchParams.set('limit', params.limit.toString());
+    if (params?.offset) searchParams.set('offset', params.offset.toString());
+    if (params?.rebuild) searchParams.set('rebuild', 'true');
+    
+    const url = `/api/clubs/${clubId}/leaderboard${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+    return fetchApi<LeaderboardResult>(url);
+  },
+  rebuildClubLeaderboard: (clubId: string, activityType: string) => 
+    fetchApi<{ success: boolean }>(`/api/clubs/${clubId}/leaderboard`, {
+      method: 'POST',
+      body: JSON.stringify({ activityType }),
+    }),
 }; 
