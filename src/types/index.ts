@@ -1107,3 +1107,18 @@ export interface ActivityWithDetails extends Activity {
   maps?: Map[];
   segmentations?: Segmentation[];
 }
+
+// Leaderboard types
+export interface LeaderboardEntry {
+  userId: string;
+  name: string;
+  score: number;
+  rank: number;
+}
+
+export interface LeaderboardResult {
+  entries: LeaderboardEntry[];
+  totalMembers: number;
+  activityType: string;
+  clubId: string;
+}

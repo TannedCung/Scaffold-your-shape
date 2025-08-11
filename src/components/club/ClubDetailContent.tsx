@@ -28,7 +28,8 @@ import {
   TableHead,
   TableBody,
   TableRow,
-  TableCell
+  TableCell,
+  Grid
 } from '@mui/material';
 import {
   Group as GroupIcon,
@@ -44,6 +45,8 @@ import {
 import { useClubDetail } from '@/hooks/useClubDetail';
 import { formatDistanceToNow } from 'date-fns';
 import ClubEditDialog from './ClubEditDialog';
+import ClubLeaderboard from './ClubLeaderboard';
+import ClubLeaderboardSidebar from './ClubLeaderboardSidebar';
 import { ClubMember } from '@/types';
 
 interface ClubDetailContentProps {
@@ -107,22 +110,20 @@ function ClubOverview({ description }: { description: string }) {
   );
 }
 
-function Leaderboard({ members }: { members: Array<{ id: string; profile?: { name?: string }; role: string }> }) {
+function MembersList({ members }: { members: Array<{ id: string; profile?: { name?: string }; role: string }> }) {
   return (
     <Paper elevation={0} sx={{ p: 2, bgcolor: '#fff', mb: 3 }}>
-      <Typography variant="h6" sx={{ color: '#2da58e', fontWeight: 700, mb: 2 }}>Leaderboard</Typography>
+      <Typography variant="h6" sx={{ color: '#2da58e', fontWeight: 700, mb: 2 }}>Club Members</Typography>
       <Table size="small" sx={{ width: '100%' }}>
         <TableHead>
           <TableRow sx={{ bgcolor: '#e0f7f3' }}>
-            <TableCell sx={{ fontWeight: 700, color: '#2da58e' }}>#</TableCell>
             <TableCell sx={{ fontWeight: 700, color: '#2da58e' }}>Name</TableCell>
             <TableCell sx={{ fontWeight: 700, color: '#2da58e' }}>Role</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {members.slice(0, 5).map((m, i) => (
+          {members.slice(0, 10).map((m) => (
             <TableRow key={m.id} sx={{ borderBottom: '1px solid #e0f7f3' }}>
-              <TableCell>{i + 1}</TableCell>
               <TableCell>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   <Avatar sx={{ width: 28, height: 28, bgcolor: '#2da58e', mr: 1 }}>
@@ -378,8 +379,11 @@ export default function ClubDetailContent({ clubId }: ClubDetailContentProps) {
 
   const activities = getClubActivities(clubId);
 
+  // Check if user is admin to show rebuild button
+  const isAdmin = club.userMembership?.role === 'admin' || canEditClub();
+
   return (
-    <Box sx={{ maxWidth: 700, mx: 'auto', px: { xs: 2, sm: 0 } }}>
+    <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 2, sm: 3 } }}>
       <ClubParticipationStats memberCount={club.memberCount} />
       <ClubDescription description={club.description} />
       <ClubActions 
@@ -391,9 +395,50 @@ export default function ClubDetailContent({ clubId }: ClubDetailContentProps) {
         onEditClub={handleEditClub}
       />
       <ClubFinisherBadge />
-      <ClubOverview description={club.description} />
-      <ClubActivityFeed activities={activities} />
-      <Leaderboard members={club.membersList} />
+      
+      {/* Main Content Grid */}
+      <Grid container spacing={4}>
+        {/* Left Column - Activity Feed and Overview */}
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <ClubOverview description={club.description} />
+          {club.isMember && (
+                             <ClubLeaderboardSidebar clubId={clubId} activityType="run" />
+          )}
+          <ClubActivityFeed activities={activities} />
+          <MembersList members={club.membersList} />
+        </Grid>
+        
+        {/* Right Column - Leaderboard */}
+        <Grid size={{ xs: 12, lg: 8 }}>
+          {club.isMember ? (
+            <ClubLeaderboard
+              clubId={clubId}
+              defaultActivityType="run"
+              showRebuildButton={isAdmin}
+              autoRefresh={true}
+            />
+          ) : (
+            <Paper 
+              elevation={0} 
+              sx={{ 
+                p: 4, 
+                textAlign: 'center',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                borderRadius: 3
+              }}
+            >
+              <EmojiEventsIcon sx={{ fontSize: 64, mb: 2, opacity: 0.8 }} />
+              <Typography variant="h5" gutterBottom fontWeight="bold">
+                Join the Club to See Leaderboard
+              </Typography>
+              <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                Compete with other members and track your progress across different activities.
+              </Typography>
+            </Paper>
+          )}
+        </Grid>
+      </Grid>
 
       {/* Member Management Menu */}
       <Menu

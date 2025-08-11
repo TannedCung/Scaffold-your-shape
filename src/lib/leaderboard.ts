@@ -1,6 +1,27 @@
+/**
+ * LEADERBOARD SERVICE - FIXED VERSION
+ * 
+ * This service manages club leaderboards with Redis caching and Supabase fallback.
+ * 
+ * ISSUE FIXED: Previously, when rebuilding leaderboard cache, we would populate Redis
+ * but then immediately fall back to database queries instead of using the cached data.
+ * 
+ * FIX: After rebuilding Redis cache, we now properly attempt to serve data from Redis
+ * before falling back to the database.
+ * 
+ * DATA FLOW:
+ * 1. getLeaderboard() checks Redis first
+ * 2. If cache miss → rebuildAndGetLeaderboard()
+ * 3. rebuildAndGetLeaderboard() rebuilds Redis cache
+ * 4. Then tries to serve from Redis (NEW: this was missing before)
+ * 5. Only falls back to database if Redis is unavailable
+ * 
+ * This ensures proper Redis utilization and performance benefits.
+ */
+
 import { getRedis, getLeaderboardKey, isRedisAvailable } from './redis';
 import { supabase } from './supabase';
-import { fetchClubConversionRates } from '@/services/activityPointService';
+import { fetchClubConversionRatesServer } from '@/services/activityPointService.server';
 import { calculateActivityPoints } from '@/utils/activityPoints';
 import { Activity, ClubPointConversion, ActivityPointConversion } from '@/types';
 import { DEFAULT_ACTIVITY_POINT_CONVERSION } from '@/constants/defaultActivityPointConversion';
@@ -37,22 +58,12 @@ export async function updateLeaderboard(
       return;
     }
 
-    // Get club-specific conversion rates
-    let clubConversions;
-    try {
-      clubConversions = await fetchClubConversionRates(clubId);
-    } catch (error) {
-      console.error(`Error fetching club conversion rates for club ${clubId}:`, error);
-      // Use default conversion rates as fallback
-      clubConversions = DEFAULT_ACTIVITY_POINT_CONVERSION.map(rate => ({
-        ...rate,
-        club_id: clubId
-      }));
-    }
+    // Get club-specific conversion rates using server-side function
+    const clubConversions = await fetchClubConversionRatesServer(clubId);
     
     // Find the conversion rate for this activity type and unit
     const conversion = clubConversions.find(
-      c => c.activity_type === activityType && c.unit === activityUnit
+      (c: ClubPointConversion) => c.activity_type === activityType && c.unit === activityUnit
     );
 
     if (!conversion) {
@@ -111,6 +122,8 @@ export async function getLeaderboard(
       return await rebuildAndGetLeaderboard(clubId, activityType, limit, offset);
     }
 
+    console.log(`Leaderboard cache hit for ${clubId}:${activityType}, serving from Redis`);
+
     // Get total count
     const totalMembers = await redis.zcard(leaderboardKey);
 
@@ -122,6 +135,8 @@ export async function getLeaderboard(
       { rev: true, withScores: true }
     );
 
+    console.log(`🔍 [getLeaderboard] Raw Redis entries:`, entries);
+
     // Transform the results into LeaderboardEntry format
     const leaderboardEntries: LeaderboardEntry[] = [];
     
@@ -129,6 +144,8 @@ export async function getLeaderboard(
       const userId = entries[i] as string;
       const score = entries[i + 1] as number;
       const rank = offset + (i / 2) + 1;
+      
+      console.log(`🔄 [getLeaderboard] Processing entry ${i/2 + 1}: userId=${userId}, score=${score}, rank=${rank}`);
       
       leaderboardEntries.push({
         userId,
@@ -138,13 +155,19 @@ export async function getLeaderboard(
       });
     }
 
+    console.log(`📊 [getLeaderboard] Transformed entries before profile fetch:`, leaderboardEntries);
+
     // Fetch user names from Supabase
     if (leaderboardEntries.length > 0) {
       const userIds = leaderboardEntries.map(entry => entry.userId);
+      console.log(`👥 [getLeaderboard] Fetching profiles for ${userIds.length} users: ${userIds.slice(0, 3).join(', ')}${userIds.length > 3 ? '...' : ''}`);
+      
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, name')
         .in('id', userIds);
+
+      console.log(`👤 [getLeaderboard] Profiles received:`, profiles?.map(p => ({ id: p.id, name: p.name })));
 
       // Map names to entries
       if (profiles) {
@@ -155,12 +178,20 @@ export async function getLeaderboard(
       }
     }
 
-    return {
+    const result = {
       entries: leaderboardEntries,
       totalMembers,
       activityType,
       clubId
     };
+
+    console.log(`📋 [getLeaderboard] Returning final result:`, {
+      entriesCount: result.entries.length,
+      totalMembers: result.totalMembers,
+      entries: result.entries.slice(0, 3).map(e => ({ userId: e.userId, name: e.name, score: e.score, rank: e.rank }))
+    });
+
+    return result;
 
   } catch (error) {
     console.error('Error getting leaderboard:', error);
@@ -208,7 +239,7 @@ export async function rebuildLeaderboard(clubId: string, activityType: string): 
     // Get club-specific conversion rates
     let clubConversions;
     try {
-      clubConversions = await fetchClubConversionRates(clubId);
+      clubConversions = await fetchClubConversionRatesServer(clubId);
     } catch (error) {
       console.error(`Error fetching club conversion rates for club ${clubId}:`, error);
       // Use default conversion rates as fallback
@@ -221,19 +252,30 @@ export async function rebuildLeaderboard(clubId: string, activityType: string): 
     // Calculate total scores for each user
     const userScores = new Map<string, number>();
 
+    console.log(`🔢 [rebuildLeaderboard] Processing ${activities?.length || 0} activities for ${userIds.length} users`);
+
     if (activities) {
       for (const activity of activities) {
         const conversion = clubConversions.find(
-          c => c.activity_type === activity.type && c.unit === activity.unit
+          (c: ClubPointConversion) => c.activity_type === activity.type && c.unit === activity.unit
         );
 
         if (conversion) {
           const points = activity.value * conversion.rate;
           const currentScore = userScores.get(activity.user_id) || 0;
-          userScores.set(activity.user_id, currentScore + points);
+          const newScore = currentScore + points;
+          userScores.set(activity.user_id, newScore);
+          
+          if (points > 0) {
+            console.log(`💯 [rebuildLeaderboard] User ${activity.user_id}: +${points} points (${activity.value} ${activity.unit} × ${conversion.rate}) = total ${newScore}`);
+          }
+        } else {
+          console.log(`⚠️ [rebuildLeaderboard] No conversion found for ${activity.type} (${activity.unit})`);
         }
       }
     }
+
+    console.log(`📈 [rebuildLeaderboard] Final user scores:`, Object.fromEntries(Array.from(userScores.entries()).filter(([, score]) => score > 0)));
 
     // Update Redis if available
     if (await isRedisAvailable()) {
@@ -246,6 +288,9 @@ export async function rebuildLeaderboard(clubId: string, activityType: string): 
       // Add all user scores
       if (userScores.size > 0) {
         for (const [userId, score] of userScores) {
+          if (score > 0) { // Only log users with actual scores
+            console.log(`Adding user ${userId} to Redis leaderboard with score ${score}`);
+          }
           await redis.zadd(leaderboardKey, { score, member: userId });
         }
       }
@@ -253,7 +298,7 @@ export async function rebuildLeaderboard(clubId: string, activityType: string): 
       // Set TTL of 24 hours
       await redis.expire(leaderboardKey, 86400);
 
-      console.log(`Rebuilt leaderboard for ${clubId}:${activityType} with ${userScores.size} users`);
+      console.log(`✅ Successfully rebuilt Redis leaderboard for ${clubId}:${activityType} with ${userScores.size} users (${Array.from(userScores.values()).filter(s => s > 0).length} with scores > 0)`);
     }
 
   } catch (error) {
@@ -275,7 +320,74 @@ async function rebuildAndGetLeaderboard(
     // First rebuild the cache
     await rebuildLeaderboard(clubId, activityType);
 
-    // Then fetch directly from database to avoid infinite recursion
+    // Try to get data from Redis after rebuilding
+    if (await isRedisAvailable()) {
+      try {
+        const redis = getRedis();
+        const leaderboardKey = getLeaderboardKey(clubId, activityType);
+        
+        // Check if rebuild was successful
+        const exists = await redis.exists(leaderboardKey);
+        if (exists) {
+          // Get total count
+          const totalMembers = await redis.zcard(leaderboardKey);
+
+          // Get leaderboard entries with scores (descending order - highest scores first)
+          const entries = await redis.zrange(
+            leaderboardKey,
+            offset,
+            offset + limit - 1,
+            { rev: true, withScores: true }
+          );
+
+          // Transform the results into LeaderboardEntry format
+          const leaderboardEntries: LeaderboardEntry[] = [];
+          
+          for (let i = 0; i < entries.length; i += 2) {
+            const userId = entries[i] as string;
+            const score = entries[i + 1] as number;
+            const rank = offset + (i / 2) + 1;
+            
+            leaderboardEntries.push({
+              userId,
+              name: '', // Will be filled below
+              score,
+              rank
+            });
+          }
+
+          // Fetch user names from Supabase
+          if (leaderboardEntries.length > 0) {
+            const userIds = leaderboardEntries.map(entry => entry.userId);
+            const { data: profiles } = await supabase
+              .from('profiles')
+              .select('id, name')
+              .in('id', userIds);
+
+            // Map names to entries
+            if (profiles) {
+              const nameMap = new Map(profiles.map(p => [p.id, p.name || 'Unknown User']));
+              leaderboardEntries.forEach(entry => {
+                entry.name = nameMap.get(entry.userId) || 'Unknown User';
+              });
+            }
+          }
+
+          console.log(`Successfully retrieved leaderboard from Redis after rebuild for ${clubId}:${activityType}`);
+          return {
+            entries: leaderboardEntries,
+            totalMembers,
+            activityType,
+            clubId
+          };
+        }
+      } catch (redisError) {
+        console.error('Error reading from Redis after rebuild:', redisError);
+      }
+    }
+
+    // If Redis is not available or failed, fall back to database
+    console.log(`Falling back to database for ${clubId}:${activityType} after Redis rebuild failed`);
     return await getLeaderboardFromDatabase(clubId, activityType, limit, offset);
   } catch (error) {
     console.error('Error in rebuildAndGetLeaderboard:', error);
@@ -294,7 +406,7 @@ async function getLeaderboardFromDatabase(
   offset: number = 0
 ): Promise<LeaderboardResult> {
   try {
-    console.log(`Getting leaderboard from database for ${clubId}:${activityType}`);
+    console.log(`🔄 Getting leaderboard from database (Redis fallback) for ${clubId}:${activityType}`);
 
     // Get club members with their profile information
     const { data: clubMembers, error: membersError } = await supabase
@@ -337,7 +449,7 @@ async function getLeaderboardFromDatabase(
     // Get club-specific conversion rates
     let clubConversions;
     try {
-      clubConversions = await fetchClubConversionRates(clubId);
+      clubConversions = await fetchClubConversionRatesServer(clubId);
     } catch (error) {
       console.error(`Error fetching club conversion rates for club ${clubId}:`, error);
       // Use default conversion rates as fallback
@@ -362,7 +474,7 @@ async function getLeaderboardFromDatabase(
     if (activities) {
       for (const activity of activities) {
         const conversion = clubConversions.find(
-          c => c.activity_type === activity.type && c.unit === activity.unit
+          (c: ClubPointConversion) => c.activity_type === activity.type && c.unit === activity.unit
         );
 
         if (conversion) {
@@ -432,5 +544,32 @@ export async function getUserRank(
   } catch (error) {
     console.error('Error getting user rank:', error);
     return null;
+  }
+}
+
+/**
+ * Test Redis connectivity and basic operations for debugging
+ */
+export async function testRedisConnection(): Promise<{ success: boolean; message: string }> {
+  try {
+    if (!(await isRedisAvailable())) {
+      return { success: false, message: 'Redis not available' };
+    }
+
+    const redis = getRedis();
+    const testKey = 'test:leaderboard:connectivity';
+    
+    // Test basic operations
+    await redis.zadd(testKey, { score: 100, member: 'test-user' });
+    const score = await redis.zscore(testKey, 'test-user');
+    await redis.del(testKey);
+    
+    if (score === 100) {
+      return { success: true, message: 'Redis connection and operations working correctly' };
+    } else {
+      return { success: false, message: 'Redis operations failed' };
+    }
+  } catch (error) {
+    return { success: false, message: `Redis test failed: ${error}` };
   }
 } 

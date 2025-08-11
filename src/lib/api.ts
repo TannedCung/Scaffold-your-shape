@@ -243,7 +243,7 @@ export const challengeApi = {
 
 // Leaderboard API functions
 export const leaderboardApi = {
-  getClubLeaderboard: (clubId: string, params?: { 
+  getClubLeaderboard: async (clubId: string, params?: { 
     activityType?: string; 
     limit?: number; 
     offset?: number; 
@@ -256,11 +256,30 @@ export const leaderboardApi = {
     if (params?.rebuild) searchParams.set('rebuild', 'true');
     
     const url = `/api/clubs/${clubId}/leaderboard${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
-    return fetchApi<LeaderboardResult>(url);
+    const response = await fetchApi<{ success: boolean; data: LeaderboardResult }>(url);
+    
+    console.log(`🔗 [leaderboardApi] Raw API response for ${clubId}:`, response);
+    
+    // Extract the nested data field since API returns { success: true, data: LeaderboardResult }
+    if (response.data?.success && response.data?.data) {
+      console.log(`✅ [leaderboardApi] Extracting nested data:`, response.data.data);
+      return { data: response.data.data, error: response.error };
+    }
+    
+    console.log(`⚠️ [leaderboardApi] Response format unexpected, returning as-is:`, response);
+    return response;
   },
-  rebuildClubLeaderboard: (clubId: string, activityType: string) => 
-    fetchApi<{ success: boolean }>(`/api/clubs/${clubId}/leaderboard`, {
+  rebuildClubLeaderboard: async (clubId: string, activityType: string) => {
+    const response = await fetchApi<{ success: boolean; message?: string }>(`/api/clubs/${clubId}/leaderboard`, {
       method: 'POST',
       body: JSON.stringify({ activityType }),
-    }),
+    });
+    
+    // Extract the nested data field if it exists
+    if (response.data?.success) {
+      return { data: { success: true }, error: response.error };
+    }
+    
+    return response;
+  },
 }; 
