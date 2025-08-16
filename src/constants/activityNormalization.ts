@@ -244,7 +244,7 @@ export function normalizeActivityType(sportType: SportType | string): string {
   
   // If it's already a lowercase normalized type, return as-is
   const lowerType = sportType.toString().toLowerCase();
-  if (Object.values(NORMALIZED_ACTIVITY_TYPES).includes(lowerType)) {
+  if ((Object.values(NORMALIZED_ACTIVITY_TYPES) as string[]).includes(lowerType)) {
     return lowerType;
   }
   
@@ -271,7 +271,7 @@ export function normalizeUnit(unit: string): string {
   }
   
   // If already normalized, return as-is
-  if (Object.values(NORMALIZED_UNITS).includes(unit)) {
+  if ((Object.values(NORMALIZED_UNITS) as string[]).includes(unit)) {
     return unit;
   }
   
