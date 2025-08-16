@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { headers } from 'next/headers';
 import { supabase } from '@/lib/supabase';
+import { normalizeActivityInput, isValidUnitForActivity } from '@/constants/activityNormalization';
 
 
 // Define tool schemas for the allowed MCP tools only
@@ -164,14 +165,22 @@ const toolHandlers = {
   create_activity: async ({ userId, name, type, value, unit, date, location, notes }: { 
     userId: string; name: string; type: string; value: number; unit: string; date: string; location?: string; notes?: string 
   }) => {
+    // Validate unit for activity type
+    if (!isValidUnitForActivity(type, unit)) {
+      throw new Error(`Invalid unit '${unit}' for activity type '${type}'. Please use an appropriate unit.`);
+    }
+
+    // Normalize activity input to standard units
+    const normalized = normalizeActivityInput(type, value, unit);
+
     const { data, error } = await supabase
       .from('activities')
       .insert([{
         user_id: userId,
         name,
-        type,
-        value,
-        unit,
+        type: normalized.type,
+        value: normalized.value,
+        unit: normalized.unit,
         date,
         location,
         notes,
@@ -480,7 +489,7 @@ const availableTools = [
   },
   {
     name: 'create_activity',
-    description: 'Create a new activity record in the system, ones those are already happened. Supports all activity types with proper units. Activity types must be one of: Run, TrailRun, Track, VirtualRun, Treadmill, Ride, MountainBikeRide, GravelRide, VirtualRide, EBikeRide, VeloMobile, Handcycle, Wheelchair, Swim, OpenWaterSwim, Walk, Hike, AlpineSki, BackcountrySki, NordicSki, Snowboard, IceSkate, Snowshoe, Kayaking, Rowing, StandUpPaddling, Surfing, Windsurf, Sail, WeightTraining, Workout, Crossfit, Elliptical, StairStepper, Pushup, Situp, PullUp, ParallelBars, Yoga, RockClimbing, Golf, InlineSkate. Units must be one of: reps, meters, kilometers, miles, minutes, hours, calories. Sample request: {"userId": "user123", "name": "Morning 5K Run", "type": "Run", "value": 5, "unit": "kilometers", "date": "2024-01-15T07:00:00Z", "location": "Central Park", "notes": "Great weather today!"}',
+    description: 'Create a new activity record in the system for activities that have already happened. Supports all activity types with automatic unit standardization. Input any valid unit and it will be converted to the appropriate standard unit for the activity type. For example: Running activities are standardized to kilometers, Swimming to meters, Yoga to minutes, etc. Supported input units include: kilometers, km, meters, m, miles, mi, hours, hr, minutes, mins, seconds, reps, repetitions, calories, etc. Sample request: {"userId": "user123", "name": "Morning 5K Run", "type": "Run", "value": 5, "unit": "kilometers", "date": "2024-01-15T07:00:00Z", "location": "Central Park", "notes": "Great weather today!"}',
     inputSchema: {
       type: 'object',
       properties: {
@@ -499,12 +508,12 @@ const availableTools = [
         },
         value: {
           type: 'number',
-          description: 'Numeric value for the activity (distance, duration, repetitions, etc.)',
+          description: 'Numeric value for the activity (distance, duration, repetitions, etc.) - will be automatically converted to standard unit',
         },
         unit: {
           type: 'string',
-          enum: ['reps', 'meters', 'kilometers', 'miles', 'minutes', 'hours', 'calories'],
-          description: 'Unit of measurement - must be exactly one of the allowed values',
+          enum: ['reps', 'repetitions', 'meters', 'm', 'kilometers', 'km', 'miles', 'mi', 'minutes', 'mins', 'hours', 'hrs', 'seconds', 'calories', 'cal', 'feet', 'ft', 'yards', 'yd'],
+          description: 'Unit of measurement - will be automatically converted to the standard unit for this activity type (e.g., running → kilometers, swimming → meters, yoga → minutes)',
         },
         date: {
           type: 'string',

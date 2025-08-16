@@ -72,23 +72,211 @@ export const NORMALIZED_ACTIVITY_TYPES = {
   ROLLER_SKI: 'ski'
 } as const;
 
+// Standard units (normalized to primary units)
+export const STANDARD_UNITS = {
+  // Distance units (primary)
+  KILOMETERS: 'kilometers',
+  METERS: 'meters',
+  
+  // Time units (primary)
+  MINUTES: 'minutes',
+  
+  // Count units (primary)
+  REPS: 'reps',
+  CALORIES: 'calories',
+} as const;
+
+// STANDARDIZED ACTIVITY TO PRIMARY UNIT MAPPING
+// Each activity type has ONE primary unit for consistency
+export const ACTIVITY_PRIMARY_UNITS: Record<string, string> = {
+  // Distance-based activities - PRIMARY UNIT: kilometers
+  'run': 'kilometers',
+  'walk': 'kilometers', 
+  'cycle': 'kilometers',
+  'hike': 'kilometers',
+  'ski': 'kilometers',
+  'snowboard': 'kilometers',
+  'skate': 'kilometers',
+  'snowshoe': 'kilometers',
+  'kayak': 'kilometers',
+  'paddle': 'kilometers',
+  'windsurf': 'kilometers',
+  'sail': 'kilometers',
+  'climb': 'kilometers', // Distance climbed
+  
+  // Swimming - PRIMARY UNIT: meters (traditional for swimming)
+  'swim': 'meters',
+  'row': 'meters', // Rowing distance typically in meters
+  
+  // Time-based activities - PRIMARY UNIT: minutes
+  'yoga': 'minutes',
+  'workout': 'minutes', // General workout sessions
+  'surf': 'minutes', // Surfing sessions
+  'golf': 'minutes', // Golf rounds
+  
+  // Rep-based activities - PRIMARY UNIT: reps (for specific exercises)
+  // Note: These will be handled by specific exercise types in the workout category
+} as const;
+
+// UNIT CONVERSION FACTORS TO PRIMARY UNITS
+export const UNIT_CONVERSIONS: Record<string, Record<string, number>> = {
+  // Distance conversions TO KILOMETERS
+  kilometers: {
+    'kilometers': 1,
+    'km': 1,
+    'meters': 0.001, // 1000 meters = 1 km
+    'm': 0.001,
+    'miles': 1.60934, // 1 mile = 1.60934 km
+    'mi': 1.60934,
+    'feet': 0.0003048, // 1 foot = 0.0003048 km
+    'ft': 0.0003048,
+    'yards': 0.0009144, // 1 yard = 0.0009144 km
+    'yd': 0.0009144,
+  },
+  
+  // Distance conversions TO METERS  
+  meters: {
+    'meters': 1,
+    'm': 1,
+    'kilometers': 1000, // 1 km = 1000 meters
+    'km': 1000,
+    'miles': 1609.34, // 1 mile = 1609.34 meters
+    'mi': 1609.34,
+    'feet': 0.3048, // 1 foot = 0.3048 meters
+    'ft': 0.3048,
+    'yards': 0.9144, // 1 yard = 0.9144 meters
+    'yd': 0.9144,
+  },
+  
+  // Time conversions TO MINUTES
+  minutes: {
+    'minutes': 1,
+    'mins': 1,
+    'min': 1,
+    'hours': 60, // 1 hour = 60 minutes
+    'hrs': 60,
+    'hr': 60,
+    'seconds': 1/60, // 60 seconds = 1 minute
+    'secs': 1/60,
+    'sec': 1/60,
+    'days': 1440, // 1 day = 1440 minutes
+    'day': 1440,
+    'weeks': 10080, // 1 week = 10080 minutes
+    'week': 10080,
+  },
+  
+  // Count conversions (no conversion needed, but included for completeness)
+  reps: {
+    'reps': 1,
+    'repetitions': 1,
+    'rep': 1,
+    'times': 1,
+    'count': 1,
+  },
+  
+  calories: {
+    'calories': 1,
+    'cal': 1,
+    'kcal': 1,
+    'kilocalories': 1,
+  }
+} as const;
+
+/**
+ * Get the primary unit for a given activity type
+ */
+export function getPrimaryUnit(activityType: string): string {
+  const normalizedType = normalizeActivityType(activityType);
+  return ACTIVITY_PRIMARY_UNITS[normalizedType] || 'minutes'; // Default to minutes
+}
+
+/**
+ * Convert any unit value to the primary unit for the given activity type
+ */
+export function convertToPrimaryUnit(
+  value: number, 
+  inputUnit: string, 
+  activityType: string
+): { value: number; unit: string } {
+  const primaryUnit = getPrimaryUnit(activityType);
+  const normalizedInputUnit = inputUnit.toLowerCase().trim();
+  
+  // Get conversion factor
+  const conversionTable = UNIT_CONVERSIONS[primaryUnit];
+  if (!conversionTable) {
+    console.warn(`No conversion table found for primary unit: ${primaryUnit}`);
+    return { value, unit: inputUnit };
+  }
+  
+  const conversionFactor = conversionTable[normalizedInputUnit];
+  if (conversionFactor === undefined) {
+    console.warn(`No conversion factor found for ${normalizedInputUnit} to ${primaryUnit}`);
+    return { value, unit: inputUnit };
+  }
+  
+  const convertedValue = value * conversionFactor;
+  return { value: convertedValue, unit: primaryUnit };
+}
+
+/**
+ * Normalize activity value and unit to standard format
+ * This is the main function to use for ALL activity input normalization
+ */
+export function normalizeActivityInput(
+  activityType: string,
+  value: number,
+  unit: string
+): { type: string; value: number; unit: string } {
+  const normalizedType = normalizeActivityType(activityType);
+  const converted = convertToPrimaryUnit(value, unit, normalizedType);
+  
+  return {
+    type: normalizedType,
+    value: converted.value,
+    unit: converted.unit
+  };
+}
+
+/**
+ * Validate if a unit is appropriate for an activity type
+ */
+export function isValidUnitForActivity(activityType: string, unit: string): boolean {
+  const primaryUnit = getPrimaryUnit(activityType);
+  const conversionTable = UNIT_CONVERSIONS[primaryUnit];
+  if (!conversionTable) return false;
+  
+  const normalizedUnit = unit.toLowerCase().trim();
+  return normalizedUnit in conversionTable;
+}
+
+/**
+ * Get all valid units for a given activity type
+ */
+export function getValidUnitsForActivity(activityType: string): string[] {
+  const primaryUnit = getPrimaryUnit(activityType);
+  const conversionTable = UNIT_CONVERSIONS[primaryUnit];
+  if (!conversionTable) return [];
+  
+  return Object.keys(conversionTable);
+}
+
 // Standard units (normalized)
 export const NORMALIZED_UNITS = {
   // Distance units
-  KILOMETERS: 'km',
-  METERS: 'm',
-  MILES: 'mi',
+  KILOMETERS: 'kilometers',
+  METERS: 'meters',
+  MILES: 'miles',
   
   // Time units
-  MINUTES: 'min',
-  HOURS: 'hr',
-  SECONDS: 'sec',
-  WEEKS: 'week',
-  DAYS: 'day',
+  MINUTES: 'minutes',
+  HOURS: 'hours',
+  SECONDS: 'seconds',
+  WEEKS: 'weeks',
+  DAYS: 'days',
   
   // Count units
   REPS: 'reps',
-  CALORIES: 'cal',
+  CALORIES: 'calories',
   
   // Generic unit
   UNIT: 'unit'
