@@ -21,6 +21,7 @@ import {
   TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
+import { formatScore } from '@/utils/formatUtils';
 
 interface ClubLeaderboardSidebarProps {
   clubId: string;
@@ -159,7 +160,7 @@ export default function ClubLeaderboardSidebar({
                       {entry.name}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {entry.score.toLocaleString()} pts
+                      {formatScore(entry.score)} pts
                     </Typography>
                   </Box>
                 </Box>

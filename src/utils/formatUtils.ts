@@ -45,4 +45,22 @@ export function formatSpeed(speed: number): string {
   // Convert to km/h
   const kmh = speed * 3.6;
   return `${kmh.toFixed(1)} km/h`;
+}
+
+/**
+ * Format score with precision of 0.01 (2 decimal places) and locale-aware formatting
+ * @param score The score to format
+ * @returns Formatted string (e.g., "1,234.56" or "1,234.00")
+ */
+export function formatScore(score: number): string {
+  if (score === null || score === undefined || isNaN(score)) return '0.00';
+  
+  // Round to 2 decimal places (precision of 0.01)
+  const roundedScore = Math.round(score * 100) / 100;
+  
+  // Format with locale-aware thousands separators and exactly 2 decimal places
+  return roundedScore.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
 } 

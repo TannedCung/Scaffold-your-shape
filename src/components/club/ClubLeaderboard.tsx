@@ -33,6 +33,7 @@ import {
 } from '@mui/icons-material';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { SportType } from '@/types';
+import { formatScore } from '@/utils/formatUtils';
 import { useRouter } from 'next/navigation';
 
 interface ClubLeaderboardProps {
@@ -376,7 +377,7 @@ export default function ClubLeaderboard({
                         </TableCell>
                         <TableCell align="right" sx={{ color: 'white' }}>
                           <Typography variant="h6" fontWeight="bold">
-                            {entry.score.toLocaleString()}
+                            {formatScore(entry.score)}
                           </Typography>
                           <Typography variant="caption" sx={{ opacity: 0.8 }}>
                             points
