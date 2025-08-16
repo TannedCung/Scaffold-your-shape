@@ -9,19 +9,20 @@
 import React from 'react';
 import {
   Box,
-  Paper,
   Typography,
   Avatar,
-  Chip,
   CircularProgress,
   Alert,
+  Paper,
+  Chip,
 } from '@mui/material';
 import {
-  EmojiEvents as TrophyIcon,
   TrendingUp as TrendingUpIcon,
+  EmojiEvents as TrophyIcon,
 } from '@mui/icons-material';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
-import { formatScore } from '@/utils/formatUtils';
+import { LeaderboardResult, LeaderboardEntry } from '@/lib/leaderboard';
+import { formatScore, formatActivityValue } from '@/utils/formatUtils';
 
 interface ClubLeaderboardSidebarProps {
   clubId: string;
@@ -147,20 +148,22 @@ export default function ClubLeaderboardSidebar({
                   </Avatar>
                   
                   <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography 
-                      variant="body2" 
-                      fontWeight="medium"
-                      sx={{ 
-                        color: '#2da58e',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
-                      }}
-                    >
+                    <Typography variant="body2" fontWeight="medium" noWrap>
                       {entry.name}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {formatScore(entry.score)} pts
+                      {activityType === 'overall' ? (
+                        <>
+                          {formatScore(entry.score)} pts
+                        </>
+                      ) : (
+                        <>
+                          {formatActivityValue(entry.activityValue, entry.activityUnit)} 
+                          {entry.activityValue && (
+                            <span style={{ opacity: 0.7 }}> • {formatScore(entry.score)} pts</span>
+                          )}
+                        </>
+                      )}
                     </Typography>
                   </Box>
                 </Box>

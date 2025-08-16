@@ -28,6 +28,7 @@ import { useUser } from '@/hooks/useUser';
 import { useSession } from 'next-auth/react';
 import { SportType, SportUnitMap, SportIconMap } from '@/types';
 import { useSnackbar } from '@/contexts/SnackbarProvider';
+import { getPrimaryUnit, getValidUnitsForActivity, isValidUnitForActivity } from '@/constants/activityNormalization';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -55,16 +56,46 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
-// Define unit options
-const unitOptions = [
-  { value: 'reps', label: 'Repetitions' },
-  { value: 'meters', label: 'Meters' },
-  { value: 'kilometers', label: 'Kilometers' },
-  { value: 'miles', label: 'Miles' },
+// Define comprehensive unit options with proper labels
+const getAllUnitOptions = () => [
+  { value: 'kilometers', label: 'Kilometers (km)' },
+  { value: 'km', label: 'Kilometers (km)' },
+  { value: 'meters', label: 'Meters (m)' },
+  { value: 'm', label: 'Meters (m)' },
+  { value: 'miles', label: 'Miles (mi)' },
+  { value: 'mi', label: 'Miles (mi)' },
+  { value: 'feet', label: 'Feet (ft)' },
+  { value: 'ft', label: 'Feet (ft)' },
+  { value: 'yards', label: 'Yards (yd)' },
+  { value: 'yd', label: 'Yards (yd)' },
   { value: 'minutes', label: 'Minutes' },
+  { value: 'mins', label: 'Minutes' },
   { value: 'hours', label: 'Hours' },
+  { value: 'hrs', label: 'Hours' },
+  { value: 'seconds', label: 'Seconds' },
+  { value: 'reps', label: 'Repetitions' },
+  { value: 'repetitions', label: 'Repetitions' },
   { value: 'calories', label: 'Calories' },
+  { value: 'cal', label: 'Calories' },
 ];
+
+// Get valid units for a specific activity type
+const getValidUnitsForType = (activityType: string): Array<{ value: string; label: string }> => {
+  const validUnits = getValidUnitsForActivity(activityType);
+  const allOptions = getAllUnitOptions();
+  return allOptions.filter(option => validUnits.includes(option.value));
+};
+
+// Get primary unit info for an activity type
+const getPrimaryUnitInfo = (activityType: string): { unit: string; label: string } => {
+  const primaryUnit = getPrimaryUnit(activityType);
+  const allOptions = getAllUnitOptions();
+  const unitOption = allOptions.find(option => option.value === primaryUnit);
+  return {
+    unit: primaryUnit,
+    label: unitOption?.label || primaryUnit
+  };
+};
 
 // Helper function to format activity type names
 const formatActivityType = (type: string): string => {
@@ -94,8 +125,23 @@ export default function CreateActivityDialog({
   
   // Update unit when activity type changes
   useEffect(() => {
-    setUnit(SportUnitMap[type as SportType] || 'kilometers');
+    const primaryUnit = getPrimaryUnit(type);
+    setUnit(primaryUnit);
   }, [type]);
+  
+  // Get valid units for current activity type
+  const validUnits = getValidUnitsForActivity(type);
+  const unitOptions = [
+    { value: 'kilometers', label: 'Kilometers (km)' },
+    { value: 'meters', label: 'Meters (m)' },
+    { value: 'miles', label: 'Miles (mi)' },
+    { value: 'minutes', label: 'Minutes' },
+    { value: 'hours', label: 'Hours' },
+    { value: 'reps', label: 'Repetitions' },
+    { value: 'calories', label: 'Calories' },
+  ].filter(option => validUnits.includes(option.value));
+  
+  const primaryUnitInfo = getPrimaryUnit(type);
   
   // Advanced fields (optional)
   const [description, setDescription] = useState('');
