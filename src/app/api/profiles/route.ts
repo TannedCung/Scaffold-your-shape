@@ -31,16 +31,13 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
-  console.log('Received PUT /api/profiles');
   try {
     const session = await getServerSession(authOptions);
-    console.log('Session:', session);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
-    console.log('Body:', body);
     const { data: profile, error } = await supabase
       .from('profiles')
       .update(body)

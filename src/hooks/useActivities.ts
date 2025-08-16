@@ -57,8 +57,6 @@ export function useActivities(userId?: string) {
           table: 'activities',
           filter: `user_id=eq.${effectiveUserId}`
         }, () => {
-          // Reload activities when changes happen
-          console.log('Supabase real-time: Activity change detected');
           loadActivities();
         })
         .subscribe();
@@ -66,7 +64,6 @@ export function useActivities(userId?: string) {
 
     // Subscribe to global activity events (fallback for manual triggers)
     const unsubscribeGlobalEvents = subscribeToActivityUpdates(() => {
-      console.log('Global event: Activity update triggered');
       loadActivities();
     });
 

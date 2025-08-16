@@ -59,10 +59,8 @@ export function useProfileStats(userId?: string) {
   const effectiveUserId = userId || session?.user?.id;
 
   const loadStats = useCallback(async () => {
-    console.log('useProfileStats - loadStats called with:', { status, effectiveUserId });
     if (status === 'loading' || !effectiveUserId) return;
 
-    console.log('useProfileStats - Starting data fetch...');
     setLoading(true);
     setError(null);
 
@@ -84,7 +82,6 @@ export function useProfileStats(userId?: string) {
         throw new Error(data.error);
       }
 
-      console.log('useProfileStats - API response:', data);
       setStats(data);
     } catch (err) {
       console.error('Error loading profile stats:', err);

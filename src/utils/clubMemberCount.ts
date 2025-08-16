@@ -36,7 +36,6 @@ export async function updateClubMemberCount(clubId: string): Promise<{ success: 
       return { success: false, error: updateError.message };
     }
 
-    console.log(`Updated member count for club ${clubId}: ${memberCount} members`);
     return { success: true };
 
   } catch (error) {

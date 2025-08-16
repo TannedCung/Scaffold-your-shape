@@ -26,8 +26,6 @@ export async function POST(request: NextRequest) {
       stream: true // Enable streaming for real-time responses
     };
 
-    console.log('Proxying request to Pili (streaming):', { endpoint: piliEndpoint, body: requestBody });
-
     // Make request to Pili chatbot
     const response = await fetch(piliEndpoint, {
       method: 'POST',
@@ -184,7 +182,6 @@ export async function POST(request: NextRequest) {
     } else {
       // Handle JSON response (fallback)
       const responseData = await response.json();
-      console.log('Pili JSON response:', responseData);
 
       // Handle different possible response formats from Pili
       let botReplyText = '';

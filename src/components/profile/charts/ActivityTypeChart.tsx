@@ -110,13 +110,6 @@ const ActivityTypeChart: React.FC<ActivityTypeChartProps> = ({ data, loading }) 
     label: item.type,
     color: COLORS[index % COLORS.length]
   }));
-  
-  console.log('ActivityTypeChart - MUI X Pie Chart debugging:', {
-    dataLength: data.length,
-    totalActivities,
-    pieData,
-    colors: COLORS.slice(0, data.length)
-  });
 
   return (
     <Box sx={{ p: 4, height: 450 }}>

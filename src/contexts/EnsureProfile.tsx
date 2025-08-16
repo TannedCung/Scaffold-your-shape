@@ -39,8 +39,6 @@ export default function EnsureProfile({ children }: { children: React.ReactNode 
           }
           
           console.log('[EnsureProfile] Profile created successfully');
-        } else {
-          console.log('[EnsureProfile] Profile already exists');
         }
       } catch (err) {
         console.error('[EnsureProfile] Error ensuring profile:', err);

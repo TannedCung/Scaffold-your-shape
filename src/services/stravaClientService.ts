@@ -49,7 +49,6 @@ export async function importActivitiesFromStrava(options: {
   before?: number;
   after?: number;
 } = {}) {
-  console.log('Importing activities from Strava with options:', options);
   try {
     // Make sure we only send non-undefined values to avoid errors in parsing
     const params: Record<string, number> = {
@@ -66,7 +65,6 @@ export async function importActivitiesFromStrava(options: {
       params.after = options.after;
     }
     
-    console.log('Sending params to API:', params);
     
     const response = await fetch('/api/strava/import-activities', {
       method: 'POST',
@@ -83,7 +81,6 @@ export async function importActivitiesFromStrava(options: {
     }
 
     const data = await response.json();
-    console.log('Import API response:', data);
     return data;
   } catch (error) {
     console.error('Error importing activities from Strava:', error);

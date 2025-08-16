@@ -101,17 +101,6 @@ const DistanceOverTimeChart: React.FC<DistanceOverTimeChartProps> = ({ data, loa
   // Calculate total distance for the period
   const totalDistance = data.reduce((sum, item) => sum + item.distance, 0);
   const avgDaily = totalDistance / data.length;
-  
-  console.log('DistanceOverTimeChart - MUI X Chart debugging:', {
-    dates,
-    dailyDistances,
-    cumulativeDistances,
-    maxDaily,
-    maxCumulative,
-    totalDistance,
-    avgDaily,
-    dataLength: data.length
-  });
 
   return (
     <Box sx={{ p: 4, height: 450 }}>

@@ -36,7 +36,6 @@ export function useLeaderboard({
       setLoading(true);
       setError(null);
 
-      console.log(`🔍 [useLeaderboard] Fetching leaderboard for club ${clubId}, activity: ${activityType}, rebuild: ${rebuild}`);
 
       const { data, error: apiError } = await leaderboardApi.getClubLeaderboard(clubId, {
         activityType,
@@ -45,7 +44,6 @@ export function useLeaderboard({
         rebuild,
       });
 
-      console.log(`📊 [useLeaderboard] API Response:`, { data, error: apiError });
 
       if (apiError) {
         throw new Error(apiError);
@@ -55,16 +53,6 @@ export function useLeaderboard({
       const hasEntries = data && typeof data === 'object' && 'entries' in data;
       const entriesValue = hasEntries ? (data as { entries: unknown }).entries : null;
       const isEntriesArray = Array.isArray(entriesValue);
-      
-      console.log(`🔍 [useLeaderboard] Data structure analysis:`, {
-        dataExists: !!data,
-        dataType: typeof data,
-        hasEntries,
-        entriesType: hasEntries ? typeof entriesValue : 'N/A',
-        entriesIsArray: isEntriesArray,
-        entriesLength: isEntriesArray ? (entriesValue as unknown[]).length : 'N/A',
-        dataKeys: data && typeof data === 'object' ? Object.keys(data) : []
-      });
       
       // Type guard for LeaderboardResult
       const isLeaderboardResult = (obj: unknown): obj is LeaderboardResult => {
@@ -79,11 +67,9 @@ export function useLeaderboard({
       
       // Ensure data has proper structure with entries array
       if (isLeaderboardResult(data)) {
-        console.log(`✅ [useLeaderboard] Setting leaderboard data with ${data.entries.length} entries:`, data.entries.slice(0, 3));
         setLeaderboard(data);
       } else if (data && typeof data === 'object') {
         // If data exists but doesn't match LeaderboardResult structure, create a safe fallback
-        console.log(`⚠️ [useLeaderboard] Data exists but doesn't match expected structure, creating fallback. Data received:`, data);
         const dataObj = data as Record<string, unknown>;
         setLeaderboard({
           entries: [],
@@ -92,7 +78,6 @@ export function useLeaderboard({
           clubId: typeof dataObj.clubId === 'string' ? dataObj.clubId : clubId
         });
       } else {
-        console.log(`❌ [useLeaderboard] No data received, setting null`);
         setLeaderboard(null);
       }
     } catch (err) {

@@ -120,7 +120,6 @@ export async function getValidStravaToken(profile: Profile) {
 export async function connectProfileToStrava(cookie: string, stravaCode: string) {
   try {
     const tokenData = await exchangeStravaCode(stravaCode);
-    console.log("Token data:", tokenData);
     const { error } = await profileApi.update({
       strava_id: tokenData.athlete.id.toString(),
       strava_access_token: tokenData.access_token,
@@ -211,9 +210,7 @@ export async function getStravaActivities(profile: Profile, params: {
   after?: number;
 } = {}) {
   try {
-    console.log("getStravaActivities called with params:", params);
     const accessToken = await getValidStravaToken(profile);
-    console.log("Access token obtained");
 
     const queryParams = new URLSearchParams();
     
@@ -225,7 +222,6 @@ export async function getStravaActivities(profile: Profile, params: {
     const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
     
     const url = `${STRAVA_API_URL}/athlete/activities${queryString}`;
-    console.log("Requesting Strava API URL:", url);
     
     const response = await fetch(url, {
       headers: {
@@ -240,7 +236,7 @@ export async function getStravaActivities(profile: Profile, params: {
     }
 
     const data = await response.json();
-    console.log(`Received ${data.length} activities from Strava API`);
+
     return data;
   } catch (error) {
     console.error('Error fetching Strava activities:', error);

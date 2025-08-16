@@ -853,7 +853,6 @@ export async function GET() {
 }
 
 export async function DELETE(): Promise<NextResponse> {
-  console.log('Received DELETE request to MCP endpoint');
   return NextResponse.json({
     jsonrpc: '2.0',
     error: {

@@ -67,19 +67,16 @@ import { mapStravaTypeToActivityType, SportUnitMap, SportType } from '@/types';
 // };
 
 export async function POST(request: NextRequest) {
-  console.log("Strava import API called");
   try {
     // Get the current user session
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      console.log("Unauthorized: No valid session");
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    console.log(`Processing request for user: ${session.user.id}`);
 
     // Get profile data including Strava tokens
     const { data: profile, error: profileError } = await supabase
@@ -97,7 +94,6 @@ export async function POST(request: NextRequest) {
     }
 
     if (!profile.strava_access_token) {
-      console.log("No Strava access token found for user");
       return NextResponse.json(
         { error: 'Not connected to Strava' },
         { status: 400 }
@@ -108,7 +104,6 @@ export async function POST(request: NextRequest) {
     let params;
     try {
       params = await request.json();
-      console.log("Request parameters:", params);
     } catch (e) {
       console.error("Error parsing request JSON:", e);
       return NextResponse.json(
@@ -118,12 +113,6 @@ export async function POST(request: NextRequest) {
     }
     
     // Fetch Strava activities using the correct parameters
-    console.log("Fetching activities from Strava with params:", {
-      per_page: params.per_page || 30,
-      page: params.page || 1,
-      before: params.before,
-      after: params.after,
-    });
 
     let stravaActivities;
     try {
@@ -133,7 +122,6 @@ export async function POST(request: NextRequest) {
         before: params.before,
         after: params.after,
       });
-      console.log(`Fetched ${stravaActivities.length} activities from Strava`);
     } catch (e) {
       console.error("Error fetching activities from Strava:", e);
       return NextResponse.json(
@@ -237,13 +225,11 @@ export async function POST(request: NextRequest) {
 
     // Skip empty imports
     if (activitiesToInsert.length === 0) {
-      console.log("No activities to import");
       return NextResponse.json({ message: 'No activities to import' });
     }
 
     // First check for existing activities to avoid duplicates
     const stravaIds: string[] = activitiesToInsert.map((activity) => activity.id).filter(Boolean) as string[];
-    console.log(`Checking for existing activities with ${stravaIds.length} Strava IDs`);
     
     let existingActivities: { strava_id: string }[] = [];
     try {
@@ -254,7 +240,6 @@ export async function POST(request: NextRequest) {
         .in('strava_id', stravaIds);
       if (error) throw error;
       existingActivities = (data ?? []) as { strava_id: string }[];
-      console.log(`Found ${existingActivities.length} existing activities`);
     } catch (e) {
       console.error("Error checking for existing activities:", e);
       return NextResponse.json(
@@ -271,7 +256,6 @@ export async function POST(request: NextRequest) {
       (activity) => activity.strava_id && !existingStravaIds.has(activity.strava_id)
     );
     
-    console.log(`${newActivities.length} new activities to insert, ${activitiesToInsert.length - newActivities.length} skipped as duplicates`);
     
     // No new activities to insert
     if (newActivities.length === 0) {
@@ -299,7 +283,6 @@ export async function POST(request: NextRequest) {
     const insertedActivitiesMap = new Map(insertedActivities.map(activity => [activity.id, activity.id]));
 
     // Process map data
-    console.log("Processing map data for activities");
     try {
       const mapsToInsert = stravaActivities
         .filter((activity: StravaActivity) => 
@@ -314,7 +297,6 @@ export async function POST(request: NextRequest) {
           summary_polyline: activity.map!.summary_polyline || ''
         }));
 
-      console.log(`Found ${mapsToInsert.length} maps to insert`);
       
       if (mapsToInsert.length > 0) {
         const { error } = await supabase
@@ -328,7 +310,7 @@ export async function POST(request: NextRequest) {
           console.error("Error inserting maps:", error);
           // Continue despite map errors
         } else {
-          console.log(`Successfully inserted ${mapsToInsert.length} maps`);
+          console.log(`Successfully inserted ${mapsToInsert.length} maps`); // TODO: remove this
         }
       }
     } catch (e) {
@@ -337,7 +319,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Process segmentation data
-    console.log("Processing segment data for activities");
     const allSegments: Array<{
       id: string;
       activity_id: string;
@@ -378,7 +359,6 @@ export async function POST(request: NextRequest) {
         }
       });
 
-      console.log(`Found ${allSegments.length} segments to insert`);
       
       if (allSegments.length > 0) {
         const { error } = await supabase
@@ -392,7 +372,7 @@ export async function POST(request: NextRequest) {
           console.error("Error inserting segments:", error);
           // Continue despite segment errors
         } else {
-          console.log(`Successfully inserted ${allSegments.length} segments`);
+          console.log(`Successfully inserted ${allSegments.length} segments`); // TODO: remove this
         }
       }
     } catch (e) {
@@ -400,7 +380,6 @@ export async function POST(request: NextRequest) {
       // Continue despite segment errors
     }
 
-    console.log("Import completed successfully");
     return NextResponse.json({
       success: true,
       imported: newActivities.length,

@@ -237,17 +237,8 @@ export default function ClubEditDialog({
 
       // Upload new background image if one was selected
       if (backgroundImage) {
-        console.log('Uploading new background image...');
         backgroundImageUrl = await uploadImageToR2(backgroundImage);
-        console.log('Upload successful, new key:', backgroundImageUrl);
       }
-
-      console.log('Updating club with data:', { 
-        name, 
-        description, 
-        isPrivate: isPrivate,
-        backgroundImageUrl
-      });
 
       const { error } = await clubApi.update(club.id, { 
         name, 
@@ -261,7 +252,6 @@ export default function ClubEditDialog({
         throw new Error(error);
       }
       
-      console.log('Club updated successfully');
       setSuccess(true);
       
       // Call success callback to refresh data

@@ -339,7 +339,6 @@ const ChatPopup: React.FC = () => {
       
       if (contentType?.includes('text/event-stream') || contentType?.includes('text/plain')) {
         // Handle OpenAI streaming response format
-        console.log('Handling OpenAI streaming response from Pili proxy');
         
         const reader = response.body?.getReader();
         const decoder = new TextDecoder('utf-8'); // Explicitly specify UTF-8 for unicode support
@@ -421,11 +420,6 @@ const ChatPopup: React.FC = () => {
         if (accumulatedText && (accumulatedText.includes('{"') || accumulatedText.includes('"finish_reason"'))) {
           const finalCleanedText = cleanStreamingContent(accumulatedText);
           if (finalCleanedText !== accumulatedText) {
-            console.log('Final cleanup applied:', { 
-              original: accumulatedText, 
-              cleaned: finalCleanedText 
-            });
-            
             // Update with final cleaned text
             setChatMessages((prevMessages) => 
               prevMessages.map((msg) => 

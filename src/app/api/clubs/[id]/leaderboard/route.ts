@@ -106,22 +106,9 @@ export async function GET(
       });
     }
 
-    // Rebuild if requested
-    if (rebuild) {
-      console.log(`🔄 [API] Rebuilding leaderboard for club ${clubId}, activity: ${activityType}`);
-      await rebuildLeaderboard(clubId, activityType);
-    }
 
-    console.log(`📋 [API] Getting leaderboard for club ${clubId}, activity: ${activityType}, limit: ${limit}, offset: ${offset}`);
+
     const leaderboard = await getLeaderboard(clubId, activityType, limit, offset);
-    
-    console.log(`📤 [API] Returning leaderboard data:`, {
-      entriesCount: leaderboard.entries?.length || 0,
-      totalMembers: leaderboard.totalMembers,
-      activityType: leaderboard.activityType,
-      clubId: leaderboard.clubId,
-      entries: leaderboard.entries?.slice(0, 3) // Log first 3 entries for debugging
-    });
 
     return NextResponse.json({ success: true, data: leaderboard });
   } catch (error) {
