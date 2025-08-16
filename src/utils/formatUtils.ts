@@ -63,4 +63,104 @@ export function formatScore(score: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
+}
+
+/**
+ * Format activity value with appropriate decimal places based on unit
+ * @param value The activity value to format
+ * @param unit The unit of measurement
+ * @returns Formatted string with unit (e.g., "5.2 km", "45 mins", "150 reps")
+ */
+export function formatActivityValue(value: number | undefined, unit: string | undefined): string {
+  if (value === null || value === undefined || isNaN(value) || !unit) {
+    return '--';
+  }
+
+  let formattedValue: string;
+  let displayUnit: string;
+
+  // Format based on unit type
+  switch (unit.toLowerCase()) {
+    case 'kilometers':
+    case 'km':
+      formattedValue = value.toLocaleString(undefined, {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 2
+      });
+      displayUnit = 'km';
+      break;
+    
+    case 'meters':
+    case 'm':
+      if (value >= 1000) {
+        // Convert to km if >= 1000m
+        formattedValue = (value / 1000).toLocaleString(undefined, {
+          minimumFractionDigits: 1,
+          maximumFractionDigits: 2
+        });
+        displayUnit = 'km';
+      } else {
+        formattedValue = Math.round(value).toLocaleString();
+        displayUnit = 'm';
+      }
+      break;
+    
+    case 'miles':
+      formattedValue = value.toLocaleString(undefined, {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 2
+      });
+      displayUnit = 'mi';
+      break;
+    
+    case 'minutes':
+    case 'mins':
+      if (value >= 60) {
+        // Convert to hours and minutes if >= 60 minutes
+        const hours = Math.floor(value / 60);
+        const minutes = Math.round(value % 60);
+        if (minutes === 0) {
+          formattedValue = hours.toString();
+          displayUnit = hours === 1 ? 'hr' : 'hrs';
+        } else {
+          formattedValue = `${hours}h ${minutes}m`;
+          displayUnit = '';
+        }
+      } else {
+        formattedValue = Math.round(value).toString();
+        displayUnit = 'mins';
+      }
+      break;
+    
+    case 'hours':
+    case 'hrs':
+      formattedValue = value.toLocaleString(undefined, {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1
+      });
+      displayUnit = value === 1 ? 'hr' : 'hrs';
+      break;
+    
+    case 'reps':
+    case 'repetitions':
+      formattedValue = Math.round(value).toLocaleString();
+      displayUnit = 'reps';
+      break;
+    
+    case 'calories':
+    case 'cal':
+      formattedValue = Math.round(value).toLocaleString();
+      displayUnit = 'cal';
+      break;
+    
+    default:
+      formattedValue = value.toLocaleString(undefined, {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2
+      });
+      displayUnit = unit;
+      break;
+  }
+
+  return displayUnit ? `${formattedValue} ${displayUnit}` : formattedValue;
 } 
