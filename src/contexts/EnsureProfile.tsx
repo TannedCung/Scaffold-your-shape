@@ -50,6 +50,7 @@ interface ProfileProviderProps {
  * 4. **Error Handling**: Provides comprehensive error states
  * 5. **Loading States**: Manages loading states properly
  * 6. **Refetch Capability**: Allows manual refetching when needed
+ * 7. **SSR Compatible**: Handles server-side rendering gracefully
  * 
  * Usage:
  * ```tsx
@@ -69,10 +70,16 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isClient, setIsClient] = useState(false);
   
   // Use refs to prevent duplicate requests
   const fetchingRef = useRef(false);
   const hasInitializedRef = useRef(false);
+
+  // Detect client-side mounting
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const fetchProfile = useCallback(async () => {
     // Prevent duplicate requests
@@ -138,11 +145,11 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
   }, [session, status]);
 
   useEffect(() => {
-    // Only fetch if we haven't initialized yet or if session changes
-    if (!hasInitializedRef.current || fetchingRef.current) {
+    // Only fetch on client-side
+    if (isClient && (!hasInitializedRef.current || !fetchingRef.current)) {
       fetchProfile();
     }
-  }, [session, status, fetchProfile]);
+  }, [session, status, fetchProfile, isClient]);
 
   const refetch = async () => {
     if (status === 'authenticated' && session?.user?.id) {
@@ -159,19 +166,33 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
     refetch,
   };
 
-  if (loading) {
+  // During SSR or before client hydration, render children without blocking
+  if (!isClient) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <CircularProgress />
-      </Box>
+      <ProfileContext.Provider value={contextValue}>
+        {children}
+      </ProfileContext.Provider>
     );
   }
 
-  if (error) {
+  // On client-side, show loading/error states if needed
+  if (loading && hasInitializedRef.current === false) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <Typography color="error">{error}</Typography>
-      </Box>
+      <ProfileContext.Provider value={contextValue}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+          <CircularProgress />
+        </Box>
+      </ProfileContext.Provider>
+    );
+  }
+
+  if (error && status === 'authenticated') {
+    return (
+      <ProfileContext.Provider value={contextValue}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+          <Typography color="error">{error}</Typography>
+        </Box>
+      </ProfileContext.Provider>
     );
   }
 
