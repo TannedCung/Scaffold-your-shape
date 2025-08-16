@@ -33,7 +33,9 @@ import {
 } from '@mui/icons-material';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { SportType } from '@/types';
+import { LeaderboardEntry } from '@/lib/leaderboard';
 import { formatScore } from '@/utils/formatUtils';
+import { formatActivityValue } from '@/utils/formatUtils';
 import { useRouter } from 'next/navigation';
 
 interface ClubLeaderboardProps {
@@ -44,6 +46,7 @@ interface ClubLeaderboardProps {
 }
 
 const activityTypeOptions = [
+  { value: 'overall', label: 'Power Rankings', icon: '⚡' }, // Energetic overall option
   { value: 'run', label: 'Running', icon: '🏃' },
   { value: 'cycle', label: 'Cycling', icon: '🚴' },
   { value: 'walk', label: 'Walking', icon: '🚶' },
@@ -327,9 +330,20 @@ export default function ClubLeaderboard({
                       <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>
                         Member
                       </TableCell>
-                      <TableCell align="right" sx={{ color: 'white', fontWeight: 'bold' }}>
-                        Score
-                      </TableCell>
+                      {selectedActivityType === 'overall' ? (
+                        <TableCell align="right" sx={{ color: 'white', fontWeight: 'bold' }}>
+                          Total Points
+                        </TableCell>
+                      ) : (
+                        <>
+                          <TableCell align="right" sx={{ color: 'white', fontWeight: 'bold' }}>
+                            Total {selectedActivity?.label || 'Activity'}
+                          </TableCell>
+                          <TableCell align="right" sx={{ color: 'white', fontWeight: 'bold' }}>
+                            Points
+                          </TableCell>
+                        </>
+                      )}
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -375,14 +389,32 @@ export default function ClubLeaderboard({
                             </Typography>
                           </Box>
                         </TableCell>
-                        <TableCell align="right" sx={{ color: 'white' }}>
-                          <Typography variant="h6" fontWeight="bold">
-                            {formatScore(entry.score)}
-                          </Typography>
-                          <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                            points
-                          </Typography>
-                        </TableCell>
+                        {selectedActivityType === 'overall' ? (
+                          <TableCell align="right" sx={{ color: 'white' }}>
+                            <Typography variant="h6" fontWeight="bold">
+                              {formatScore(entry.score)}
+                            </Typography>
+                            <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                              points
+                            </Typography>
+                          </TableCell>
+                        ) : (
+                          <>
+                            <TableCell align="right" sx={{ color: 'white' }}>
+                              <Typography variant="h6" fontWeight="bold">
+                                {formatActivityValue(entry.activityValue, entry.activityUnit)}
+                              </Typography>
+                            </TableCell>
+                            <TableCell align="right" sx={{ color: 'white' }}>
+                              <Typography variant="h6" fontWeight="bold">
+                                {formatScore(entry.score)}
+                              </Typography>
+                              <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                                pts
+                              </Typography>
+                            </TableCell>
+                          </>
+                        )}
                       </TableRow>
                     ))}
                   </TableBody>

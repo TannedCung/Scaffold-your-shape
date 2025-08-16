@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { supabase } from '@/lib/supabase';
 import { authOptions } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
+import { normalizeActivityInput, isValidUnitForActivity } from '@/constants/activityNormalization';
 import { updateLeaderboard } from '@/lib/leaderboard';
 
 export async function GET(request: Request) {
@@ -50,12 +51,37 @@ export async function POST(request: Request) {
 
     const body = await request.json();
 
-    // Remove userId from body if it exists and ensure proper field mapping
-    const { userId, ...cleanBody } = body;
+    // Extract activity data and validate required fields
+    const { userId, type, value, unit, ...otherFields } = body;
+
+    if (!type || !value || !unit) {
+      return NextResponse.json({ 
+        error: 'Missing required fields: type, value, and unit are required' 
+      }, { status: 400 });
+    }
+
+    // Validate unit for activity type
+    if (!isValidUnitForActivity(type, unit)) {
+      return NextResponse.json({ 
+        error: `Invalid unit '${unit}' for activity type '${type}'` 
+      }, { status: 400 });
+    }
+
+    // Normalize activity input to standard units
+    const normalized = normalizeActivityInput(type, parseFloat(value), unit);
+
+    // Create activity object with normalized values
+    const activityData = {
+      ...otherFields,
+      user_id: session.user.id,
+      type: normalized.type,
+      value: normalized.value,
+      unit: normalized.unit
+    };
 
     const { data: activity, error } = await supabase
       .from('activities')
-      .insert([{ ...cleanBody, user_id: session.user.id }])
+      .insert([activityData])
       .select()
       .single();
 
@@ -93,6 +119,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(activity);
   } catch (error) {
+    console.error('Error creating activity:', error);
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }
@@ -109,7 +136,56 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { id, ...updateData } = body;
+    const { id, type, value, unit, ...otherUpdateData } = body;
+
+    if (!id) {
+      return NextResponse.json({ 
+        error: 'Activity ID is required' 
+      }, { status: 400 });
+    }
+
+    // Prepare update data
+    let updateData = { ...otherUpdateData };
+
+    // If type, value, or unit are being updated, normalize them
+    if (type !== undefined || value !== undefined || unit !== undefined) {
+      // Get current activity data if partial update
+      const { data: currentActivity } = await supabase
+        .from('activities')
+        .select('type, value, unit')
+        .eq('id', id)
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (!currentActivity) {
+        return NextResponse.json({ 
+          error: 'Activity not found or not owned by user' 
+        }, { status: 404 });
+      }
+
+      // Use current values as defaults for normalization
+      const finalType = type !== undefined ? type : currentActivity.type;
+      const finalValue = value !== undefined ? parseFloat(value) : currentActivity.value;
+      const finalUnit = unit !== undefined ? unit : currentActivity.unit;
+
+      // Validate unit for activity type
+      if (!isValidUnitForActivity(finalType, finalUnit)) {
+        return NextResponse.json({ 
+          error: `Invalid unit '${finalUnit}' for activity type '${finalType}'` 
+        }, { status: 400 });
+      }
+
+      // Normalize activity input to standard units
+      const normalized = normalizeActivityInput(finalType, finalValue, finalUnit);
+
+      // Add normalized values to update data
+      updateData = {
+        ...updateData,
+        type: normalized.type,
+        value: normalized.value,
+        unit: normalized.unit
+      };
+    }
 
     const { data: activity, error } = await supabase
       .from('activities')
@@ -123,8 +199,15 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    if (!activity) {
+      return NextResponse.json({ 
+        error: 'Activity not found or not owned by user' 
+      }, { status: 404 });
+    }
+
     return NextResponse.json(activity);
   } catch (error) {
+    console.error('Error updating activity:', error);
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

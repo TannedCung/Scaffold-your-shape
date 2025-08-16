@@ -65,7 +65,7 @@ export async function GET(
           currentTimestamp: new Date().toISOString(),
         };
 
-        if (await isRedisAvailable()) {
+        if (await isRedisAvailable() && activityType !== 'overall') {
           const redis = getRedis();
           const leaderboardKey = getLeaderboardKey(clubId, activityType);
           
@@ -78,7 +78,7 @@ export async function GET(
             ttl: await redis.ttl(leaderboardKey)
           };
         } else {
-          debugInfo.redis = { error: 'Redis not available' };
+          debugInfo.redis = { error: 'Redis not available or overall activity type' };
         }
 
         return NextResponse.json({ success: true, debug: debugInfo });

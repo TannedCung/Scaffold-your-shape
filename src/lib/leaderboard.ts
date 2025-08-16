@@ -35,6 +35,9 @@ export interface LeaderboardEntry {
   name: string;
   score: number;
   rank: number;
+  // Enhanced fields for showing activity values
+  activityValue?: number;
+  activityUnit?: string;
 }
 
 export interface LeaderboardResult {
@@ -42,6 +45,8 @@ export interface LeaderboardResult {
   totalMembers: number;
   activityType: string;
   clubId: string;
+  // Enhanced field to indicate if this is showing points or activity values
+  displayMode?: 'points' | 'values';
 }
 
 /**
@@ -123,6 +128,11 @@ export async function getLeaderboard(
   offset: number = 0
 ): Promise<LeaderboardResult> {
   try {
+    // Handle "overall" activity type - aggregate all activities
+    if (activityType === 'overall') {
+      return await getOverallLeaderboard(clubId, limit, offset);
+    }
+
     // Normalize activity type for consistent Redis key lookup
     const normalizedType = normalizeActivityType(activityType);
     
@@ -176,7 +186,6 @@ export async function getLeaderboard(
     // Fetch user names from Supabase
     if (leaderboardEntries.length > 0) {
       const userIds = leaderboardEntries.map(entry => entry.userId);
-      
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, name')
@@ -191,19 +200,24 @@ export async function getLeaderboard(
       }
     }
 
-    const result = {
-      entries: leaderboardEntries,
+    // For specific activity types, also get activity values
+    const enhancedEntries = await enhanceEntriesWithActivityValues(leaderboardEntries, clubId, normalizedType);
+
+    return {
+      entries: enhancedEntries,
       totalMembers,
       activityType: normalizedType,
-      clubId
+      clubId,
+      displayMode: 'values'
     };
 
-    return result;
-
   } catch (error) {
-    console.error('Error getting leaderboard:', error);
+    console.error('Error in getLeaderboard:', error);
     // Fallback to database query
-    return await rebuildAndGetLeaderboard(clubId, normalizeActivityType(activityType), limit, offset);
+    if (activityType === 'overall') {
+      return await getOverallLeaderboard(clubId, limit, offset);
+    }
+    return await getLeaderboardFromDatabase(clubId, normalizeActivityType(activityType), limit, offset);
   }
 }
 
@@ -320,6 +334,11 @@ async function rebuildAndGetLeaderboard(
   offset: number = 0
 ): Promise<LeaderboardResult> {
   try {
+    // Handle "overall" activity type
+    if (activityType === 'overall') {
+      return await getOverallLeaderboard(clubId, limit, offset);
+    }
+
     // Normalize activity type
     const normalizedType = normalizeActivityType(activityType);
     
@@ -379,11 +398,15 @@ async function rebuildAndGetLeaderboard(
             }
           }
 
+          // Enhance entries with activity values for specific activity types
+          const enhancedEntries = await enhanceEntriesWithActivityValues(leaderboardEntries, clubId, normalizedType);
+
           return {
-            entries: leaderboardEntries,
+            entries: enhancedEntries,
             totalMembers,
             activityType: normalizedType,
-            clubId
+            clubId,
+            displayMode: 'values'
           };
         }
       } catch (redisError) {
@@ -397,6 +420,9 @@ async function rebuildAndGetLeaderboard(
   } catch (error) {
     console.error('Error in rebuildAndGetLeaderboard:', error);
     // Fallback to direct database query
+    if (activityType === 'overall') {
+      return await getOverallLeaderboard(clubId, limit, offset);
+    }
     return await getLeaderboardFromDatabase(clubId, normalizeActivityType(activityType), limit, offset);
   }
 }
@@ -411,6 +437,11 @@ async function getLeaderboardFromDatabase(
   offset: number = 0
 ): Promise<LeaderboardResult> {
   try {
+    // Handle "overall" activity type
+    if (activityType === 'overall') {
+      return await getOverallLeaderboard(clubId, limit, offset);
+    }
+
     // Normalize activity type
     const normalizedType = normalizeActivityType(activityType);
     
@@ -436,7 +467,8 @@ async function getLeaderboardFromDatabase(
         entries: [],
         totalMembers: 0,
         activityType: normalizedType,
-        clubId
+        clubId,
+        displayMode: 'values'
       };
     }
 
@@ -473,6 +505,7 @@ async function getLeaderboardFromDatabase(
     // Calculate total scores for each user
     const userScores = new Map<string, number>();
     const userNames = new Map<string, string>();
+    const userActivityTotals = new Map<string, { value: number; unit: string; count: number }>();
 
     // Initialize user data
     for (const member of clubMembers) {
@@ -481,7 +514,7 @@ async function getLeaderboardFromDatabase(
       userNames.set(member.user_id, memberProfile?.name || 'Unknown User');
     }
 
-    // Calculate points from activities
+    // Calculate points from activities and track activity totals
     if (filteredActivities.length > 0) {
       for (const activity of filteredActivities) {
         const conversion = findNormalizedConversion(clubConversions, activity.type, activity.unit);
@@ -490,18 +523,40 @@ async function getLeaderboardFromDatabase(
           const points = activity.value * conversion.rate;
           const currentScore = userScores.get(activity.user_id) || 0;
           userScores.set(activity.user_id, currentScore + points);
+
+          // Track activity totals for display
+          const existing = userActivityTotals.get(activity.user_id);
+          if (existing) {
+            if (existing.unit === activity.unit) {
+              existing.value += activity.value;
+              existing.count += 1;
+            } else {
+              existing.count += 1;
+            }
+          } else {
+            userActivityTotals.set(activity.user_id, {
+              value: activity.value,
+              unit: activity.unit,
+              count: 1
+            });
+          }
         }
       }
     }
 
-    // Convert to sorted array
+    // Convert to sorted array with enhanced data
     const sortedEntries = Array.from(userScores.entries())
-      .map(([userId, score]) => ({
-        userId,
-        name: userNames.get(userId) || 'Unknown User',
-        score,
-        rank: 0 // Will be set below
-      }))
+      .map(([userId, score]) => {
+        const activityData = userActivityTotals.get(userId);
+        return {
+          userId,
+          name: userNames.get(userId) || 'Unknown User',
+          score,
+          rank: 0, // Will be set below
+          activityValue: activityData?.value,
+          activityUnit: activityData?.unit
+        };
+      })
       .sort((a, b) => b.score - a.score) // Descending order
       .map((entry, index) => ({
         ...entry,
@@ -513,7 +568,8 @@ async function getLeaderboardFromDatabase(
       entries: sortedEntries,
       totalMembers: clubMembers.length,
       activityType: normalizedType,
-      clubId
+      clubId,
+      displayMode: 'values'
     };
 
   } catch (error) {
@@ -522,7 +578,8 @@ async function getLeaderboardFromDatabase(
       entries: [],
       totalMembers: 0,
       activityType: normalizeActivityType(activityType),
-      clubId
+      clubId,
+      displayMode: 'values'
     };
   }
 }
@@ -583,5 +640,192 @@ export async function testRedisConnection(): Promise<{ success: boolean; message
     }
   } catch (error) {
     return { success: false, message: `Redis test failed: ${error}` };
+  }
+}
+
+/**
+ * Get overall leaderboard aggregating points from all activity types
+ */
+async function getOverallLeaderboard(
+  clubId: string,
+  limit: number = 50,
+  offset: number = 0
+): Promise<LeaderboardResult> {
+  try {
+    // Get club members with their profile information
+    const { data: clubMembers, error: membersError } = await supabase
+      .from('club_members')
+      .select(`
+        user_id,
+        profiles!inner (
+          id,
+          name
+        )
+      `)
+      .eq('club_id', clubId);
+
+    if (membersError) {
+      throw new Error(`Error fetching club members: ${membersError.message}`);
+    }
+
+    if (!clubMembers || clubMembers.length === 0) {
+      return {
+        entries: [],
+        totalMembers: 0,
+        activityType: 'overall',
+        clubId,
+        displayMode: 'points'
+      };
+    }
+
+    const userIds = clubMembers.map(m => m.user_id);
+
+    // Get all activities for these users
+    const { data: activities, error: activitiesError } = await supabase
+      .from('activities')
+      .select('user_id, type, value, unit')
+      .in('user_id', userIds);
+
+    if (activitiesError) {
+      throw new Error(`Error fetching activities: ${activitiesError.message}`);
+    }
+
+    // Get club-specific conversion rates
+    let clubConversions;
+    try {
+      clubConversions = await fetchClubConversionRatesServer(clubId);
+    } catch (error) {
+      console.error(`Error fetching club conversion rates for club ${clubId}:`, error);
+      // Use default conversion rates as fallback
+      clubConversions = DEFAULT_ACTIVITY_POINT_CONVERSION.map(rate => ({
+        ...rate,
+        club_id: clubId
+      }));
+    }
+
+    // Calculate total scores for each user across all activity types
+    const userScores = new Map<string, number>();
+    const userNames = new Map<string, string>();
+
+    // Initialize user data
+    for (const member of clubMembers) {
+      userScores.set(member.user_id, 0);
+      const memberProfile = member.profiles as { name?: string } | null;
+      userNames.set(member.user_id, memberProfile?.name || 'Unknown User');
+    }
+
+    // Calculate points from all activities
+    if (activities && activities.length > 0) {
+      for (const activity of activities) {
+        const conversion = findNormalizedConversion(clubConversions, activity.type, activity.unit);
+
+        if (conversion) {
+          const points = activity.value * conversion.rate;
+          const currentScore = userScores.get(activity.user_id) || 0;
+          userScores.set(activity.user_id, currentScore + points);
+        }
+      }
+    }
+
+    // Convert to sorted array
+    const sortedEntries = Array.from(userScores.entries())
+      .map(([userId, score]) => ({
+        userId,
+        name: userNames.get(userId) || 'Unknown User',
+        score,
+        rank: 0 // Will be set below
+      }))
+      .sort((a, b) => b.score - a.score) // Descending order
+      .map((entry, index) => ({
+        ...entry,
+        rank: index + 1
+      }))
+      .slice(offset, offset + limit);
+
+    return {
+      entries: sortedEntries,
+      totalMembers: clubMembers.length,
+      activityType: 'overall',
+      clubId,
+      displayMode: 'points'
+    };
+
+  } catch (error) {
+    console.error('Error getting overall leaderboard:', error);
+    return {
+      entries: [],
+      totalMembers: 0,
+      activityType: 'overall',
+      clubId,
+      displayMode: 'points'
+    };
+  }
+}
+
+/**
+ * Enhance leaderboard entries with activity values for display
+ */
+async function enhanceEntriesWithActivityValues(
+  entries: LeaderboardEntry[],
+  clubId: string,
+  activityType: string
+): Promise<LeaderboardEntry[]> {
+  try {
+    if (entries.length === 0) return entries;
+
+    const userIds = entries.map(entry => entry.userId);
+
+    // Get activity totals for each user for this activity type
+    const { data: userActivityData, error } = await supabase
+      .from('activities')
+      .select('user_id, type, value, unit')
+      .in('user_id', userIds);
+
+    if (error || !userActivityData) {
+      return entries; // Return original entries if we can't fetch activity data
+    }
+
+    // Filter activities by the normalized type and calculate totals per user
+    const userActivityTotals = new Map<string, { value: number; unit: string; count: number }>();
+
+    for (const activity of userActivityData) {
+      const normalizedType = normalizeActivityType(activity.type);
+      if (normalizedType === activityType) {
+        const existing = userActivityTotals.get(activity.user_id);
+        if (existing) {
+          // If units match, add values; otherwise keep the most common unit
+          if (existing.unit === activity.unit) {
+            existing.value += activity.value;
+            existing.count += 1;
+          } else {
+            // Use the unit with more activities, or keep the first one
+            existing.count += 1;
+          }
+        } else {
+          userActivityTotals.set(activity.user_id, {
+            value: activity.value,
+            unit: activity.unit,
+            count: 1
+          });
+        }
+      }
+    }
+
+    // Enhance entries with activity values
+    return entries.map(entry => {
+      const activityData = userActivityTotals.get(entry.userId);
+      if (activityData) {
+        return {
+          ...entry,
+          activityValue: activityData.value,
+          activityUnit: activityData.unit
+        };
+      }
+      return entry;
+    });
+
+  } catch (error) {
+    console.error('Error enhancing entries with activity values:', error);
+    return entries; // Return original entries on error
   }
 } 

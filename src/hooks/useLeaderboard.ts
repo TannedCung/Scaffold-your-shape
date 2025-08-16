@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { leaderboardApi } from '@/lib/api';
-import { LeaderboardResult } from '@/types';
+import { LeaderboardResult } from '@/lib/leaderboard';
 
 interface UseLeaderboardParams {
   clubId: string;
