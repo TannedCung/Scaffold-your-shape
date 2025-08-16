@@ -176,7 +176,7 @@ export default function ActivitiesPage() {
                           <MenuItem value="cycle">Cycling</MenuItem>
                           <MenuItem value="hike">Hiking</MenuItem>
                           <MenuItem value="workout">Workout</MenuItem>
-                          <MenuItem value="other">Other</MenuItem>
+                          
                         </TextField>
                       </Grid>
                     </Grid>

@@ -80,10 +80,7 @@ const activityTypes = [
   { value: SportType.Situp, label: 'Situp' },
   { value: SportType.PullUp, label: 'Pull Up' },
   { value: SportType.ParallelBars, label: 'Parallel Bars' },
-  
-  // Other
-  { value: SportType.Yoga, label: 'Yoga' },
-  { value: SportType.Other, label: 'Other' },
+  { value: SportType.Yoga, label: 'Yoga' }
 ];
 
 const unitOptions = [
@@ -135,7 +132,7 @@ export default function ActivityEditDialog({
       const sportType = Object.values(SportType).find(
         (sport) => sport.toLowerCase() === activity.type.toLowerCase()
       );
-      setType(sportType || SportType.Other);
+      setType(sportType || SportType.Run);
       setName(activity.name || '');
       setValue(activity.value?.toString() || '');
       setUnit(activity.unit || 'reps');

@@ -65,7 +65,7 @@ export default function RecentActivities({ userId, limit = 5 }: RecentActivities
     }
     
     // Fallback to default icon
-    const DefaultIcon = SportIconMap[SportType.Other];
+    const DefaultIcon = SportIconMap[SportType.Workout];
     return <DefaultIcon />;
   };
 
@@ -81,7 +81,7 @@ export default function RecentActivities({ userId, limit = 5 }: RecentActivities
     }
     
     // Fallback to default color
-    return SportColorMap[SportType.Other];
+    return SportColorMap[SportType.Workout];
   };
   
   // Animation variants

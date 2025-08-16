@@ -274,5 +274,5 @@ async function mapStravaType(stravaType: string): Promise<string> {
     'CrossFit': 'workout',
   };
 
-  return typeMap[stravaType] || 'other';
+  return typeMap[stravaType] || 'run';
 }

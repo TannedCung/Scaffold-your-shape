@@ -111,7 +111,7 @@ export function mapWorkoutLogDbToWorkoutLog(db: WorkoutLogDb): WorkoutLog {
 }
 
 // Outdoor activity types
-export type ActivityType = 'run' | 'walk' | 'swim' | 'cycle' | 'hike' | 'other';
+export type ActivityType = 'run' | 'walk' | 'swim' | 'cycle' | 'hike';
 
 // Comprehensive list of sport types from Strava
 export enum SportType {
@@ -175,10 +175,7 @@ export enum SportType {
   // Misc
   InlineSkate = 'InlineSkate',
   Skateboard = 'Skateboard',
-  RollerSki = 'RollerSki',
-  
-  // Default
-  Other = 'Other'
+  RollerSki = 'RollerSki'
 }
 
 // Map sport types to their default units
@@ -241,10 +238,7 @@ export const SportUnitMap: Record<SportType, string> = {
   // Misc (kilometers)
   [SportType.InlineSkate]: 'kilometers',
   [SportType.Skateboard]: 'kilometers',
-  [SportType.RollerSki]: 'kilometers',
-  
-  // Default
-  [SportType.Other]: 'minutes'
+  [SportType.RollerSki]: 'kilometers'
 };
 
 // Map Strava sport types to our internal activity types
@@ -271,7 +265,7 @@ export function mapStravaTypeToActivityType(stravaType: string): ActivityType {
     [SportType.Hike]: 'hike',
   };
   
-  return typeMap[stravaType as SportType] || 'other';
+  return typeMap[stravaType as SportType] || 'run';
 }
 
 // DB shape for Activity (snake_case)
@@ -1029,10 +1023,7 @@ export const SportIconMap: Record<SportType, React.ElementType> = {
   // Misc
   [SportType.InlineSkate]: SkateboardIcon,
   [SportType.Skateboard]: SkateboardIcon,
-  [SportType.RollerSki]: SkiIcon,
-  
-  // Default
-  [SportType.Other]: OtherIcon
+  [SportType.RollerSki]: SkiIcon
 };
 
 // Map sport types to their corresponding colors
@@ -1097,10 +1088,7 @@ export const SportColorMap: Record<SportType, string> = {
   // Misc - shades of gray/neutral
   [SportType.InlineSkate]: '#6b7280',
   [SportType.Skateboard]: '#4b5563',
-  [SportType.RollerSki]: '#6b7280',
-  
-  // Default
-  [SportType.Other]: '#6b7280'
+  [SportType.RollerSki]: '#6b7280'
 };
 
 export interface ActivityWithDetails extends Activity {

@@ -69,10 +69,7 @@ export const NORMALIZED_ACTIVITY_TYPES = {
   // Misc
   INLINE_SKATE: 'skate',
   SKATEBOARD: 'skate',
-  ROLLER_SKI: 'ski',
-  
-  // Default
-  OTHER: 'other'
+  ROLLER_SKI: 'ski'
 } as const;
 
 // Standard units (normalized)
@@ -159,10 +156,7 @@ export const SPORT_TYPE_TO_NORMALIZED: Record<SportType, string> = {
   // Misc
   [SportType.InlineSkate]: NORMALIZED_ACTIVITY_TYPES.INLINE_SKATE,
   [SportType.Skateboard]: NORMALIZED_ACTIVITY_TYPES.SKATEBOARD,
-  [SportType.RollerSki]: NORMALIZED_ACTIVITY_TYPES.ROLLER_SKI,
-  
-  // Default
-  [SportType.Other]: NORMALIZED_ACTIVITY_TYPES.OTHER
+  [SportType.RollerSki]: NORMALIZED_ACTIVITY_TYPES.ROLLER_SKI
 };
 
 // Mapping from UI/API unit names to normalized units
@@ -255,7 +249,7 @@ export function normalizeActivityType(sportType: SportType | string): string {
     }
   }
   
-  return NORMALIZED_ACTIVITY_TYPES.OTHER;
+  return NORMALIZED_ACTIVITY_TYPES.WORKOUT;
 }
 
 export function normalizeUnit(unit: string): string {
@@ -369,13 +363,7 @@ export const DEFAULT_NORMALIZED_ACTIVITY_POINT_CONVERSION: ActivityPointConversi
   { activity_type: NORMALIZED_ACTIVITY_TYPES.ROCK_CLIMBING, unit: NORMALIZED_UNITS.METERS, rate: 0.5 }, // Vertical meters
   
   { activity_type: NORMALIZED_ACTIVITY_TYPES.GOLF, unit: NORMALIZED_UNITS.MINUTES, rate: 0.3 },
-  { activity_type: NORMALIZED_ACTIVITY_TYPES.GOLF, unit: NORMALIZED_UNITS.HOURS, rate: 18 },
-  
-  // Generic fallback
-  { activity_type: NORMALIZED_ACTIVITY_TYPES.OTHER, unit: NORMALIZED_UNITS.UNIT, rate: 1 },
-  { activity_type: NORMALIZED_ACTIVITY_TYPES.OTHER, unit: NORMALIZED_UNITS.MINUTES, rate: 0.5 },
-  { activity_type: NORMALIZED_ACTIVITY_TYPES.OTHER, unit: NORMALIZED_UNITS.METERS, rate: 0.002 },
-  { activity_type: NORMALIZED_ACTIVITY_TYPES.OTHER, unit: NORMALIZED_UNITS.KILOMETERS, rate: 2 },
+  { activity_type: NORMALIZED_ACTIVITY_TYPES.GOLF, unit: NORMALIZED_UNITS.HOURS, rate: 18 }
 ];
 
 // Function to get conversion with normalized lookup

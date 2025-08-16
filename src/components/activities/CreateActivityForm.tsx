@@ -11,7 +11,7 @@ const activityTypes = [
   { value: 'swim', label: 'Swim' },
   { value: 'cycle', label: 'Cycle' },
   { value: 'hike', label: 'Hike' },
-  { value: 'other', label: 'Other' },
+  
 ];
 
 export default function CreateActivityForm() {

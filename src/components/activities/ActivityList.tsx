@@ -135,8 +135,8 @@ export default function ActivityList({
     }
     
     // Fallback to default icon
-    const DefaultIcon = SportIconMap[SportType.Other];
-    return <DefaultIcon sx={{ color: SportColorMap[SportType.Other] }} />;
+    const DefaultIcon = SportIconMap[SportType.Workout];
+    return <DefaultIcon sx={{ color: SportColorMap[SportType.Workout] }} />;
   };
 
   const getActivityColor = (type: string) => {
@@ -150,7 +150,7 @@ export default function ActivityList({
     }
     
     // Fallback to default color
-    return SportColorMap[SportType.Other];
+    return SportColorMap[SportType.Workout];
   };
 
   const formatDate = (dateString: string) => {

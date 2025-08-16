@@ -51,7 +51,7 @@ const activityTypeOptions = [
   { value: 'hike', label: 'Hiking', icon: '🥾' },
   { value: 'workout', label: 'Workout', icon: '💪' },
   { value: 'yoga', label: 'Yoga', icon: '🧘' },
-  { value: 'other', label: 'Other', icon: '⚡' },
+  
 ];
 
 const getRankColor = (rank: number): string => {
