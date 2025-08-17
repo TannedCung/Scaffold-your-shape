@@ -29,7 +29,9 @@ import {
   TableBody,
   TableRow,
   TableCell,
-  Grid
+  Grid,
+  Fade,
+  useTheme
 } from '@mui/material';
 import {
   Group as GroupIcon,
@@ -40,123 +42,51 @@ import {
   Person as PersonIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
-  EmojiEvents as EmojiEventsIcon
+  EmojiEvents as EmojiEventsIcon,
+  People as PeopleIcon
 } from '@mui/icons-material';
 import { useClubDetail } from '@/hooks/useClubDetail';
 import { formatDistanceToNow } from 'date-fns';
 import ClubEditDialog from './ClubEditDialog';
 import ClubLeaderboard from './ClubLeaderboard';
-import ClubLeaderboardSidebar from './ClubLeaderboardSidebar';
+import ClubMemberActivities from './ClubMemberActivities';
 import { ClubMember } from '@/types';
 
 interface ClubDetailContentProps {
   clubId: string;
 }
 
-interface Activity {
-  id: string;
-  userName: string;
-  type: string;
-  name: string;
-  value: number;
-  unit: string;
-  date: string;
-}
-
-// Placeholder activity data - replace with real data when available
-const getClubActivities = (clubId: string): Activity[] => {
-  // This would be replaced with actual API call
-  return [];
-};
-
-function ClubActivityFeed({ activities }: { activities: Activity[] }) {
-  return (
-    <Paper elevation={0} sx={{ p: 2, bgcolor: '#f7faf9', mb: 3 }}>
-      <Typography variant="h6" sx={{ color: '#2da58e', fontWeight: 700, mb: 2 }}>Recent Activities</Typography>
-      {activities.length === 0 ? (
-        <Typography variant="body2" color="text.secondary">No activities yet.</Typography>
-      ) : (
-        <List>
-          {activities.slice(0, 6).map((a) => (
-            <ListItem key={a.id} sx={{ px: 0 }}>
-              <ListItemAvatar>
-                <Avatar sx={{ bgcolor: '#2da58e' }}>{a.userName ? a.userName[0] : '?'}</Avatar>
-              </ListItemAvatar>
-              <ListItemText
-                primary={<Typography sx={{ fontWeight: 600 }}>{a.userName || 'Unknown'}</Typography>}
-                secondary={<>
-                  <Typography component="span" variant="body2" color="text.secondary">
-                    {a.type}: {a.name} ({a.value} {a.unit})
-                  </Typography>
-                  <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-                    {new Date(a.date).toLocaleDateString()}
-                  </Typography>
-                </>}
-              />
-            </ListItem>
-          ))}
-        </List>
-      )}
-    </Paper>
-  );
-}
-
-function ClubOverview({ description }: { description: string }) {
-  return (
-    <Box sx={{ mb: 3 }}>
-      <Typography variant="h5" sx={{ fontWeight: 700, color: '#2da58e', mb: 1 }}>Overview</Typography>
-      <Typography variant="body1" color="text.secondary">{description}</Typography>
-    </Box>
-  );
-}
-
-function MembersList({ members }: { members: Array<{ id: string; profile?: { name?: string }; role: string }> }) {
-  return (
-    <Paper elevation={0} sx={{ p: 2, bgcolor: '#fff', mb: 3 }}>
-      <Typography variant="h6" sx={{ color: '#2da58e', fontWeight: 700, mb: 2 }}>Club Members</Typography>
-      <Table size="small" sx={{ width: '100%' }}>
-        <TableHead>
-          <TableRow sx={{ bgcolor: '#e0f7f3' }}>
-            <TableCell sx={{ fontWeight: 700, color: '#2da58e' }}>Name</TableCell>
-            <TableCell sx={{ fontWeight: 700, color: '#2da58e' }}>Role</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {members.slice(0, 10).map((m) => (
-            <TableRow key={m.id} sx={{ borderBottom: '1px solid #e0f7f3' }}>
-              <TableCell>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Avatar sx={{ width: 28, height: 28, bgcolor: '#2da58e', mr: 1 }}>
-                    {m.profile?.name ? m.profile.name[0] : '?'}
-                  </Avatar>
-                  {m.profile?.name || 'Unknown'}
-                </Box>
-              </TableCell>
-              <TableCell>
-                <Chip
-                  icon={m.role === 'admin' ? <AdminIcon /> : <PersonIcon />}
-                  label={m.role}
-                  size="small"
-                  color={m.role === 'admin' ? 'secondary' : 'default'}
-                  variant="outlined"
-                />
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </Paper>
-  );
-}
-
 function ClubDescription({ description }: { description: string }) {
+  const theme = useTheme();
+  
   return (
-    <Box sx={{ mb: 3 }}>
-      <Typography variant="h5" sx={{ fontWeight: 700, color: '#2da58e', mb: 1 }}>Club Goal</Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-        {description}
-      </Typography>
-    </Box>
+    <Fade in timeout={1000}>
+      <Card sx={{ 
+        mb: 3,
+        bgcolor: 'rgba(255, 255, 255, 0.9)',
+        backdropFilter: 'blur(10px)',
+        border: '1px solid rgba(255, 255, 255, 0.2)'
+      }}>
+        <CardContent sx={{ p: 3 }}>
+          <Typography variant="h6" sx={{ 
+            fontWeight: 700, 
+            color: theme.palette.primary.main, 
+            mb: 2,
+            display: 'flex',
+            alignItems: 'center'
+          }}>
+            <EmojiEventsIcon sx={{ mr: 1 }} />
+            Club Goal
+          </Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ 
+            lineHeight: 1.6,
+            fontWeight: 500
+          }}>
+            {description}
+          </Typography>
+        </CardContent>
+      </Card>
+    </Fade>
   );
 }
 
@@ -175,84 +105,230 @@ function ClubActions({
   canEditClub: boolean;
   onEditClub: () => void;
 }) {
+  const theme = useTheme();
+  
   return (
-    <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
-      {isMember ? (
-        <>
-          <Button
-            variant="outlined"
-            color="error"
-            startIcon={<ExitToAppIcon />}
-            onClick={onLeaveClub}
-            disabled={actionLoading}
-            sx={{ fontWeight: 700, px: 4, py: 1.5, borderRadius: 2 }}
-          >
-            Leave Club
-          </Button>
-          {canEditClub && (
+    <Fade in timeout={1200}>
+      <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+        {isMember ? (
+          <>
             <Button
               variant="outlined"
-              startIcon={<EditIcon />}
-              onClick={onEditClub}
+              color="error"
+              startIcon={<ExitToAppIcon />}
+              onClick={onLeaveClub}
               disabled={actionLoading}
-              sx={{ borderColor: '#2da58e', color: '#2da58e', fontWeight: 700, px: 4, py: 1.5, borderRadius: 2, ':hover': { bgcolor: '#e0f7f3' } }}
+              sx={{ 
+                fontWeight: 700, 
+                px: 4, 
+                py: 1.5, 
+                borderRadius: 2,
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-1px)'
+                }
+              }}
             >
-              Edit Club
+              Leave Club
             </Button>
-          )}
-        </>
-      ) : (
-        <>
-          <Button
-            variant="contained"
-            startIcon={<PersonAddIcon />}
-            onClick={onJoinClub}
-            disabled={actionLoading}
-            sx={{ bgcolor: '#2da58e', color: '#fff', fontWeight: 700, px: 4, py: 1.5, borderRadius: 2, ':hover': { bgcolor: '#24977e' } }}
-          >
-            Join Club
-          </Button>
-          <Button
-            variant="outlined"
-            sx={{ borderColor: '#2da58e', color: '#2da58e', fontWeight: 700, px: 4, py: 1.5, borderRadius: 2, ':hover': { bgcolor: '#e0f7f3' } }}
-          >
-            Invite Friends
-          </Button>
-        </>
-      )}
-    </Box>
+            {canEditClub && (
+              <Button
+                variant="outlined"
+                startIcon={<EditIcon />}
+                onClick={onEditClub}
+                disabled={actionLoading}
+                sx={{ 
+                  borderColor: theme.palette.primary.main, 
+                  color: theme.palette.primary.main, 
+                  fontWeight: 700, 
+                  px: 4, 
+                  py: 1.5, 
+                  borderRadius: 2,
+                  transition: 'all 0.3s ease',
+                  '&:hover': { 
+                    bgcolor: theme.palette.primary.main + '10',
+                    transform: 'translateY(-1px)'
+                  }
+                }}
+              >
+                Edit Club
+              </Button>
+            )}
+          </>
+        ) : (
+          <>
+            <Button
+              variant="contained"
+              startIcon={<PersonAddIcon />}
+              onClick={onJoinClub}
+              disabled={actionLoading}
+              sx={{ 
+                bgcolor: theme.palette.primary.main, 
+                color: '#fff', 
+                fontWeight: 700, 
+                px: 4, 
+                py: 1.5, 
+                borderRadius: 2,
+                transition: 'all 0.3s ease',
+                '&:hover': { 
+                  bgcolor: theme.palette.primary.dark,
+                  transform: 'translateY(-1px)'
+                }
+              }}
+            >
+              Join Club
+            </Button>
+            <Button
+              variant="outlined"
+              sx={{ 
+                borderColor: theme.palette.primary.main, 
+                color: theme.palette.primary.main, 
+                fontWeight: 700, 
+                px: 4, 
+                py: 1.5, 
+                borderRadius: 2,
+                transition: 'all 0.3s ease',
+                '&:hover': { 
+                  bgcolor: theme.palette.primary.main + '10',
+                  transform: 'translateY(-1px)'
+                }
+              }}
+            >
+              Invite Friends
+            </Button>
+          </>
+        )}
+      </Box>
+    </Fade>
   );
 }
 
 function ClubParticipationStats({ memberCount }: { memberCount: number }) {
+  const theme = useTheme();
+  
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-      <GroupIcon sx={{ color: '#2da58e', fontSize: 32 }} />
-      <Typography variant="h5" sx={{ color: '#2da58e', fontWeight: 800 }}>
-        {memberCount?.toLocaleString?.() ?? '0'}
-      </Typography>
-      <Typography variant="body1" sx={{ color: '#24977e', fontWeight: 500, ml: 1 }}>
-        participants
-      </Typography>
-    </Box>
+    <Fade in timeout={800}>
+      <Card sx={{ 
+        mb: 3,
+        bgcolor: `linear-gradient(135deg, ${theme.palette.primary.main}15, ${theme.palette.secondary.main}15)`,
+        border: `1px solid ${theme.palette.primary.main}20`
+      }}>
+        <CardContent sx={{ p: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Avatar sx={{ 
+              bgcolor: theme.palette.primary.main, 
+              width: 56, 
+              height: 56,
+              boxShadow: `0 4px 12px ${theme.palette.primary.main}30`
+            }}>
+              <PeopleIcon sx={{ fontSize: 28 }} />
+            </Avatar>
+            <Box>
+              <Typography variant="h4" sx={{ 
+                color: theme.palette.primary.main, 
+                fontWeight: 900,
+                lineHeight: 1
+              }}>
+                {memberCount?.toLocaleString?.() ?? '0'}
+              </Typography>
+              <Typography variant="body1" sx={{ 
+                color: theme.palette.primary.dark, 
+                fontWeight: 600
+              }}>
+                Active Members
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+    </Fade>
   );
 }
 
-function ClubFinisherBadge() {
+function MembersList({ members }: { members: Array<{ id: string; profile?: { name?: string }; role: string }> }) {
+  const theme = useTheme();
+  
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, bgcolor: '#f7faf9', p: 2, borderRadius: 2, mb: 3 }}>
-      <EmojiEventsIcon sx={{ color: '#2da58e', fontSize: 48 }} />
-      <Box>
-                 <Typography variant="h6" sx={{ color: '#2da58e', fontWeight: 700 }}>Earn a Digital Finisher&apos;s Badge!</Typography>
-        <Typography variant="body2" color="text.secondary">
-          Complete club milestones to earn a special digital badge for your Trophy Case. Show off your achievement and inspire others!
-        </Typography>
-      </Box>
-    </Box>
+    <Fade in timeout={1400}>
+      <Card sx={{ 
+        bgcolor: 'rgba(255, 255, 255, 0.9)',
+        backdropFilter: 'blur(10px)',
+        border: '1px solid rgba(255, 255, 255, 0.2)'
+      }}>
+        <CardContent sx={{ p: 3 }}>
+          <Typography variant="h6" sx={{ 
+            color: theme.palette.primary.main, 
+            fontWeight: 700, 
+            mb: 2,
+            display: 'flex',
+            alignItems: 'center'
+          }}>
+            <GroupIcon sx={{ mr: 1 }} />
+            Club Members
+          </Typography>
+          <Table size="small" sx={{ width: '100%' }}>
+            <TableHead>
+              <TableRow sx={{ bgcolor: theme.palette.primary.main + '10' }}>
+                <TableCell sx={{ fontWeight: 700, color: theme.palette.primary.main }}>Name</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: theme.palette.primary.main }}>Role</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {members.slice(0, 10).map((m) => (
+                <TableRow key={m.id} sx={{ 
+                  borderBottom: `1px solid ${theme.palette.primary.main}15`,
+                  '&:hover': {
+                    bgcolor: theme.palette.primary.main + '05'
+                  }
+                }}>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Avatar sx={{ 
+                        width: 32, 
+                        height: 32, 
+                        bgcolor: theme.palette.primary.main, 
+                        mr: 1.5,
+                        fontSize: '0.875rem'
+                      }}>
+                        {m.profile?.name ? m.profile.name[0] : '?'}
+                      </Avatar>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {m.profile?.name || 'Unknown'}
+                      </Typography>
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      icon={m.role === 'admin' ? <AdminIcon /> : <PersonIcon />}
+                      label={m.role}
+                      size="small"
+                      color={m.role === 'admin' ? 'secondary' : 'default'}
+                      variant="outlined"
+                      sx={{ fontWeight: 600 }}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          {members.length > 10 && (
+            <Typography variant="caption" color="text.secondary" sx={{ 
+              display: 'block', 
+              textAlign: 'center', 
+              mt: 2,
+              fontWeight: 500
+            }}>
+              Showing 10 of {members.length} members
+            </Typography>
+          )}
+        </CardContent>
+      </Card>
+    </Fade>
   );
 }
 
 export default function ClubDetailContent({ clubId }: ClubDetailContentProps) {
+  const theme = useTheme();
   const {
     club,
     loading,
@@ -377,13 +453,11 @@ export default function ClubDetailContent({ clubId }: ClubDetailContentProps) {
     ? club.membersList.find(m => m.userId === selectedMember)
     : null;
 
-  const activities = getClubActivities(clubId);
-
   // Check if user is admin to show rebuild button
   const isAdmin = club.userMembership?.role === 'admin' || canEditClub();
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 2, sm: 3 } }}>
+    <Box sx={{ maxWidth: 1400, mx: 'auto', px: { xs: 2, sm: 3 } }}>
       <ClubParticipationStats memberCount={club.memberCount} />
       <ClubDescription description={club.description} />
       <ClubActions 
@@ -394,49 +468,67 @@ export default function ClubDetailContent({ clubId }: ClubDetailContentProps) {
         canEditClub={canEditClub()}
         onEditClub={handleEditClub}
       />
-      <ClubFinisherBadge />
       
       {/* Main Content Grid */}
       <Grid container spacing={4}>
-        {/* Left Column - Activity Feed and Overview */}
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <ClubOverview description={club.description} />
-          {club.isMember && (
-                             <ClubLeaderboardSidebar clubId={clubId} activityType="run" />
-          )}
-          <ClubActivityFeed activities={activities} />
-          <MembersList members={club.membersList} />
-        </Grid>
-        
-        {/* Right Column - Leaderboard */}
+        {/* Main Content - Member Activities */}
         <Grid size={{ xs: 12, lg: 8 }}>
           {club.isMember ? (
-            <ClubLeaderboard
-              clubId={clubId}
-              defaultActivityType="run"
-              showRebuildButton={isAdmin}
-              autoRefresh={true}
-            />
+            <ClubMemberActivities clubId={clubId} />
           ) : (
-            <Paper 
-              elevation={0} 
-              sx={{ 
-                p: 4, 
-                textAlign: 'center',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: 'white',
-                borderRadius: 3
-              }}
-            >
-              <EmojiEventsIcon sx={{ fontSize: 64, mb: 2, opacity: 0.8 }} />
-              <Typography variant="h5" gutterBottom fontWeight="bold">
-                Join the Club to See Leaderboard
-              </Typography>
-              <Typography variant="body1" sx={{ opacity: 0.9 }}>
-                Compete with other members and track your progress across different activities.
-              </Typography>
-            </Paper>
+            <Fade in timeout={1500}>
+              <Paper 
+                elevation={0} 
+                sx={{ 
+                  p: 6, 
+                  textAlign: 'center',
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}20, ${theme.palette.secondary.main}20)`,
+                  border: `1px solid ${theme.palette.primary.main}30`,
+                  borderRadius: 3
+                }}
+              >
+                <EmojiEventsIcon sx={{ 
+                  fontSize: 80, 
+                  mb: 3, 
+                  color: theme.palette.primary.main,
+                  opacity: 0.8
+                }} />
+                <Typography variant="h4" gutterBottom sx={{ 
+                  fontWeight: 800,
+                  color: theme.palette.primary.main,
+                  mb: 2
+                }}>
+                  Join the Club to See Activities
+                </Typography>
+                <Typography variant="body1" sx={{ 
+                  color: theme.palette.text.secondary,
+                  fontWeight: 500,
+                  maxWidth: 400,
+                  mx: 'auto'
+                }}>
+                  Connect with fellow members, view their activities, and stay motivated together.
+                </Typography>
+              </Paper>
+            </Fade>
           )}
+        </Grid>
+        
+        {/* Sidebar - Full Leaderboard and Members */}
+        <Grid size={{ xs: 12, lg: 4 }}>
+          {/* Full Leaderboard (replaces Top Performers) */}
+          {club.isMember && (
+            <Box sx={{ mb: 4 }}>
+              <ClubLeaderboard
+                clubId={clubId}
+                defaultActivityType="run"
+                showRebuildButton={isAdmin}
+                autoRefresh={true}
+              />
+            </Box>
+          )}
+          
+          {/* Members List */}
+          <MembersList members={club.membersList} />
         </Grid>
       </Grid>
 
