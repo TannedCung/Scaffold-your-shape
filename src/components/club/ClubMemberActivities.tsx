@@ -94,165 +94,195 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ activity, index }) => {
   const activityColor = getActivityColor(activity.type);
   
   return (
-    <Grow in timeout={1000 + index * 100}>
+    <Grow in timeout={1000 + index * 50}>
       <Card sx={{
         position: 'relative',
         overflow: 'visible',
-        bgcolor: 'rgba(255, 255, 255, 0.9)',
+        bgcolor: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(255, 255, 255, 0.2)',
+        border: '1px solid rgba(255, 255, 255, 0.3)',
         transition: 'all 0.3s ease',
+        mb: 2,
         '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: `0 8px 25px ${activityColor}20`,
+          transform: 'translateY(-2px)',
+          boxShadow: `0 6px 20px ${activityColor}15`,
+          border: `1px solid ${activityColor}40`,
         }
       }}>
         <CardContent sx={{ p: 3 }}>
           {/* Activity Header */}
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
             <Avatar 
               src={activity.memberProfile.avatar_url} 
               sx={{ 
-                width: 48, 
-                height: 48, 
+                width: 56, 
+                height: 56, 
                 mr: 2,
-                border: `2px solid ${activityColor}`,
+                border: `3px solid ${activityColor}`,
                 bgcolor: activityColor
               }}
             >
               {activity.memberProfile.name?.[0] || '?'}
             </Avatar>
             <Box sx={{ flex: 1 }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
                 {activity.memberProfile.name || 'Unknown Member'}
               </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
                 {formatDistanceToNow(new Date(activity.date), { addSuffix: true })}
               </Typography>
+              <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap' }}>
+                <Chip 
+                  label={activity.type} 
+                  size="small" 
+                  sx={{ 
+                    bgcolor: `${activityColor}20`, 
+                    color: activityColor, 
+                    fontWeight: 600,
+                    fontSize: '0.75rem'
+                  }} 
+                />
+                <Chip 
+                  label={`${activity.value} ${activity.unit}`} 
+                  size="small" 
+                  sx={{ 
+                    bgcolor: theme.palette.primary.main + '20', 
+                    color: theme.palette.primary.main, 
+                    fontWeight: 700,
+                    fontSize: '0.75rem'
+                  }} 
+                />
+              </Box>
             </Box>
             <Box sx={{
-              width: 48,
-              height: 48,
+              width: 56,
+              height: 56,
               borderRadius: 2,
-              background: `linear-gradient(135deg, ${activityColor}, ${activityColor}CC)`,
+              background: `linear-gradient(135deg, ${activityColor}, ${activityColor}DD)`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               boxShadow: `0 4px 12px ${activityColor}30`
             }}>
-              {getActivityIcon(activity.type, { sx: { color: 'white', fontSize: 24 } })}
+              {getActivityIcon(activity.type, { sx: { color: 'white', fontSize: 28 } })}
             </Box>
           </Box>
 
-          {/* Activity Details */}
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="h6" sx={{ 
-              fontWeight: 700, 
-              mb: 1,
-              color: activityColor,
-              lineHeight: 1.2
-            }}>
-              {activity.name}
-            </Typography>
+          {/* Activity Title */}
+          <Typography variant="h5" sx={{ 
+            fontWeight: 700, 
+            mb: 3,
+            color: activityColor,
+            lineHeight: 1.3
+          }}>
+            {activity.name}
+          </Typography>
+
+          {/* Key Metrics in Horizontal Layout */}
+          <Box sx={{ 
+            display: 'flex', 
+            flexWrap: 'wrap', 
+            gap: 3, 
+            mb: 3,
+            p: 2,
+            bgcolor: `${activityColor}08`,
+            borderRadius: 2,
+            border: `1px solid ${activityColor}15`
+          }}>
+            {activity.elapsed_time && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 120 }}>
+                <Avatar sx={{ 
+                  bgcolor: theme.palette.secondary.main + '20', 
+                  width: 36, 
+                  height: 36 
+                }}>
+                  <TimeIcon sx={{ color: theme.palette.secondary.main, fontSize: 20 }} />
+                </Avatar>
+                <Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: 'block' }}>
+                    Duration
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 700 }}>
+                    {formatDuration(activity.elapsed_time)}
+                  </Typography>
+                </Box>
+              </Box>
+            )}
             
-            <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-              <Chip 
-                label={activity.type} 
-                size="small" 
-                sx={{ 
-                  bgcolor: `${activityColor}15`, 
-                  color: activityColor, 
-                  fontWeight: 600,
-                  border: `1px solid ${activityColor}30`
-                }} 
-              />
-              <Chip 
-                label={`${activity.value} ${activity.unit}`} 
-                size="small" 
-                sx={{ 
-                  bgcolor: theme.palette.primary.main + '15', 
-                  color: theme.palette.primary.main, 
-                  fontWeight: 700
-                }} 
-              />
-            </Box>
+            {activity.distance && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 120 }}>
+                <Avatar sx={{ 
+                  bgcolor: '#16a08520', 
+                  width: 36, 
+                  height: 36 
+                }}>
+                  <WorkoutIcon sx={{ color: '#16a085', fontSize: 20 }} />
+                </Avatar>
+                <Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: 'block' }}>
+                    Distance
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 700 }}>
+                    {formatDistance(activity.distance)}
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+            
+            {activity.average_speed && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 120 }}>
+                <Avatar sx={{ 
+                  bgcolor: '#ef444420', 
+                  width: 36, 
+                  height: 36 
+                }}>
+                  <SpeedIcon sx={{ color: '#ef4444', fontSize: 20 }} />
+                </Avatar>
+                <Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: 'block' }}>
+                    Avg Speed
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 700 }}>
+                    {formatSpeed(activity.average_speed)}
+                  </Typography>
+                </Box>
+              </Box>
+            )}
           </Box>
-
-                     {/* Key Metrics */}
-           <Grid container spacing={2}>
-             {activity.elapsed_time && (
-               <Grid size={{ xs: 6, sm: 4 }}>
-                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                   <TimeIcon sx={{ color: theme.palette.secondary.main, fontSize: 18 }} />
-                   <Box>
-                     <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                       Duration
-                     </Typography>
-                     <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                       {formatDuration(activity.elapsed_time)}
-                     </Typography>
-                   </Box>
-                 </Box>
-               </Grid>
-             )}
-             
-             {activity.distance && (
-               <Grid size={{ xs: 6, sm: 4 }}>
-                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                   <WorkoutIcon sx={{ color: '#16a085', fontSize: 18 }} />
-                   <Box>
-                     <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                       Distance
-                     </Typography>
-                     <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                       {formatDistance(activity.distance)}
-                     </Typography>
-                   </Box>
-                 </Box>
-               </Grid>
-             )}
-             
-             {activity.average_speed && (
-               <Grid size={{ xs: 6, sm: 4 }}>
-                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                   <SpeedIcon sx={{ color: '#ef4444', fontSize: 18 }} />
-                   <Box>
-                     <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                       Avg Speed
-                     </Typography>
-                     <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                       {formatSpeed(activity.average_speed)}
-                     </Typography>
-                   </Box>
-                 </Box>
-               </Grid>
-             )}
-             
-             {activity.location && (
-               <Grid size={{ xs: 12 }}>
-                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
-                   <PlaceIcon sx={{ color: theme.palette.primary.main, fontSize: 18 }} />
-                   <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-                     {activity.location}
-                   </Typography>
-                 </Box>
-               </Grid>
-             )}
-           </Grid>
+          
+          {/* Location */}
+          {activity.location && (
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 1.5, 
+              mb: 2,
+              p: 2,
+              bgcolor: theme.palette.primary.main + '08',
+              borderRadius: 2,
+              border: `1px solid ${theme.palette.primary.main}15`
+            }}>
+              <PlaceIcon sx={{ color: theme.palette.primary.main, fontSize: 20 }} />
+              <Typography variant="body1" color="text.secondary" sx={{ fontWeight: 600 }}>
+                {activity.location}
+              </Typography>
+            </Box>
+          )}
 
           {/* Notes */}
           {activity.notes && (
             <Paper sx={{ 
               mt: 2, 
-              p: 2, 
+              p: 3, 
               bgcolor: `${activityColor}08`,
               border: `1px solid ${activityColor}20`,
               borderRadius: 2
             }}>
-              <Typography variant="body2" sx={{ 
+              <Typography variant="body1" sx={{ 
                 fontStyle: 'italic',
-                color: 'text.secondary',
-                lineHeight: 1.4
+                color: 'text.primary',
+                lineHeight: 1.6,
+                fontSize: '0.95rem'
               }}>
                 "{activity.notes}"
               </Typography>
@@ -335,9 +365,11 @@ export default function ClubMemberActivities({ clubId }: ClubMemberActivitiesPro
       {/* Activity Type Filter */}
       <Paper sx={{ 
         mb: 4, 
-        bgcolor: 'rgba(255, 255, 255, 0.9)',
+        bgcolor: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(255, 255, 255, 0.2)'
+        border: '1px solid rgba(255, 255, 255, 0.3)',
+        maxWidth: 700,
+        mx: 'auto'
       }}>
         <Tabs
           value={selectedActivityType}
@@ -348,8 +380,9 @@ export default function ClubMemberActivities({ clubId }: ClubMemberActivitiesPro
             '& .MuiTab-root': {
               fontWeight: 600,
               textTransform: 'none',
-              minHeight: 64,
-              px: 3
+              minHeight: 56,
+              px: 2,
+              fontSize: '0.875rem'
             },
             '& .Mui-selected': {
               color: theme.palette.primary.main + ' !important'
@@ -384,9 +417,11 @@ export default function ClubMemberActivities({ clubId }: ClubMemberActivitiesPro
         <Paper sx={{ 
           p: 6, 
           textAlign: 'center',
-          bgcolor: 'rgba(255, 255, 255, 0.9)',
+          bgcolor: 'rgba(255, 255, 255, 0.95)',
           backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.2)'
+          border: '1px solid rgba(255, 255, 255, 0.3)',
+          maxWidth: 700,
+          mx: 'auto'
         }}>
           <WorkoutIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
           <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 600, mb: 1 }}>
@@ -397,18 +432,28 @@ export default function ClubMemberActivities({ clubId }: ClubMemberActivitiesPro
           </Typography>
         </Paper>
       ) : (
-        <>
-                     <Grid container spacing={3}>
-             {activities.map((activity, index) => (
-               <Grid size={{ xs: 12, md: 6, lg: 4 }} key={activity.id}>
-                 <ActivityCard activity={activity} index={index} />
-               </Grid>
-             ))}
-           </Grid>
+                  <>
+            <Box sx={{ 
+              maxWidth: 700, 
+              mx: 'auto', 
+              '& > *': { 
+                mb: 0 // Remove margin since cards have their own spacing
+              }
+            }}>
+              {activities.map((activity, index) => (
+                <ActivityCard key={activity.id} activity={activity} index={index} />
+              ))}
+            </Box>
 
           {/* Load More */}
           {hasMore && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              mt: 4,
+              maxWidth: 700,
+              mx: 'auto'
+            }}>
               <Button
                 variant="outlined"
                 onClick={loadMore}
@@ -420,10 +465,13 @@ export default function ClubMemberActivities({ clubId }: ClubMemberActivitiesPro
                   fontWeight: 600,
                   borderColor: theme.palette.primary.main,
                   color: theme.palette.primary.main,
+                  borderRadius: 3,
                   '&:hover': {
                     bgcolor: theme.palette.primary.main + '10',
-                    borderColor: theme.palette.primary.main
-                  }
+                    borderColor: theme.palette.primary.main,
+                    transform: 'translateY(-1px)'
+                  },
+                  transition: 'all 0.3s ease'
                 }}
               >
                 {loading ? 'Loading...' : `Load More (${pagination.total - activities.length} remaining)`}
@@ -432,7 +480,12 @@ export default function ClubMemberActivities({ clubId }: ClubMemberActivitiesPro
           )}
 
           {/* Pagination Info */}
-          <Box sx={{ mt: 3, textAlign: 'center' }}>
+          <Box sx={{ 
+            mt: 3, 
+            textAlign: 'center',
+            maxWidth: 700,
+            mx: 'auto'
+          }}>
             <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
               Showing {activities.length} of {pagination.total} activities
             </Typography>

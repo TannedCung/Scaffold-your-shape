@@ -471,46 +471,53 @@ export default function ClubDetailContent({ clubId }: ClubDetailContentProps) {
       
       {/* Main Content Grid */}
       <Grid container spacing={4}>
-        {/* Main Content - Member Activities */}
+        {/* Main Content - Member Activities Feed */}
         <Grid size={{ xs: 12, lg: 8 }}>
-          {club.isMember ? (
-            <ClubMemberActivities clubId={clubId} />
-          ) : (
-            <Fade in timeout={1500}>
-              <Paper 
-                elevation={0} 
-                sx={{ 
-                  p: 6, 
-                  textAlign: 'center',
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main}20, ${theme.palette.secondary.main}20)`,
-                  border: `1px solid ${theme.palette.primary.main}30`,
-                  borderRadius: 3
-                }}
-              >
-                <EmojiEventsIcon sx={{ 
-                  fontSize: 80, 
-                  mb: 3, 
-                  color: theme.palette.primary.main,
-                  opacity: 0.8
-                }} />
-                <Typography variant="h4" gutterBottom sx={{ 
-                  fontWeight: 800,
-                  color: theme.palette.primary.main,
-                  mb: 2
-                }}>
-                  Join the Club to See Activities
-                </Typography>
-                <Typography variant="body1" sx={{ 
-                  color: theme.palette.text.secondary,
-                  fontWeight: 500,
-                  maxWidth: 400,
-                  mx: 'auto'
-                }}>
-                  Connect with fellow members, view their activities, and stay motivated together.
-                </Typography>
-              </Paper>
-            </Fade>
-          )}
+          <Box sx={{ 
+            pr: { lg: 2 }, // Add some padding on the right for large screens
+            height: 'fit-content'
+          }}>
+            {club.isMember ? (
+              <ClubMemberActivities clubId={clubId} />
+            ) : (
+              <Fade in timeout={1500}>
+                <Paper 
+                  elevation={0} 
+                  sx={{ 
+                    p: 6, 
+                    textAlign: 'center',
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main}20, ${theme.palette.secondary.main}20)`,
+                    border: `1px solid ${theme.palette.primary.main}30`,
+                    borderRadius: 3,
+                    maxWidth: 700,
+                    mx: 'auto'
+                  }}
+                >
+                  <EmojiEventsIcon sx={{ 
+                    fontSize: 80, 
+                    mb: 3, 
+                    color: theme.palette.primary.main,
+                    opacity: 0.8
+                  }} />
+                  <Typography variant="h4" gutterBottom sx={{ 
+                    fontWeight: 800,
+                    color: theme.palette.primary.main,
+                    mb: 2
+                  }}>
+                    Join the Club to See Activities
+                  </Typography>
+                  <Typography variant="body1" sx={{ 
+                    color: theme.palette.text.secondary,
+                    fontWeight: 500,
+                    maxWidth: 400,
+                    mx: 'auto'
+                  }}>
+                    Connect with fellow members, view their activities, and stay motivated together.
+                  </Typography>
+                </Paper>
+              </Fade>
+            )}
+          </Box>
         </Grid>
         
         {/* Sidebar - Full Leaderboard and Members */}
