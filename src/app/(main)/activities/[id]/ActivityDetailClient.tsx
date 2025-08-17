@@ -1,7 +1,23 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Paper, Chip, Divider, Avatar, Button, CircularProgress, Tooltip, Card, CardContent, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { 
+  Box, 
+  Typography, 
+  Paper, 
+  Chip, 
+  Divider, 
+  Avatar, 
+  Button, 
+  CircularProgress, 
+  Card, 
+  CardContent, 
+  LinearProgress,
+  IconButton,
+  Fade,
+  Grow,
+  useTheme
+} from '@mui/material';
 import { Grid } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { ActivityWithDetails, ActivityPointConversion } from '@/types';
@@ -21,6 +37,10 @@ import SpeedIcon from '@mui/icons-material/Speed';
 import ThermostatIcon from '@mui/icons-material/Thermostat';
 import ElectricBoltIcon from '@mui/icons-material/ElectricBolt';
 import TerrainIcon from '@mui/icons-material/Terrain';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import FlashOnIcon from '@mui/icons-material/FlashOn';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import MainLayout from '@/components/layout/MainLayout';
 import { getActivityIcon, getActivityColor } from '@/utils/activityTypeUI';
 import { fetchActivityById } from '@/services/activityService';
@@ -30,7 +50,7 @@ import { activityApi } from '@/lib/api';
 // Dynamically import the map component to avoid SSR issues
 const MapComponent = dynamic(() => import('@/components/maps/ActivityMap'), { 
   ssr: false,
-  loading: () => <Box sx={{ height: 300, bgcolor: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  loading: () => <Box sx={{ height: 300, bgcolor: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 2 }}>
     <CircularProgress size={40} />
   </Box>
 });
@@ -44,7 +64,7 @@ function formatDuration(seconds: number): string {
   const remainingSeconds = seconds % 60;
   
   if (hours > 0) {
-    return `${hours}h ${minutes}m ${remainingSeconds}s`;
+    return `${hours}h ${minutes}m`;
   } else if (minutes > 0) {
     return `${minutes}m ${remainingSeconds}s`;
   } else {
@@ -72,8 +92,105 @@ function formatSpeed(speed: number): string {
   return `${kmh.toFixed(1)} km/h`;
 }
 
+// Helper function to get activity background image
+function getActivityImage(type: string): string {
+  const imageMap: { [key: string]: string } = {
+    'run': '/images/running.jpg',
+    'walk': '/images/walking.jpg',
+    'swim': '/images/swimming.jpg',
+    'cycle': '/images/cycling.jpg',
+    'hike': '/images/running.jpg', // Fallback to running
+    'workout': '/images/fitness.jpg',
+  };
+  return imageMap[type] || '/images/fitness.jpg';
+}
+
+// Metric Card Component
+interface MetricCardProps {
+  icon: React.ReactNode;
+  title: string;
+  value: string | number;
+  unit?: string;
+  progress?: number;
+  color?: string;
+  delay?: number;
+}
+
+const MetricCard: React.FC<MetricCardProps> = ({ icon, title, value, unit, progress, color = '#2da58e', delay = 0 }) => {
+  const theme = useTheme();
+  
+  return (
+    <Grow in timeout={1000 + delay}>
+      <Card sx={{ 
+        position: 'relative',
+        overflow: 'visible',
+        bgcolor: 'rgba(255, 255, 255, 0.9)',
+        backdropFilter: 'blur(10px)',
+        border: '1px solid rgba(255, 255, 255, 0.2)',
+        transition: 'all 0.3s ease',
+        '&:hover': {
+          transform: 'translateY(-4px)',
+          boxShadow: `0 8px 25px ${color}20`,
+        }
+      }}>
+        <CardContent sx={{ p: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <Box sx={{ 
+              width: 48,
+              height: 48,
+              borderRadius: 2,
+              background: `linear-gradient(135deg, ${color}, ${color}CC)`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mr: 2,
+              boxShadow: `0 4px 12px ${color}30`
+            }}>
+              {icon}
+            </Box>
+            <Box>
+              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, mb: 0.5 }}>
+                {title}
+              </Typography>
+              <Typography variant="h4" sx={{ fontWeight: 800, color, lineHeight: 1 }}>
+                {value}
+                {unit && (
+                  <Typography component="span" variant="body1" sx={{ color: 'text.secondary', fontWeight: 500, ml: 0.5 }}>
+                    {unit}
+                  </Typography>
+                )}
+              </Typography>
+            </Box>
+          </Box>
+          {progress !== undefined && (
+            <Box>
+              <LinearProgress 
+                variant="determinate" 
+                value={progress} 
+                sx={{ 
+                  height: 6, 
+                  borderRadius: 3,
+                  bgcolor: `${color}15`,
+                  '& .MuiLinearProgress-bar': {
+                    bgcolor: color,
+                    borderRadius: 3
+                  }
+                }}
+              />
+              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, mt: 0.5 }}>
+                {progress.toFixed(0)}% of best
+              </Typography>
+            </Box>
+          )}
+        </CardContent>
+      </Card>
+    </Grow>
+  );
+};
+
 export default function ActivityDetailClient({ id }: { id: string }) {
   const router = useRouter();
+  const theme = useTheme();
   const [activity, setActivity] = useState<ActivityWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -124,361 +241,518 @@ export default function ActivityDetailClient({ id }: { id: string }) {
 
   // Calculate points
   const points = calculateActivityPoints(activity, conversionRates);
+  const activityColor = getActivityColor(activity.type);
 
   return (
     <MainLayout>
-      <Box sx={{ maxWidth: 900, mx: 'auto', mt: 4, px: { xs: 1, sm: 0 } }}>
-        <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Button variant="outlined" sx={{ color: '#2da58e', borderColor: '#2da58e', fontWeight: 700, borderRadius: 2 }} onClick={() => router.back()}>
-            Back
-          </Button>
-        </Box>
-        <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 3, bgcolor: '#f7faf9', boxShadow: '0 2px 8px rgba(45,165,142,0.07)' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <Avatar sx={{ bgcolor: getActivityColor(activity.type), width: 56, height: 56, mr: 2 }}>
-              {getActivityIcon(activity.type, { sx: { color: '#fff', fontSize: 32 } })}
-            </Avatar>
+      <Box sx={{ maxWidth: 1200, mx: 'auto', mt: 4, px: { xs: 1, sm: 0 } }}>
+        {/* Hero Section */}
+        <Fade in timeout={1000}>
+          <Box sx={{ 
+            position: 'relative',
+            height: { xs: 280, md: 320 },
+            borderRadius: 4,
+            overflow: 'hidden',
+            mb: 4,
+            backgroundImage: `linear-gradient(45deg, ${activityColor}E6, ${activityColor}99), url(${getActivityImage(activity.type)})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundBlendMode: 'overlay',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            textAlign: 'center'
+          }}>
+            {/* Back Button */}
+            <IconButton 
+              onClick={() => router.back()}
+              sx={{ 
+                position: 'absolute', 
+                top: 16, 
+                left: 16,
+                bgcolor: 'rgba(255, 255, 255, 0.1)',
+                backdropFilter: 'blur(10px)',
+                color: 'white',
+                '&:hover': {
+                  bgcolor: 'rgba(255, 255, 255, 0.2)',
+                  transform: 'scale(1.1)'
+                },
+                transition: 'all 0.3s ease'
+              }}
+            >
+              <ArrowBackIcon />
+            </IconButton>
+
+            {/* Activity Icon and Name */}
             <Box>
-              <Typography variant="h4" sx={{ fontWeight: 800, color: getActivityColor(activity.type), mb: 0.5 }}>
+              <Avatar sx={{ 
+                bgcolor: 'rgba(255, 255, 255, 0.15)', 
+                width: 80, 
+                height: 80, 
+                mx: 'auto',
+                mb: 2,
+                backdropFilter: 'blur(10px)',
+                border: '2px solid rgba(255, 255, 255, 0.2)'
+              }}>
+                {getActivityIcon(activity.type, { sx: { color: '#fff', fontSize: 40 } })}
+              </Avatar>
+              
+              <Typography variant="h3" sx={{ 
+                fontWeight: 900, 
+                mb: 1,
+                textShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                lineHeight: 1.2
+              }}>
                 {activity.name}
               </Typography>
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-                <Chip label={activity.type} size="small" sx={{ bgcolor: getActivityColor(activity.type), color: '#fff', fontWeight: 600 }} />
-                <Chip label={activity.unit} size="small" sx={{ bgcolor: '#e0f7f3', color: getActivityColor(activity.type), fontWeight: 600 }} />
-                {activity.sportType && (
-                  <Chip label={activity.sportType} size="small" sx={{ bgcolor: '#e0f7f3', color: getActivityColor(activity.type), fontWeight: 600 }} />
-                )}
+              
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', mb: 2 }}>
+                <Chip 
+                  label={activity.type} 
+                  size="medium" 
+                  sx={{ 
+                    bgcolor: 'rgba(255, 255, 255, 0.2)', 
+                    color: '#fff', 
+                    fontWeight: 700,
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255, 255, 255, 0.3)'
+                  }} 
+                />
                 {activity.source && (
-                  <Chip label={activity.source} size="small" sx={{ bgcolor: activity.source === 'Strava' ? '#fc520020' : '#2da58e20', color: activity.source === 'Strava' ? '#fc5200' : '#2da58e', borderColor: activity.source === 'Strava' ? '#fc5200' : '#2da58e', fontWeight: 500 }} variant="outlined" />
+                  <Chip 
+                    label={activity.source} 
+                    size="medium" 
+                    sx={{ 
+                      bgcolor: activity.source === 'Strava' ? 'rgba(252, 82, 0, 0.9)' : 'rgba(255, 255, 255, 0.2)', 
+                      color: '#fff', 
+                      fontWeight: 600,
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid rgba(255, 255, 255, 0.3)'
+                    }} 
+                  />
                 )}
                 {points > 0 && (
-                  <Chip label={`Points: ${points}`} size="small" sx={{ bgcolor: '#e0f7f3', color: getActivityColor(activity.type), fontWeight: 700 }} />
+                  <Chip 
+                    icon={<EmojiEventsIcon sx={{ color: '#fff !important' }} />}
+                    label={`${points} pts`} 
+                    size="medium" 
+                    sx={{ 
+                      bgcolor: 'rgba(255, 193, 7, 0.9)', 
+                      color: '#fff', 
+                      fontWeight: 700,
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid rgba(255, 255, 255, 0.3)'
+                    }} 
+                  />
                 )}
               </Box>
+
+              {/* Primary Metric Display */}
+              <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 1 }}>
+                <Typography variant="h1" sx={{ 
+                  fontWeight: 900, 
+                  textShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                  lineHeight: 1
+                }}>
+                  {activity.value}
+                </Typography>
+                <Typography variant="h4" sx={{ 
+                  fontWeight: 600, 
+                  opacity: 0.9,
+                  textShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                }}>
+                  {activity.unit}
+                </Typography>
+              </Box>
+              
+              <Typography variant="body1" sx={{ 
+                mt: 1, 
+                opacity: 0.9,
+                fontWeight: 500,
+                textShadow: '0 1px 4px rgba(0,0,0,0.3)'
+              }}>
+                {new Date(activity.date).toLocaleDateString('en-US', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </Typography>
             </Box>
           </Box>
-          <Divider sx={{ my: 2 }} />
-          
-          {/* Map section if available */}
-          {activity.map && activity.map.summaryPolyline && (
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Activity Map</Typography>
-              <Box sx={{ height: 300, borderRadius: 2, overflow: 'hidden' }}>
-                <MapComponent 
-                  polyline={activity.map.summaryPolyline}
-                  startPosition={activity.startLatlng}
-                  endPosition={activity.endLatlng}
-                />
-              </Box>
-            </Box>
-          )}
+        </Fade>
+
+        {/* Key Metrics Section */}
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h5" sx={{ 
+            fontWeight: 700, 
+            mb: 3, 
+            display: 'flex', 
+            alignItems: 'center',
+            color: activityColor
+          }}>
+            <TrendingUpIcon sx={{ mr: 1, fontSize: 28 }} />
+            Performance Metrics
+          </Typography>
           
           <Grid container spacing={3}>
-            {/* Main stats */}
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Card sx={{ bgcolor: '#f0f9f7', boxShadow: 'none', height: '100%' }}>
-                <CardContent>
-                  <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Activity Details</Typography>
+            {activity.elapsedTime && (
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <MetricCard
+                  icon={<AccessTimeIcon sx={{ color: 'white', fontSize: 24 }} />}
+                  title="Duration"
+                  value={formatDuration(activity.elapsedTime)}
+                  color={activityColor}
+                  delay={0}
+                />
+              </Grid>
+            )}
+            
+            {activity.distance && (
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <MetricCard
+                  icon={<FitnessCenterIcon sx={{ color: 'white', fontSize: 24 }} />}
+                  title="Distance"
+                  value={formatDistance(activity.distance)}
+                  color={theme.palette.secondary.main}
+                  delay={100}
+                />
+              </Grid>
+            )}
+            
+            {activity.averageSpeed && (
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <MetricCard
+                  icon={<SpeedIcon sx={{ color: 'white', fontSize: 24 }} />}
+                  title="Avg Speed"
+                  value={formatSpeed(activity.averageSpeed)}
+                  color="#16a085"
+                  delay={200}
+                />
+              </Grid>
+            )}
+            
+            {activity.totalElevationGain && (
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <MetricCard
+                  icon={<TerrainIcon sx={{ color: 'white', fontSize: 24 }} />}
+                  title="Elevation"
+                  value={activity.totalElevationGain}
+                  unit="m"
+                  color="#ef4444"
+                  delay={300}
+                />
+              </Grid>
+            )}
+          </Grid>
+        </Box>
+
+        {/* Map and Additional Stats */}
+        <Grid container spacing={4}>
+          {/* Map Section */}
+          {activity.map && activity.map.summaryPolyline && (
+            <Grid size={{ xs: 12, md: 8 }}>
+              <Grow in timeout={1500}>
+                <Card sx={{ 
+                  overflow: 'hidden',
+                  bgcolor: 'rgba(255, 255, 255, 0.9)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)'
+                }}>
+                  <CardContent sx={{ p: 0 }}>
+                    <Box sx={{ p: 3, pb: 2 }}>
+                      <Typography variant="h6" sx={{ 
+                        fontWeight: 700, 
+                        display: 'flex', 
+                        alignItems: 'center',
+                        color: activityColor
+                      }}>
+                        <PlaceIcon sx={{ mr: 1 }} />
+                        Activity Route
+                      </Typography>
+                    </Box>
+                    <Box sx={{ height: 400, borderRadius: 0 }}>
+                      <MapComponent 
+                        polyline={activity.map.summaryPolyline}
+                        startPosition={activity.startLatlng}
+                        endPosition={activity.endLatlng}
+                      />
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grow>
+            </Grid>
+          )}
+          
+          {/* Detailed Stats */}
+          <Grid size={{ xs: 12, md: activity.map && activity.map.summaryPolyline ? 4 : 12 }}>
+            <Grow in timeout={1500}>
+              <Card sx={{ 
+                height: '100%',
+                bgcolor: 'rgba(255, 255, 255, 0.9)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.2)'
+              }}>
+                <CardContent sx={{ p: 3 }}>
+                  <Typography variant="h6" sx={{ 
+                    mb: 3, 
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    color: activityColor
+                  }}>
+                    <FlashOnIcon sx={{ mr: 1 }} />
+                    Activity Details
+                  </Typography>
                   
-                  <Grid container spacing={2}>
-                    {/* Standout value */}
-                    <Grid size={{ xs: 12 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                        {getActivityIcon(activity.type, { sx: { color: getActivityColor(activity.type), fontSize: 40 } })}
-                        <Typography variant="h3" sx={{ color: getActivityColor(activity.type), fontWeight: 900, letterSpacing: 1 }}>
-                          {activity.value} <Typography component="span" variant="h5" sx={{ color: '#888', fontWeight: 500 }}>{activity.unit}</Typography>
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    
-                    {/* Date/Time */}
-                    <Grid size={{ xs: 12 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <CalendarTodayIcon sx={{ color: '#2da58e' }} />
-                        <Typography variant="body2" color="text.secondary">
-                          {new Date(activity.date).toLocaleDateString()} {new Date(activity.date).toLocaleTimeString()}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
                     {/* Location */}
                     {activity.location && (
-                      <Grid size={{ xs: 12 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <PlaceIcon sx={{ color: '#2da58e' }} />
-                          <Typography variant="body2" color="text.secondary">Location: {activity.location}</Typography>
-                        </Box>
-                      </Grid>
-                    )}
-                    
-                    {/* Duration */}
-                    {activity.elapsedTime && (
-                      <Grid size={{ xs: 12, sm: 6 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <AccessTimeIcon sx={{ color: '#2da58e' }} />
-                          <Typography variant="body2" color="text.secondary">
-                            Duration: {formatDuration(activity.elapsedTime)}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Avatar sx={{ bgcolor: `${activityColor}15`, width: 40, height: 40 }}>
+                          <PlaceIcon sx={{ color: activityColor, fontSize: 20 }} />
+                        </Avatar>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
+                            Location
+                          </Typography>
+                          <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                            {activity.location}
                           </Typography>
                         </Box>
-                      </Grid>
+                      </Box>
                     )}
                     
                     {/* Moving Time */}
                     {activity.movingTime && (
-                      <Grid size={{ xs: 12, sm: 6 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <AccessTimeIcon sx={{ color: '#2da58e' }} />
-                          <Typography variant="body2" color="text.secondary">
-                            Moving Time: {formatDuration(activity.movingTime)}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Avatar sx={{ bgcolor: `${theme.palette.secondary.main}15`, width: 40, height: 40 }}>
+                          <AccessTimeIcon sx={{ color: theme.palette.secondary.main, fontSize: 20 }} />
+                        </Avatar>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
+                            Moving Time
+                          </Typography>
+                          <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                            {formatDuration(activity.movingTime)}
                           </Typography>
                         </Box>
-                      </Grid>
-                    )}
-                    
-                    {/* Distance */}
-                    {activity.distance && (
-                      <Grid size={{ xs: 12, sm: 6 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <FitnessCenterIcon sx={{ color: '#2da58e' }} />
-                          <Typography variant="body2" color="text.secondary">
-                            Distance: {formatDistance(activity.distance)}
-                          </Typography>
-                        </Box>
-                      </Grid>
-                    )}
-                    
-                    {/* Elevation Gain */}
-                    {activity.totalElevationGain && (
-                      <Grid size={{ xs: 12, sm: 6 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <TerrainIcon sx={{ color: '#2da58e' }} />
-                          <Typography variant="body2" color="text.secondary">
-                            Elevation Gain: {activity.totalElevationGain} m
-                          </Typography>
-                        </Box>
-                      </Grid>
-                    )}
-                    
-                    {/* Average Speed */}
-                    {activity.averageSpeed && (
-                      <Grid size={{ xs: 12, sm: 6 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <SpeedIcon sx={{ color: '#2da58e' }} />
-                          <Typography variant="body2" color="text.secondary">
-                            Avg Speed: {formatSpeed(activity.averageSpeed)}
-                          </Typography>
-                        </Box>
-                      </Grid>
+                      </Box>
                     )}
                     
                     {/* Max Speed */}
                     {activity.maxSpeed && (
-                      <Grid size={{ xs: 12, sm: 6 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <SpeedIcon sx={{ color: '#2da58e' }} />
-                          <Typography variant="body2" color="text.secondary">
-                            Max Speed: {formatSpeed(activity.maxSpeed)}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Avatar sx={{ bgcolor: '#16a08515', width: 40, height: 40 }}>
+                          <SpeedIcon sx={{ color: '#16a085', fontSize: 20 }} />
+                        </Avatar>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
+                            Max Speed
+                          </Typography>
+                          <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                            {formatSpeed(activity.maxSpeed)}
                           </Typography>
                         </Box>
-                      </Grid>
+                      </Box>
                     )}
                     
                     {/* Average Cadence */}
                     {activity.averageCadence && (
-                      <Grid size={{ xs: 12, sm: 6 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <NumbersIcon sx={{ color: '#2da58e' }} />
-                          <Typography variant="body2" color="text.secondary">
-                            Avg Cadence: {activity.averageCadence.toFixed(1)} rpm
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Avatar sx={{ bgcolor: '#ff851515', width: 40, height: 40 }}>
+                          <NumbersIcon sx={{ color: '#ff8515', fontSize: 20 }} />
+                        </Avatar>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
+                            Avg Cadence
+                          </Typography>
+                          <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                            {activity.averageCadence.toFixed(1)} rpm
                           </Typography>
                         </Box>
-                      </Grid>
-                    )}
-                    
-                    {/* Average Temperature */}
-                    {activity.averageTemp && (
-                      <Grid size={{ xs: 12, sm: 6 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <ThermostatIcon sx={{ color: '#2da58e' }} />
-                          <Typography variant="body2" color="text.secondary">
-                            Avg Temp: {activity.averageTemp.toFixed(1)}°C
-                          </Typography>
-                        </Box>
-                      </Grid>
+                      </Box>
                     )}
                     
                     {/* Average Watts */}
                     {activity.averageWatts && (
-                      <Grid size={{ xs: 12, sm: 6 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <ElectricBoltIcon sx={{ color: '#2da58e' }} />
-                          <Typography variant="body2" color="text.secondary">
-                            Avg Power: {activity.averageWatts.toFixed(1)} W
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Avatar sx={{ bgcolor: '#ffd70015', width: 40, height: 40 }}>
+                          <ElectricBoltIcon sx={{ color: '#ffd700', fontSize: 20 }} />
+                        </Avatar>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
+                            Avg Power
+                          </Typography>
+                          <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                            {activity.averageWatts.toFixed(1)} W
                           </Typography>
                         </Box>
-                      </Grid>
+                      </Box>
                     )}
                     
-                    {/* Max Watts */}
-                    {activity.maxWatts && (
-                      <Grid size={{ xs: 12, sm: 6 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <ElectricBoltIcon sx={{ color: '#2da58e' }} />
-                          <Typography variant="body2" color="text.secondary">
-                            Max Power: {activity.maxWatts.toFixed(0)} W
+                    {/* Temperature */}
+                    {activity.averageTemp && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Avatar sx={{ bgcolor: '#3b82f615', width: 40, height: 40 }}>
+                          <ThermostatIcon sx={{ color: '#3b82f6', fontSize: 20 }} />
+                        </Avatar>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
+                            Temperature
+                          </Typography>
+                          <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                            {activity.averageTemp.toFixed(1)}°C
                           </Typography>
                         </Box>
-                      </Grid>
-                    )}
-                    
-                    {/* Kilojoules */}
-                    {activity.kilojoules && (
-                      <Grid size={{ xs: 12, sm: 6 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <ElectricBoltIcon sx={{ color: '#2da58e' }} />
-                          <Typography variant="body2" color="text.secondary">
-                            Energy: {activity.kilojoules.toFixed(1)} kJ
-                          </Typography>
-                        </Box>
-                      </Grid>
+                      </Box>
                     )}
                     
                     {/* Strava Link */}
                     {activity.url && (
-                      <Grid size={{ xs: 12 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <LinkIcon sx={{ color: '#2da58e' }} />
-                          <Button
-                            href={activity.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            size="small"
-                            startIcon={<OpenInNewIcon />}
-                            sx={{ color: '#fc5200', fontWeight: 600, textTransform: 'none', px: 0 }}
-                          >
-                            View on Strava
-                          </Button>
-                        </Box>
-                      </Grid>
+                      <Box sx={{ mt: 2 }}>
+                        <Button
+                          href={activity.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          fullWidth
+                          variant="outlined"
+                          startIcon={<OpenInNewIcon />}
+                          sx={{ 
+                            color: '#fc5200', 
+                            borderColor: '#fc5200',
+                            fontWeight: 600,
+                            textTransform: 'none',
+                            py: 1.5,
+                            '&:hover': {
+                              bgcolor: '#fc520010',
+                              borderColor: '#fc5200',
+                              transform: 'translateY(-1px)'
+                            },
+                            transition: 'all 0.3s ease'
+                          }}
+                        >
+                          View on Strava
+                        </Button>
+                      </Box>
                     )}
-                  </Grid>
+                  </Box>
                 </CardContent>
               </Card>
-            </Grid>
-            
-            {/* Additional Stats & Metadata */}
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Card sx={{ bgcolor: '#f0f9f7', boxShadow: 'none', height: '100%' }}>
-                <CardContent>
-                  <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Additional Information</Typography>
-                  
-                  <Grid container spacing={2}>
-                    {/* Strava ID */}
-                    {activity.strava_id && (
-                      <Grid size={{ xs: 12 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <NumbersIcon sx={{ color: '#2da58e' }} />
-                          <Typography variant="body2" color="text.secondary">Strava ID: {activity.strava_id}</Typography>
-                        </Box>
-                      </Grid>
-                    )}
-                    
-                    {/* Source */}
-                    <Grid size={{ xs: 12 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <SourceIcon sx={{ color: '#2da58e' }} />
-                        <Typography variant="body2" color="text.secondary">Source: {activity.source || 'Manual'}</Typography>
-                      </Box>
-                    </Grid>
-                    
-                    {/* Sport Type */}
-                    {activity.sportType && (
-                      <Grid size={{ xs: 12 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <FitnessCenterIcon sx={{ color: '#2da58e' }} />
-                          <Typography variant="body2" color="text.secondary">Sport Type: {activity.sportType}</Typography>
-                        </Box>
-                      </Grid>
-                    )}
-                    
-                    {/* Created At */}
-                    <Grid size={{ xs: 12 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <AccessTimeIcon sx={{ color: '#2da58e' }} />
-                        <Typography variant="body2" color="text.secondary">
-                          Created: {new Date(activity.created_at).toLocaleString()}
+            </Grow>
+          </Grid>
+        </Grid>
+
+        {/* Notes Section */}
+        {(activity.notes || activity.description) && (
+          <Fade in timeout={2000}>
+            <Card sx={{ 
+              mt: 4,
+              bgcolor: 'rgba(255, 255, 255, 0.9)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)'
+            }}>
+              <CardContent sx={{ p: 3 }}>
+                <Typography variant="h6" sx={{ 
+                  mb: 2, 
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  color: activityColor
+                }}>
+                  <NotesIcon sx={{ mr: 1 }} />
+                  Notes
+                </Typography>
+                <Paper 
+                  variant="outlined" 
+                  sx={{ 
+                    p: 3, 
+                    borderColor: `${activityColor}30`, 
+                    bgcolor: `${activityColor}05`,
+                    borderRadius: 2
+                  }}
+                >
+                  <Typography variant="body1" sx={{ 
+                    whiteSpace: 'pre-line',
+                    lineHeight: 1.6,
+                    color: 'text.primary'
+                  }}>
+                    {activity.description || activity.notes}
+                  </Typography>
+                </Paper>
+              </CardContent>
+            </Card>
+          </Fade>
+        )}
+
+        {/* Segment Efforts Section */}
+        {activity.segmentEfforts && activity.segmentEfforts.length > 0 && (
+          <Fade in timeout={2500}>
+            <Card sx={{ 
+              mt: 4,
+              mb: 4,
+              bgcolor: 'rgba(255, 255, 255, 0.9)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)'
+            }}>
+              <CardContent sx={{ p: 3 }}>
+                <Typography variant="h6" sx={{ 
+                  mb: 3, 
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  color: activityColor
+                }}>
+                  <EmojiEventsIcon sx={{ mr: 1 }} />
+                  Segment Efforts
+                </Typography>
+                
+                <Grid container spacing={2}>
+                  {activity.segmentEfforts.map((segment, index) => (
+                    <Grid size={{ xs: 12, md: 6 }} key={segment.id}>
+                      <Paper sx={{ 
+                        p: 2.5, 
+                        bgcolor: `${activityColor}08`,
+                        border: `1px solid ${activityColor}20`,
+                        borderRadius: 2,
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          transform: 'translateY(-2px)',
+                          boxShadow: `0 4px 12px ${activityColor}20`
+                        }
+                      }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1, color: activityColor }}>
+                          {segment.name}
                         </Typography>
-                      </Box>
-                    </Grid>
-                    
-                    {/* Updated At */}
-                    <Grid size={{ xs: 12 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <UpdateIcon sx={{ color: '#2da58e' }} />
-                        <Typography variant="body2" color="text.secondary">
-                          Updated: {new Date(activity.updatedAt).toLocaleString()}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    
-                    {/* High/Low Elevation */}
-                    {(activity.elevHigh || activity.elevLow) && (
-                      <Grid size={{ xs: 12 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <TerrainIcon sx={{ color: '#2da58e' }} />
-                          <Typography variant="body2" color="text.secondary">
-                            Elevation: {activity.elevLow ? activity.elevLow.toFixed(1) : '--'} to {activity.elevHigh ? activity.elevHigh.toFixed(1) : '--'} m
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                          <Typography variant="body2" color="text.secondary">Distance</Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {formatDistance(segment.distance)}
                           </Typography>
                         </Box>
-                      </Grid>
-                    )}
-                  </Grid>
-                  
-                  {/* Notes / Description */}
-                  {(activity.notes || activity.description) && (
-                    <Box sx={{ mt: 3 }}>
-                      <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>Notes</Typography>
-                      <Paper variant="outlined" sx={{ p: 2, borderColor: '#e0e0e0', bgcolor: '#fff' }}>
-                        <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>
-                          {activity.description || activity.notes}
-                        </Typography>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                          <Typography variant="body2" color="text.secondary">Time</Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {formatDuration(segment.elapsedTime)}
+                          </Typography>
+                        </Box>
+                        {segment.averageWatts && (
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <Typography variant="body2" color="text.secondary">Avg Power</Typography>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              {segment.averageWatts.toFixed(0)} W
+                            </Typography>
+                          </Box>
+                        )}
                       </Paper>
-                    </Box>
-                  )}
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-          
-          {/* Segment Efforts Section */}
-          {activity.segmentEfforts && activity.segmentEfforts.length > 0 && (
-            <Box sx={{ mt: 4 }}>
-              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Segments</Typography>
-              <TableContainer component={Paper} sx={{ boxShadow: 'none', bgcolor: '#f0f9f7' }}>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 600 }}>Segment</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Distance</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Time</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Avg Power</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {activity.segmentEfforts.map((segment) => (
-                      <TableRow key={segment.id}>
-                        <TableCell>{segment.name}</TableCell>
-                        <TableCell>{formatDistance(segment.distance)}</TableCell>
-                        <TableCell>{formatDuration(segment.elapsedTime)}</TableCell>
-                        <TableCell>{segment.averageWatts ? `${segment.averageWatts.toFixed(0)} W` : '-'}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Box>
-          )}
-        </Paper>
+                    </Grid>
+                  ))}
+                </Grid>
+              </CardContent>
+            </Card>
+          </Fade>
+        )}
       </Box>
     </MainLayout>
   );
