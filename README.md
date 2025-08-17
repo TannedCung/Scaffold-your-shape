@@ -110,4 +110,4 @@ scaffold-your-shape/
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the AGPL-3.0 License.
