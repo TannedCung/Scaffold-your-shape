@@ -13,7 +13,7 @@ interface BatchSocialProps {
   activityId: string;
   currentUserId?: string;
   socialData: {
-    reactions: { [reactionType: string]: { count: number; users: any[] } };
+    reactions: { [reactionType: string]: { count: number; users: Array<{ id: string; name: string; avatar_url: string | null }> } };
     totalReactions: number;
     commentsCount: number;
     sharesCount: number;
@@ -152,3 +152,4 @@ export default function BatchSocial({
     </>
   );
 } 
+

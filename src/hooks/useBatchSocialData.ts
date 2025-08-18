@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface SocialData {
-  reactions: { [reactionType: string]: { count: number; users: any[] } };
+  reactions: { [reactionType: string]: { count: number; users: Array<{ id: string; name: string; avatar_url: string | null }> } };
   totalReactions: number;
   commentsCount: number;
   sharesCount: number;
@@ -100,11 +100,12 @@ export function useBatchSocialData(): BatchSocialDataHook {
 export function useSocialDataForActivities(activityIds: string[]) {
   const { socialData, loading, error, fetchForActivities } = useBatchSocialData();
   
+  const activityIdsString = activityIds.join(',');
   useEffect(() => {
     if (activityIds.length > 0) {
       fetchForActivities(activityIds);
     }
-  }, [activityIds.join(','), fetchForActivities]); // Re-fetch when activity IDs change
+  }, [activityIdsString, fetchForActivities, activityIds]); // Re-fetch when activity IDs change
 
   return {
     socialData,
@@ -120,3 +121,6 @@ export function useSocialDataForActivities(activityIds: string[]) {
     }
   };
 } 
+
+
+

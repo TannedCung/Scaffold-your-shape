@@ -46,7 +46,7 @@ interface BatchSocialInteractionsProps {
   activity: ActivityData;
   currentUserId?: string;
   socialData: {
-    reactions: { [reactionType: string]: { count: number; users: any[] } };
+    reactions: { [reactionType: string]: { count: number; users: Array<{ id: string; name: string; avatar_url: string | null }> } };
     totalReactions: number;
     commentsCount: number;
     sharesCount: number;
@@ -125,7 +125,7 @@ export default function BatchSocialInteractions({
   const [reactionAnchor, setReactionAnchor] = useState<null | HTMLElement>(null);
   
   // State for comments
-  const [comments, setComments] = useState<any[]>([]);
+  const [comments, setComments] = useState<Array<{ id: string; content: string; user: { id: string; name: string; avatar_url: string | null }; created_at: string; replies?: Array<{ id: string; content: string; user: { id: string; name: string; avatar_url: string | null }; created_at: string }> }>>([]);
   const [newComment, setNewComment] = useState('');
   const [commentLoading, setCommentLoading] = useState(false);
   const [commentsLoaded, setCommentsLoaded] = useState(false);
@@ -546,7 +546,7 @@ export default function BatchSocialInteractions({
               {comments.map((comment) => (
                 <ListItem key={comment.id} alignItems="flex-start" sx={{ px: 0, py: 1 }}>
                   <ListItemAvatar>
-                    <Avatar src={comment.user.avatar_url} sx={{ width: 32, height: 32 }}>
+                    <Avatar src={comment.user.avatar_url || undefined} sx={{ width: 32, height: 32 }}>
                       {comment.user.name[0]}
                     </Avatar>
                   </ListItemAvatar>
