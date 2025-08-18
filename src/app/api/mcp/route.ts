@@ -162,7 +162,7 @@ const toolHandlers = {
       return data;
     },
 
-  create_activity: async ({ userId, name, type, value, unit, date, location, notes }: { 
+  log_activity: async ({ userId, name, type, value, unit, date, location, notes }: { 
     userId: string; name: string; type: string; value: number; unit: string; date: string; location?: string; notes?: string 
   }) => {
     // Validate unit for activity type
@@ -475,7 +475,7 @@ const availableTools = [
   },
   {
     name: 'get_activity_details',
-    description: 'Get detailed information about a specific activity including all stored data like type, value, unit, date, location, notes, and any Strava integration data if available. Sample request: {"activityId": "550e8400-e29b-41d4-a716-446655440000"}',
+    description: 'Get detailed information about a specific activity, required activityId. Sample request: {"activityId": "550e8400-e29b-41d4-a716-446655440000"}',
     inputSchema: {
       type: 'object',
       properties: {
@@ -488,8 +488,8 @@ const availableTools = [
     },
   },
   {
-    name: 'create_activity',
-    description: 'Create a new activity record in the system for activities that have already happened. Supports all activity types with automatic unit standardization. Input any valid unit and it will be converted to the appropriate standard unit for the activity type. For example: Running activities are standardized to kilometers, Swimming to meters, Yoga to minutes, etc. Supported input units include: kilometers, km, meters, m, miles, mi, hours, hr, minutes, mins, seconds, reps, repetitions, calories, etc. Sample request: {"userId": "user123", "name": "Morning 5K Run", "type": "Run", "value": 5, "unit": "kilometers", "date": "2024-01-15T07:00:00Z", "location": "Central Park", "notes": "Great weather today!"}',
+    name: 'log_activity',
+    description: 'Log a new record in the system for activities that have already happened. Sample request: {"userId": "user123", "name": "Morning 5K Run", "type": "Run", "value": 5, "unit": "kilometers", "date": "2024-01-15T07:00:00Z", "location": "Central Park", "notes": "Great weather today!"}',
     inputSchema: {
       type: 'object',
       properties: {
