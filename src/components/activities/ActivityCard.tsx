@@ -294,7 +294,7 @@ export default function ActivityCard({
                 lineHeight: 1.6,
                 fontSize: compact ? '0.875rem' : '0.95rem'
               }}>
-                "{activity.notes}"
+                &ldquo;{activity.notes}&rdquo;
               </Typography>
             </Paper>
           )}
@@ -310,3 +310,4 @@ export default function ActivityCard({
     </Grow>
   );
 } 
+
