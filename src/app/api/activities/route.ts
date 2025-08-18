@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { normalizeActivityInput, isValidUnitForActivity } from '@/constants/activityNormalization';
 import { updateLeaderboard } from '@/lib/leaderboard';
+import { updateChallengeProgressFromActivity } from '@/lib/challengeLeaderboard';
 
 export async function GET(request: Request) {
   try {
@@ -115,6 +116,19 @@ export async function POST(request: Request) {
     } catch (leaderboardError) {
       console.error('Error fetching club memberships for leaderboard update:', leaderboardError);
       // Don't fail the request if leaderboard update fails
+    }
+
+    // Update challenge progress for any relevant challenges the user is participating in
+    try {
+      await updateChallengeProgressFromActivity(
+        session.user.id,
+        activity.type,
+        activity.value,
+        activity.unit
+      );
+    } catch (challengeError) {
+      console.error('Error updating challenge progress from activity:', challengeError);
+      // Don't fail the request if challenge update fails
     }
 
     return NextResponse.json(activity);

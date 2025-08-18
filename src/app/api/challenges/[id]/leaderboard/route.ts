@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { getChallengeLeaderboard, rebuildChallengeLeaderboard } from '@/lib/challengeLeaderboard';
 
 export async function GET(
   request: NextRequest,
@@ -8,8 +8,9 @@ export async function GET(
   try {
     const { id } = await params;
     const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get('limit') || '10');
+    const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
+    const rebuild = searchParams.get('rebuild') === 'true';
 
     if (!id) {
       return NextResponse.json(
@@ -18,67 +19,79 @@ export async function GET(
       );
     }
 
-    // Fetch leaderboard data using the view
-    const { data: leaderboard, error } = await supabase
-      .from('challenge_leaderboard')
-      .select(`
-        challenge_id,
-        user_id,
-        current_value,
-        progress_percentage,
-        rank,
-        joined_at,
-        last_activity_date,
-        profile:profiles(
-          id,
-          name,
-          avatar_url
-        )
-      `)
-      .eq('challenge_id', id)
-      .order('rank', { ascending: true })
-      .range(offset, offset + limit - 1);
-
-    if (error) {
-      console.warn('Warning fetching leaderboard:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch leaderboard' },
-        { status: 500 }
-      );
+    // Rebuild cache if requested
+    if (rebuild) {
+      await rebuildChallengeLeaderboard(id);
     }
 
-    // Format the leaderboard data
-    const formattedLeaderboard = (leaderboard || []).map((entry, index) => {
-      const profile = entry.profile as { id?: string; name?: string; avatar_url?: string | null } | null;
-      return {
-        id: entry.user_id,
-        userId: entry.user_id,
-        challengeId: entry.challenge_id,
-        currentValue: entry.current_value || 0,
-        progressPercentage: entry.progress_percentage || 0,
-        rank: entry.rank || (offset + index + 1),
-        joinedAt: entry.joined_at,
-        lastActivityDate: entry.last_activity_date,
-        profile: {
-          id: profile?.id || entry.user_id,
-          fullName: profile?.name || 'Unknown User',
-          avatarUrl: profile?.avatar_url
-        }
-      };
-    });
+    // Get leaderboard using Redis-backed service
+    const leaderboard = await getChallengeLeaderboard(id, limit, offset);
+
+    // Format the response to match the expected frontend structure
+    const formattedLeaderboard = leaderboard.entries.map(entry => ({
+      id: entry.userId,
+      userId: entry.userId,
+      challengeId: leaderboard.challengeId,
+      currentValue: entry.currentValue,
+      progressPercentage: entry.progressPercentage,
+      rank: entry.rank,
+      joinedAt: entry.joinedAt,
+      lastActivityDate: entry.lastActivityDate,
+      completed: entry.completed,
+      completedAt: entry.completedAt,
+      profile: {
+        id: entry.userId,
+        fullName: entry.name,
+        avatarUrl: entry.avatarUrl
+      }
+    }));
 
     return NextResponse.json({ 
       data: formattedLeaderboard,
       pagination: {
         limit,
         offset,
-        total: formattedLeaderboard.length
-      }
+        total: leaderboard.totalParticipants
+      },
+      challengeInfo: leaderboard.challengeInfo,
+      cachedAt: new Date().toISOString()
     });
   } catch (error) {
-    console.warn('Warning in GET /api/challenges/[id]/leaderboard:', error);
+    console.error('Error in GET /api/challenges/[id]/leaderboard:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+// POST endpoint to rebuild leaderboard cache
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Challenge ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Rebuild the leaderboard cache
+    await rebuildChallengeLeaderboard(id);
+
+    return NextResponse.json({ 
+      message: 'Challenge leaderboard cache rebuilt successfully',
+      challengeId: id,
+      rebuiltAt: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error rebuilding challenge leaderboard:', error);
+    return NextResponse.json(
+      { error: 'Failed to rebuild leaderboard cache' },
       { status: 500 }
     );
   }

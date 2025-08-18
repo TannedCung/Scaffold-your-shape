@@ -95,7 +95,7 @@ export async function GET(
     return NextResponse.json({
       comments: comments.map(comment => {
         try {
-          const profile = comment.profiles as any;
+          const profile = comment.profiles as { name?: string; avatar_url?: string } | null;
           return {
             id: comment.id,
             content: comment.content,
@@ -275,7 +275,7 @@ export async function POST(
 
     // Handle the response mapping safely
     try {
-      const profile = newComment.profiles as any;
+      const profile = newComment.profiles as { name?: string; avatar_url?: string } | null;
       return NextResponse.json({
         comment: {
           id: newComment.id,
@@ -319,3 +319,6 @@ export async function POST(
     );
   }
 } 
+
+
+

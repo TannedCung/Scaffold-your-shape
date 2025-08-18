@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Process reactions data - group by activity and reaction type
-    const reactionsData: { [activityId: string]: { [reactionType: string]: { count: number; users: any[] } } } = {};
+    const reactionsData: { [activityId: string]: { [reactionType: string]: { count: number; users: Array<{ id: string; name: string; avatar_url: string | null }> } } } = {};
     
     reactionsResult.data?.forEach(reaction => {
       const activityId = reaction.activity_id;
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
         reactionsData[activityId][reactionType] = { count: 0, users: [] };
       }
       
-      const profile = reaction.profiles as any;
+      const profile = reaction.profiles as { name?: string; avatar_url?: string } | null;
       reactionsData[activityId][reactionType].count += 1;
       reactionsData[activityId][reactionType].users.push({
         id: reaction.user_id,
@@ -138,11 +138,11 @@ export async function POST(request: NextRequest) {
     });
 
     // Build response for each activity
-    const socialData: { [activityId: string]: any } = {};
+    const socialData: { [activityId: string]: { reactions: Record<string, { count: number; users: Array<{ id: string; name: string; avatar_url: string | null }> }>; totalReactions: number; commentsCount: number; sharesCount: number } } = {};
     
     activityIds.forEach(activityId => {
       const reactions = reactionsData[activityId] || {};
-      const totalReactions = Object.values(reactions).reduce((sum: number, reaction: any) => sum + reaction.count, 0);
+      const totalReactions = Object.values(reactions).reduce((sum: number, reaction: { count: number; users: Array<{ id: string; name: string; avatar_url: string | null }> }) => sum + reaction.count, 0);
       
       socialData[activityId] = {
         reactions,
@@ -168,3 +168,5 @@ export async function POST(request: NextRequest) {
     );
   }
 } 
+
+

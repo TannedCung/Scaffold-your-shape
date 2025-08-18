@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { supabase } from '@/lib/supabase';
 import { authOptions } from '@/lib/auth';
+import { updateChallengeLeaderboard } from '@/lib/challengeLeaderboard';
 
 export async function PUT(
   request: Request,
@@ -64,6 +65,19 @@ export async function PUT(
     if (error) {
       console.error('Database error:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // Update Redis leaderboard cache asynchronously
+    if (updatedParticipant) {
+      updateChallengeLeaderboard(
+        id,
+        session.user.id,
+        updatedParticipant.current_value,
+        updatedParticipant.progress_percentage
+      ).catch(err => {
+        console.error('Error updating challenge leaderboard cache:', err);
+        // Don't fail the main request if Redis update fails
+      });
     }
 
     return NextResponse.json(updatedParticipant);

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { supabase } from '@/lib/supabase';
 import { authOptions } from '@/lib/auth';
+import { updateChallengeLeaderboard, rebuildChallengeLeaderboard } from '@/lib/challengeLeaderboard';
 
 export async function POST(
   request: Request,
@@ -84,6 +85,19 @@ export async function POST(
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Update Redis leaderboard cache asynchronously
+    if (participant) {
+      updateChallengeLeaderboard(
+        id,
+        session.user.id,
+        participant.current_value || 0,
+        participant.progress_percentage || 0
+      ).catch(err => {
+        console.error('Error updating challenge leaderboard cache after join:', err);
+        // Don't fail the main request if Redis update fails
+      });
+    }
+
     return NextResponse.json(participant, { status: 201 });
   } catch (error) {
     console.warn('Server warning joining challenge:', error);
@@ -132,6 +146,13 @@ export async function DELETE(
       console.warn('Warning leaving challenge:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    // Rebuild Redis leaderboard cache asynchronously after user leaves
+    // This is more efficient than trying to remove individual entries
+    rebuildChallengeLeaderboard(id).catch(err => {
+      console.error('Error rebuilding challenge leaderboard cache after leave:', err);
+      // Don't fail the main request if Redis update fails
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

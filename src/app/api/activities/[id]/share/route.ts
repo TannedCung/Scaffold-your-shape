@@ -62,7 +62,7 @@ export async function POST(
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3006';
     const shareUrl = `${baseUrl}/activities/${activityId}`;
     
-    const profile = activity.profiles as any;
+    const profile = activity.profiles as { name?: string; avatar_url?: string } | null;
     const shareText = `Check out ${profile?.name || 'Someone'}'s ${activity.type}: ${activity.name} - ${activity.value} ${activity.unit}! 💪`;
 
     let externalShareUrl = '';
@@ -147,3 +147,4 @@ export async function GET(
     );
   }
 } 
+

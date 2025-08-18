@@ -63,10 +63,10 @@ export async function GET(
     }
 
     // Group reactions by type with counts
-    const reactionCounts = reactions.reduce((acc: any, reaction) => {
+    const reactionCounts = reactions.reduce((acc: Record<string, { count: number; users: Array<{ id: string; name: string; avatar_url: string | null }> }>, reaction) => {
       try {
         const type = reaction.reaction_type;
-        const profile = reaction.profiles as any;
+        const profile = reaction.profiles as { name?: string; avatar_url?: string } | null;
         
         if (!acc[type]) {
           acc[type] = { count: 0, users: [] };
@@ -250,3 +250,4 @@ export async function POST(
     );
   }
 } 
+

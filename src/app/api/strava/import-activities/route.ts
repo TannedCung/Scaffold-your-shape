@@ -6,6 +6,8 @@ import { supabase } from '@/lib/supabase';
 import { StravaActivity, StravaSegment, ActivityInsert } from '@/types/strava';
 import { v4 as uuidv4 } from 'uuid';
 import { mapStravaTypeToActivityType, SportUnitMap, SportType } from '@/types';
+import { updateLeaderboard } from '@/lib/leaderboard';
+import { updateChallengeProgressFromActivity } from '@/lib/challengeLeaderboard';
 
 // Define StravaActivity type
 // interface StravaActivity {
@@ -378,6 +380,52 @@ export async function POST(request: NextRequest) {
     } catch (e) {
       console.error("Error processing segment data:", e);
       // Continue despite segment errors
+    }
+
+    // Update club leaderboards and challenge progress for imported activities
+    if (insertedActivities && insertedActivities.length > 0) {
+      try {
+        // Get user's club memberships
+        const { data: clubMemberships } = await supabase
+          .from('club_members')
+          .select('club_id')
+          .eq('user_id', session.user.id);
+
+        // Update club leaderboards for each imported activity
+        if (clubMemberships && clubMemberships.length > 0) {
+          for (const activity of insertedActivities) {
+            // Update club leaderboards
+            clubMemberships.forEach(async (membership) => {
+              try {
+                await updateLeaderboard(
+                  membership.club_id,
+                  session.user.id,
+                  activity.type,
+                  activity.value,
+                  activity.unit
+                );
+              } catch (leaderboardError) {
+                console.error('Error updating leaderboard for club:', membership.club_id, leaderboardError);
+              }
+            });
+
+            // Update challenge progress
+            try {
+              await updateChallengeProgressFromActivity(
+                session.user.id,
+                activity.type,
+                activity.value,
+                activity.unit
+              );
+            } catch (challengeError) {
+              console.error('Error updating challenge progress from imported activity:', challengeError);
+            }
+          }
+        }
+      } catch (updateError) {
+        console.error('Error updating leaderboards/challenges for imported activities:', updateError);
+        // Don't fail the import if updates fail
+      }
     }
 
     return NextResponse.json({
