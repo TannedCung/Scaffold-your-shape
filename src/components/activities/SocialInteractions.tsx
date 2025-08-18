@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Box,
   Button,
@@ -163,7 +163,7 @@ export default function SocialInteractions({ activityId, activity, currentUserId
   const reactionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch all social data
-  const fetchSocialData = async () => {
+  const fetchSocialData = useCallback(async () => {
     try {
       const [reactionsRes, commentsRes, shareRes] = await Promise.all([
         fetch(`/api/activities/${activityId}/reactions`),
@@ -178,7 +178,7 @@ export default function SocialInteractions({ activityId, activity, currentUserId
         // Check if current user has reacted
         if (currentUserId) {
           for (const [type, data] of Object.entries(reactionsData.reactions || {})) {
-            if ((data as any).users.some((user: any) => user.id === currentUserId)) {
+            if ((data as { count: number; users: Array<{ id: string; name: string; avatar_url: string | null }> }).users.some((user: { id: string; name: string; avatar_url: string | null }) => user.id === currentUserId)) {
               setUserReaction(type);
               break;
             }
@@ -198,11 +198,11 @@ export default function SocialInteractions({ activityId, activity, currentUserId
     } catch (error) {
       console.error('Error fetching social data:', error);
     }
-  };
+  }, [activityId, currentUserId]);
 
   useEffect(() => {
     fetchSocialData();
-  }, [activityId, currentUserId]);
+  }, [activityId, currentUserId, fetchSocialData]);
 
   // Handle reaction (quick like or from picker)
   const handleReaction = async (reactionType: string) => {
@@ -665,3 +665,6 @@ export default function SocialInteractions({ activityId, activity, currentUserId
     </>
   );
 } 
+
+
+
