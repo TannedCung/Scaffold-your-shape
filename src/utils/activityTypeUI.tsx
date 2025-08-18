@@ -1,27 +1,31 @@
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
-import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
-import DirectionsWalkIcon from '@mui/icons-material/DirectionsWalk';
+import SportsScoreIcon from '@mui/icons-material/SportsScore';
+import SelfImprovementIcon from '@mui/icons-material/SelfImprovement';
 import PoolIcon from '@mui/icons-material/Pool';
-import DirectionsBikeIcon from '@mui/icons-material/DirectionsBike';
-import LandscapeIcon from '@mui/icons-material/Landscape';
+import PedalBikeIcon from '@mui/icons-material/PedalBike';
+import HikingIcon from '@mui/icons-material/Hiking';
+import SportsGymnasticsIcon from '@mui/icons-material/SportsGymnastics';
+import SportsIcon from '@mui/icons-material/Sports';
 import { SvgIconProps } from '@mui/material/SvgIcon';
 
 export function getActivityIcon(type: string, props: SvgIconProps = {}) {
   switch (type) {
     case 'run':
-      return <DirectionsRunIcon {...props} />;
+      return <SportsScoreIcon {...props} />;
     case 'walk':
-      return <DirectionsWalkIcon {...props} />;
+      return <SelfImprovementIcon {...props} />;
     case 'swim':
       return <PoolIcon {...props} />;
     case 'cycle':
-      return <DirectionsBikeIcon {...props} />;
+      return <PedalBikeIcon {...props} />;
     case 'hike':
-      return <LandscapeIcon {...props} />;
+      return <HikingIcon {...props} />;
     case 'workout':
       return <FitnessCenterIcon {...props} />;
+    case 'yoga':
+      return <SportsGymnasticsIcon {...props} />;
     default:
-      return <FitnessCenterIcon {...props} />;
+      return <SportsIcon {...props} />;
   }
 }
 
@@ -39,6 +43,8 @@ export function getActivityColor(type: string): string {
       return '#ef4444';
     case 'workout':
       return '#24977e';
+    case 'yoga':
+      return '#f59e0b';
     default:
       return '#2da58e';
   }
