@@ -50,16 +50,18 @@ export const NORMALIZED_ACTIVITY_TYPES = {
   WINDSURF: 'windsurf',
   SAIL: 'sail',
   
-  // Gym/Fitness
+  // Gym/Fitness - time-based workouts
   WEIGHT_TRAINING: 'workout',
   WORKOUT: 'workout',
   CROSSFIT: 'workout',
   ELLIPTICAL: 'workout',
   STAIR_STEPPER: 'workout',
-  PUSHUP: 'workout',
-  SITUP: 'workout',
-  PULL_UP: 'workout',
   PARALLEL_BARS: 'workout',
+  
+  // Rep-based exercises - should be measured in repetitions
+  PUSHUP: 'pushup',
+  SITUP: 'situp',
+  PULL_UP: 'pullup',
   
   // Other sports
   YOGA: 'yoga',
@@ -114,8 +116,10 @@ export const ACTIVITY_PRIMARY_UNITS: Record<string, string> = {
   'surf': 'minutes', // Surfing sessions
   'golf': 'minutes', // Golf rounds
   
-  // Rep-based activities - PRIMARY UNIT: reps (for specific exercises)
-  // Note: These will be handled by specific exercise types in the workout category
+  // Rep-based activities - PRIMARY UNIT: reps
+  'pushup': 'reps',
+  'situp': 'reps',
+  'pullup': 'reps',
 } as const;
 
 // UNIT CONVERSION FACTORS TO PRIMARY UNITS
@@ -491,17 +495,21 @@ export const DEFAULT_NORMALIZED_ACTIVITY_POINT_CONVERSION: ActivityPointConversi
   { activity_type: NORMALIZED_ACTIVITY_TYPES.SWIM, unit: NORMALIZED_UNITS.KILOMETERS, rate: 20 }, // 20 points per km
   { activity_type: NORMALIZED_ACTIVITY_TYPES.SWIM, unit: NORMALIZED_UNITS.MINUTES, rate: 2 }, // Time-based swimming
   
-  // Workout activities - time and reps based
+  // Workout activities - time based (general workouts)
   { activity_type: NORMALIZED_ACTIVITY_TYPES.WORKOUT, unit: NORMALIZED_UNITS.MINUTES, rate: 0.5 },
   { activity_type: NORMALIZED_ACTIVITY_TYPES.WORKOUT, unit: NORMALIZED_UNITS.HOURS, rate: 30 }, // 30 points per hour
   { activity_type: NORMALIZED_ACTIVITY_TYPES.WORKOUT, unit: NORMALIZED_UNITS.SECONDS, rate: 0.008 }, // 0.008 per second = 0.5 per minute
   { activity_type: NORMALIZED_ACTIVITY_TYPES.WORKOUT, unit: NORMALIZED_UNITS.DAYS, rate: 720 }, // 720 points per day (30 per hour × 24)
   { activity_type: NORMALIZED_ACTIVITY_TYPES.WORKOUT, unit: NORMALIZED_UNITS.WEEKS, rate: 5040 }, // 5040 points per week (720 per day × 7)
-  { activity_type: NORMALIZED_ACTIVITY_TYPES.WORKOUT, unit: NORMALIZED_UNITS.REPS, rate: 0.1 },
   { activity_type: NORMALIZED_ACTIVITY_TYPES.WORKOUT, unit: NORMALIZED_UNITS.CALORIES, rate: 0.01 }, // 0.01 per calorie
   { activity_type: NORMALIZED_ACTIVITY_TYPES.WORKOUT, unit: NORMALIZED_UNITS.METERS, rate: 0.002 }, // Distance-based workouts (treadmill, etc.)
   { activity_type: NORMALIZED_ACTIVITY_TYPES.WORKOUT, unit: NORMALIZED_UNITS.KILOMETERS, rate: 2 }, // 2 points per km for workout distance
   { activity_type: NORMALIZED_ACTIVITY_TYPES.WORKOUT, unit: NORMALIZED_UNITS.MILES, rate: 3.2 }, // ~2 per km × 1.6
+  
+  // Rep-based exercises - PRIMARY UNIT: reps
+  { activity_type: NORMALIZED_ACTIVITY_TYPES.PUSHUP, unit: NORMALIZED_UNITS.REPS, rate: 0.1 }, // 0.1 points per push-up
+  { activity_type: NORMALIZED_ACTIVITY_TYPES.SITUP, unit: NORMALIZED_UNITS.REPS, rate: 0.1 }, // 0.1 points per sit-up  
+  { activity_type: NORMALIZED_ACTIVITY_TYPES.PULL_UP, unit: NORMALIZED_UNITS.REPS, rate: 0.2 }, // 0.2 points per pull-up (harder exercise)
   
   // Winter sports - distance and time (using ALPINE_SKI which maps to 'ski')
   { activity_type: NORMALIZED_ACTIVITY_TYPES.ALPINE_SKI, unit: NORMALIZED_UNITS.KILOMETERS, rate: 6 },

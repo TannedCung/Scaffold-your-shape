@@ -1,8 +1,10 @@
 "use client";
-import { Box, Typography, CircularProgress } from '@mui/material';
+import { Box, Typography, CircularProgress, IconButton } from '@mui/material';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import React, { useRef, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Club } from '@/types';
 import Image from 'next/image';
 
@@ -14,6 +16,7 @@ function isR2Url(url?: string | null) {
 }
 
 export default function ClubHeader({ club }: { club: Club }) {
+  const router = useRouter();
   const bgRef = useRef<HTMLDivElement>(null);
   const [offset, setOffset] = useState(0);
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
@@ -83,7 +86,9 @@ export default function ClubHeader({ club }: { club: Club }) {
         py: 0,
         mb: 4,
         borderRadius: 3,
-        boxShadow: 1,
+        boxShadow: 0,
+        border: '1px solid',
+        borderColor: 'rgba(45, 165, 142, 0.1)',
         overflow: 'hidden',
         ...(typeof window === 'undefined' ? {} : {
           '@supports not (aspect-ratio: 21 / 9)': {
@@ -92,6 +97,24 @@ export default function ClubHeader({ club }: { club: Club }) {
         }),
       }}
     >
+      {/* Back Button integrated in header */}
+      <IconButton
+        onClick={() => router.back()}
+        sx={{
+          position: 'absolute',
+          top: 20,
+          left: 20,
+          backgroundColor: 'rgba(45, 165, 142, 0.1)',
+          color: '#2da58e',
+          '&:hover': {
+            backgroundColor: 'rgba(45, 165, 142, 0.2)',
+          },
+          zIndex: 3
+        }}
+      >
+        <ArrowBackIcon />
+      </IconButton>
+
       {club.backgroundImageUrl && (
         <Box sx={{
           position: 'absolute',
