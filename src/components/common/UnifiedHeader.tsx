@@ -17,7 +17,7 @@ import {
 import {
   ArrowBack as ArrowBackIcon,
   Share as ShareIcon,
-  Favorite as FavoriteIcon,
+  FavoriteBorder as FavoriteIcon,
   FavoriteBorder as FavoriteBorderIcon,
   MoreVert as MoreVertIcon
 } from '@mui/icons-material';

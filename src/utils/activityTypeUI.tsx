@@ -1,31 +1,31 @@
-import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
-import SportsScoreIcon from '@mui/icons-material/SportsScore';
-import SelfImprovementIcon from '@mui/icons-material/SelfImprovement';
-import PoolIcon from '@mui/icons-material/Pool';
-import PedalBikeIcon from '@mui/icons-material/PedalBike';
-import HikingIcon from '@mui/icons-material/Hiking';
-import SportsGymnasticsIcon from '@mui/icons-material/SportsGymnastics';
-import SportsIcon from '@mui/icons-material/Sports';
+import FitnessCenterOutlinedIcon from '@mui/icons-material/FitnessCenterOutlined';
+import SportsScoreOutlinedIcon from '@mui/icons-material/SportsScoreOutlined';
+import SelfImprovementOutlinedIcon from '@mui/icons-material/SelfImprovementOutlined';
+import PoolOutlinedIcon from '@mui/icons-material/PoolOutlined';
+import PedalBikeOutlinedIcon from '@mui/icons-material/PedalBikeOutlined';
+import HikingOutlinedIcon from '@mui/icons-material/HikingOutlined';
+import SportsGymnasticsOutlinedIcon from '@mui/icons-material/SportsGymnasticsOutlined';
+import SportsOutlinedIcon from '@mui/icons-material/SportsOutlined';
 import { SvgIconProps } from '@mui/material/SvgIcon';
 
 export function getActivityIcon(type: string, props: SvgIconProps = {}) {
   switch (type) {
     case 'run':
-      return <SportsScoreIcon {...props} />;
+      return <SportsScoreOutlinedIcon {...props} />;
     case 'walk':
-      return <SelfImprovementIcon {...props} />;
+      return <SelfImprovementOutlinedIcon {...props} />;
     case 'swim':
-      return <PoolIcon {...props} />;
+      return <PoolOutlinedIcon {...props} />;
     case 'cycle':
-      return <PedalBikeIcon {...props} />;
+      return <PedalBikeOutlinedIcon {...props} />;
     case 'hike':
-      return <HikingIcon {...props} />;
+      return <HikingOutlinedIcon {...props} />;
     case 'workout':
-      return <FitnessCenterIcon {...props} />;
+      return <FitnessCenterOutlinedIcon {...props} />;
     case 'yoga':
-      return <SportsGymnasticsIcon {...props} />;
+      return <SportsGymnasticsOutlinedIcon {...props} />;
     default:
-      return <SportsIcon {...props} />;
+      return <SportsOutlinedIcon {...props} />;
   }
 }
 

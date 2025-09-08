@@ -15,21 +15,19 @@ import {
   useTheme
 } from '@mui/material';
 import {
-  SportsScore as RunIcon,
-  PedalBike as BikeIcon,
-  Pool as SwimIcon,
-  FitnessCenter as WorkoutIcon,
-  SelfImprovement as WalkIcon,
-  Hiking as HikeIcon,
+  SportsScoreOutlined as RunIcon,
+  PedalBikeOutlined as BikeIcon,
+  PoolOutlined as SwimIcon,
+  FitnessCenterOutlined as WorkoutIcon,
+  SelfImprovementOutlined as WalkIcon,
+  HikingOutlined as HikeIcon,
   Refresh as RefreshIcon,
   ExpandMore as ExpandMoreIcon,
-  SportsGymnastics as GymnasticsIcon,
-  Sports as SportsIcon
+  SportsGymnasticsOutlined as GymnasticsIcon,
+  SportsOutlined as SportsIcon
 } from '@mui/icons-material';
 import { useClubActivities } from '@/hooks/useClubActivities';
-import { useSocialDataForActivities } from '@/hooks/useBatchSocialData';
-import ActivityCard from '@/components/activities/ActivityCard';
-import SocialInteractions from '@/components/activities/SocialInteractions';
+import ActivityList from '@/components/activities/ActivityList';
 import { useSession } from 'next-auth/react';
 
 interface ClubMemberActivitiesProps {
@@ -193,24 +191,15 @@ export default function ClubMemberActivities({ clubId }: ClubMemberActivitiesPro
                   <>
             <Box sx={{ 
               maxWidth: { xs: 700, sm: 800, md: 900, lg: 1000 }, 
-              mx: 'auto', 
-              '& > *': { 
-                mb: 0 // Remove margin since cards have their own spacing
-              }
+              mx: 'auto'
             }}>
-              {activities.map((activity, index) => (
-                <ActivityCard 
-                  key={activity.id} 
-                  activity={activity} 
-                  index={index}
-                >
-                  <SocialInteractions 
-                    activityId={activity.id}
-                    activity={activity}
-                    currentUserId={session?.user?.id}
-                  />
-                </ActivityCard>
-              ))}
+              <ActivityList
+                activities={activities}
+                loading={false}
+                error={null}
+                showSocial={true}
+                userId={session?.user?.id}
+              />
             </Box>
 
           {/* Load More */}

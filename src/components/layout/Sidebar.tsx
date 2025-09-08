@@ -4,11 +4,11 @@ import React from 'react';
 import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, IconButton, 
   Typography, Avatar, Divider } from '@mui/material';
 import { 
-  Dashboard as DashboardIcon,
-  People as ClubIcon,
-  EmojiEvents as ChallengesIcon,
-  Person as ProfileIcon,
-  FitnessCenter as FitnessIcon,
+  DashboardOutlined as DashboardIcon,
+  PeopleOutlined as ClubIcon,
+  EmojiEventsOutlined as ChallengesIcon,
+  PersonOutlined as ProfileIcon,
+  FitnessCenterOutlined as FitnessIcon,
   Close as CloseIcon 
 } from '@mui/icons-material';
 import Link from 'next/link';

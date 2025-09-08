@@ -25,18 +25,18 @@ import {
 } from '@mui/material';
 import {
   ThumbUpOutlined as ThumbUpOutlinedIcon,
-  ThumbUp as ThumbUpIcon,
+  ThumbUpOutlined as ThumbUpIcon,
   ChatBubbleOutline as CommentOutlinedIcon,
   ShareOutlined as ShareOutlinedIcon,
   Send as SendIcon,
   Close as CloseIcon,
   FavoriteBorder as HeartOutlinedIcon,
-  Favorite as HeartIcon,
-  SentimentVerySatisfied as LaughOutlinedIcon,
-  EmojiEmotions as LaughIcon,
-  Celebration as CelebrationIcon,
-  LocalFireDepartment as FireIcon,
-  FitnessCenter as MuscleIcon
+  FavoriteBorder as HeartIcon,
+  SentimentVerySatisfiedOutlined as LaughOutlinedIcon,
+  SentimentVerySatisfiedOutlined as LaughIcon,
+  CelebrationOutlined as CelebrationIcon,
+  LocalFireDepartmentOutlined as FireIcon,
+  FitnessCenterOutlined as MuscleIcon
 } from '@mui/icons-material';
 import { formatDistanceToNow } from 'date-fns';
 import ActivityCard, { ActivityData } from './ActivityCard';

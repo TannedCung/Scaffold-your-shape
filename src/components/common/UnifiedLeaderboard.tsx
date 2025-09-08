@@ -28,7 +28,7 @@ import {
   Star as StarIcon,
   TrendingUp as TrendingUpIcon,
   Schedule as ScheduleIcon,
-  LocalFireDepartment as FireIcon
+  LocalFireDepartmentOutlined as FireIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';

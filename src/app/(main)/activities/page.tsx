@@ -189,6 +189,8 @@ export default function ActivitiesPage() {
               activities={filteredActivities} 
               loading={loading} 
               error={error} 
+              showSocial={true}
+              userId={user?.id}
             />
           </>
         )}
