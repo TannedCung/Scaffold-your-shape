@@ -15,12 +15,13 @@ export async function GET() {
       .from('profiles')
       .select('*')
       .eq('id', session.user.id)
-      .single();
+      .maybeSingle();
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Return null if profile doesn't exist (this allows EnsureProfile to create it)
     return NextResponse.json(profile);
   } catch (error) {
     return NextResponse.json(
@@ -38,10 +39,15 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
+    
+    // Use upsert to create or update the profile
     const { data: profile, error } = await supabase
       .from('profiles')
-      .update(body)
-      .eq('id', session.user.id)
+      .upsert({
+        ...body,
+        id: session.user.id, // Ensure we're updating the correct user
+        updated_at: new Date().toISOString(),
+      })
       .select()
       .single();
 
