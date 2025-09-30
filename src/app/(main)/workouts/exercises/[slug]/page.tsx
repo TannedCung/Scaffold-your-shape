@@ -50,6 +50,13 @@ const DIFFICULTY_COLORS = {
   advanced: '#ef4444',
 };
 
+// Helper function to extract YouTube video ID from URL
+function getYouTubeVideoId(url: string): string | null {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+}
+
 export default function ExerciseDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -265,6 +272,45 @@ export default function ExerciseDetailPage() {
       <Grid container spacing={3}>
         {/* Main Content */}
         <Grid item xs={12} md={8}>
+          {/* YouTube Video Tutorial */}
+          {exercise.youtubeUrl && (
+            <Fade in timeout={600}>
+              <Card sx={{ borderRadius: '16px', mb: 3 }}>
+                <CardContent sx={{ p: 3 }}>
+                  <Typography variant="h5" fontWeight="bold" gutterBottom sx={{ color: '#2da58e' }}>
+                    Video Tutorial
+                  </Typography>
+                  <Divider sx={{ mb: 2 }} />
+                  <Box
+                    sx={{
+                      position: 'relative',
+                      paddingBottom: '56.25%', // 16:9 aspect ratio
+                      height: 0,
+                      overflow: 'hidden',
+                      borderRadius: '12px',
+                      bgcolor: '#000',
+                    }}
+                  >
+                    <iframe
+                      src={`https://www.youtube.com/embed/${getYouTubeVideoId(exercise.youtubeUrl)}`}
+                      title={`${exercise.name} Tutorial`}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        border: 'none',
+                      }}
+                    />
+                  </Box>
+                </CardContent>
+              </Card>
+            </Fade>
+          )}
+
           {/* Instructions */}
           <Fade in timeout={700}>
             <Card sx={{ borderRadius: '16px', mb: 3 }}>

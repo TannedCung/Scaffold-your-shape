@@ -57,6 +57,7 @@ export interface ExerciseDb {
   image_url?: string | null;
   video_url?: string | null;
   animation_url?: string | null;
+  youtube_url?: string | null;
   default_sets?: number | null;
   default_reps?: number | null;
   default_duration?: number | null;
@@ -86,6 +87,7 @@ export interface Exercise {
   imageUrl?: string;
   videoUrl?: string;
   animationUrl?: string;
+  youtubeUrl?: string;
   defaultSets?: number;
   defaultReps?: number;
   defaultDuration?: number;
@@ -116,6 +118,7 @@ export function mapExerciseDbToExercise(db: ExerciseDb): Exercise {
     imageUrl: db.image_url ?? undefined,
     videoUrl: db.video_url ?? undefined,
     animationUrl: db.animation_url ?? undefined,
+    youtubeUrl: db.youtube_url ?? undefined,
     defaultSets: db.default_sets ?? undefined,
     defaultReps: db.default_reps ?? undefined,
     defaultDuration: db.default_duration ?? undefined,

@@ -24,7 +24,8 @@ import {
   FitnessCenterOutlined as StrengthIcon,
   DirectionsRunOutlined as CardioIcon,
   SelfImprovementOutlined as FlexibilityIcon,
-  LocalFireDepartmentOutlined as CaloriesIcon
+  LocalFireDepartmentOutlined as CaloriesIcon,
+  PlayCircleOutline as VideoIcon
 } from '@mui/icons-material';
 import Link from 'next/link';
 import MainLayout from '@/components/layout/MainLayout';
@@ -296,20 +297,31 @@ function ExerciseCard({ exercise }: ExerciseCardProps) {
                 }
               }}
             />
-            {exercise.isFeatured && (
-              <Chip
-                label="Featured"
-                size="small"
-                sx={{
-                  position: 'absolute',
-                  top: 12,
-                  right: 12,
-                  backgroundColor: '#2da58e',
-                  color: 'white',
-                  fontWeight: 'bold'
-                }}
-              />
-            )}
+            <Box sx={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: 1 }}>
+              {exercise.youtubeUrl && (
+                <Chip
+                  icon={<VideoIcon sx={{ color: 'white !important' }} />}
+                  label="Video"
+                  size="small"
+                  sx={{
+                    backgroundColor: '#ef4444',
+                    color: 'white',
+                    fontWeight: 'bold'
+                  }}
+                />
+              )}
+              {exercise.isFeatured && (
+                <Chip
+                  label="Featured"
+                  size="small"
+                  sx={{
+                    backgroundColor: '#2da58e',
+                    color: 'white',
+                    fontWeight: 'bold'
+                  }}
+                />
+              )}
+            </Box>
           </Box>
           
           <CardContent>
@@ -332,6 +344,44 @@ function ExerciseCard({ exercise }: ExerciseCardProps) {
             >
               {exercise.description}
             </Typography>
+
+            {/* Muscle Groups */}
+            {exercise.muscleGroups && exercise.muscleGroups.length > 0 && (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 'bold', mb: 0.5, display: 'block' }}>
+                  Target Muscles:
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {exercise.muscleGroups.slice(0, 3).map((muscle, idx) => (
+                    <Chip
+                      key={idx}
+                      label={muscle.charAt(0).toUpperCase() + muscle.slice(1)}
+                      size="small"
+                      sx={{
+                        backgroundColor: 'rgba(45, 165, 142, 0.1)',
+                        color: '#2da58e',
+                        fontWeight: 500,
+                        fontSize: '0.7rem',
+                        height: 24
+                      }}
+                    />
+                  ))}
+                  {exercise.muscleGroups.length > 3 && (
+                    <Chip
+                      label={`+${exercise.muscleGroups.length - 3}`}
+                      size="small"
+                      sx={{
+                        backgroundColor: 'rgba(45, 165, 142, 0.1)',
+                        color: '#2da58e',
+                        fontWeight: 500,
+                        fontSize: '0.7rem',
+                        height: 24
+                      }}
+                    />
+                  )}
+                </Box>
+              </Box>
+            )}
             
             {/* Tags */}
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
