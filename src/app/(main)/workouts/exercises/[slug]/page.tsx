@@ -36,7 +36,7 @@ import {
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import MainLayout from '@/components/layout/MainLayout';
-import MuscleDiagram from '@/components/workout/MuscleDiagram';
+import MuscleDiagram3D from '@/components/workout/MuscleDiagram3DWithModel';
 import { Exercise } from '@/types';
 
 const TYPE_COLORS = {
@@ -445,7 +445,7 @@ export default function ExerciseDetailPage() {
                   </Typography>
                   <Divider sx={{ mb: 3 }} />
                   <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-                    <MuscleDiagram activeMuscles={exercise.muscleGroups} size="medium" />
+                    <MuscleDiagram3D activeMuscles={exercise.muscleGroups} size="medium" autoRotate={true} />
                   </Box>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'center' }}>
                     {exercise.muscleGroups.map((muscle, idx) => (

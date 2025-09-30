@@ -31,7 +31,7 @@ import {
 } from '@mui/icons-material';
 import Link from 'next/link';
 import MainLayout from '@/components/layout/MainLayout';
-import MuscleDiagram from '@/components/workout/MuscleDiagram';
+import MuscleDiagram3D from '@/components/workout/MuscleDiagram3DWithModel';
 import { Exercise, ExerciseType } from '@/types';
 
 const TYPE_ICONS = {
@@ -273,7 +273,7 @@ function ExerciseCard({ exercise }: ExerciseCardProps) {
               <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold', textAlign: 'center' }}>
                 Target Muscles
               </Typography>
-              <MuscleDiagram activeMuscles={exercise.muscleGroups} size="small" />
+              <MuscleDiagram3D activeMuscles={exercise.muscleGroups} size="small" autoRotate={false} />
             </Box>
           ) : (
             ''

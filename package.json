@@ -17,6 +17,8 @@
     "@mui/icons-material": "^7.0.2",
     "@mui/material": "^7.0.2",
     "@mui/x-charts": "^8.6.0",
+    "@react-three/drei": "^10.7.6",
+    "@react-three/fiber": "^9.3.0",
     "@supabase/supabase-js": "^2.49.4",
     "@types/leaflet": "^1.9.17",
     "@upstash/ratelimit": "^1.0.0",
@@ -34,6 +36,7 @@
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",
     "recharts": "^3.0.1",
+    "three": "^0.180.0",
     "uuid": "^11.1.0",
     "zod": "^3.0.0"
   },
