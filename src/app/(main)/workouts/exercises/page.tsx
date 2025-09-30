@@ -17,7 +17,9 @@ import {
   CircularProgress,
   Alert,
   Fade,
-  Skeleton
+  Skeleton,
+  Tooltip,
+  Zoom
 } from '@mui/material';
 import { 
   Search as SearchIcon,
@@ -29,6 +31,7 @@ import {
 } from '@mui/icons-material';
 import Link from 'next/link';
 import MainLayout from '@/components/layout/MainLayout';
+import MuscleDiagram from '@/components/workout/MuscleDiagram';
 import { Exercise, ExerciseType } from '@/types';
 
 const TYPE_ICONS = {
@@ -56,6 +59,7 @@ export default function ExercisesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<ExerciseType | 'all'>('all');
   const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
+  const [hoveredExercise, setHoveredExercise] = useState<string | null>(null);
 
   useEffect(() => {
     fetchExercises();
@@ -262,174 +266,210 @@ function ExerciseCard({ exercise }: ExerciseCardProps) {
   
   return (
     <Fade in timeout={300}>
-      <Link 
-        href={`/workouts/exercises/${exercise.slug}`} 
-        style={{ textDecoration: 'none' }}
+      <Tooltip
+        title={
+          exercise.muscleGroups && exercise.muscleGroups.length > 0 ? (
+            <Box sx={{ p: 1 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold', textAlign: 'center' }}>
+                Target Muscles
+              </Typography>
+              <MuscleDiagram activeMuscles={exercise.muscleGroups} size="small" />
+            </Box>
+          ) : (
+            ''
+          )
+        }
+        arrow
+        placement="right"
+        TransitionComponent={Zoom}
+        TransitionProps={{ timeout: 200 }}
+        componentsProps={{
+          tooltip: {
+            sx: {
+              bgcolor: 'white',
+              color: 'text.primary',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+              borderRadius: '12px',
+              padding: 2,
+              maxWidth: 'none',
+              '& .MuiTooltip-arrow': {
+                color: 'white',
+              },
+            },
+          },
+        }}
       >
-        <Card 
-          sx={{ 
-            borderRadius: '16px',
-            transition: 'all 0.3s ease',
-            cursor: 'pointer',
-            '&:hover': {
-              transform: 'translateY(-4px)',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-            }
-          }}
-        >
-          {/* Image */}
-          <Box sx={{ position: 'relative', overflow: 'hidden', bgcolor: '#e0f7f3' }}>
-            {!imageLoaded && (
-              <Skeleton variant="rectangular" height={200} />
-            )}
-            <CardMedia
-              component="img"
-              height="200"
-              image={exercise.imageUrl || '/images/workout-club.jpg'}
-              alt={exercise.name}
-              onLoad={() => setImageLoaded(true)}
+        <Box>
+          <Link 
+            href={`/workouts/exercises/${exercise.slug}`} 
+            style={{ textDecoration: 'none' }}
+          >
+            <Card 
               sx={{ 
-                display: imageLoaded ? 'block' : 'none',
-                objectFit: 'cover',
-                transition: 'transform 0.3s ease',
+                borderRadius: '16px',
+                transition: 'all 0.3s ease',
+                cursor: 'pointer',
                 '&:hover': {
-                  transform: 'scale(1.05)'
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
                 }
               }}
-            />
-            <Box sx={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: 1 }}>
-              {exercise.youtubeUrl && (
-                <Chip
-                  icon={<VideoIcon sx={{ color: 'white !important' }} />}
-                  label="Video"
-                  size="small"
-                  sx={{
-                    backgroundColor: '#ef4444',
-                    color: 'white',
-                    fontWeight: 'bold'
-                  }}
-                />
-              )}
-              {exercise.isFeatured && (
-                <Chip
-                  label="Featured"
-                  size="small"
-                  sx={{
-                    backgroundColor: '#2da58e',
-                    color: 'white',
-                    fontWeight: 'bold'
-                  }}
-                />
-              )}
-            </Box>
-          </Box>
-          
-          <CardContent>
-            {/* Title */}
-            <Typography variant="h6" fontWeight="bold" gutterBottom>
-              {exercise.name}
-            </Typography>
-            
-            {/* Description */}
-            <Typography 
-              variant="body2" 
-              color="text.secondary" 
-              sx={{ 
-                mb: 2,
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden'
-              }}
             >
-              {exercise.description}
-            </Typography>
-
-            {/* Muscle Groups */}
-            {exercise.muscleGroups && exercise.muscleGroups.length > 0 && (
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 'bold', mb: 0.5, display: 'block' }}>
-                  Target Muscles:
-                </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {exercise.muscleGroups.slice(0, 3).map((muscle, idx) => (
+              {/* Image */}
+              <Box sx={{ position: 'relative', overflow: 'hidden', bgcolor: '#e0f7f3' }}>
+                {!imageLoaded && (
+                  <Skeleton variant="rectangular" height={200} />
+                )}
+                <CardMedia
+                  component="img"
+                  height="200"
+                  image={exercise.imageUrl || '/images/workout-club.jpg'}
+                  alt={exercise.name}
+                  onLoad={() => setImageLoaded(true)}
+                  sx={{ 
+                    display: imageLoaded ? 'block' : 'none',
+                    objectFit: 'cover',
+                    transition: 'transform 0.3s ease',
+                    '&:hover': {
+                      transform: 'scale(1.05)'
+                    }
+                  }}
+                />
+                <Box sx={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: 1 }}>
+                  {exercise.youtubeUrl && (
                     <Chip
-                      key={idx}
-                      label={muscle.charAt(0).toUpperCase() + muscle.slice(1)}
+                      icon={<VideoIcon sx={{ color: 'white !important' }} />}
+                      label="Video"
                       size="small"
                       sx={{
-                        backgroundColor: 'rgba(45, 165, 142, 0.1)',
-                        color: '#2da58e',
-                        fontWeight: 500,
-                        fontSize: '0.7rem',
-                        height: 24
+                        backgroundColor: '#ef4444',
+                        color: 'white',
+                        fontWeight: 'bold'
                       }}
                     />
-                  ))}
-                  {exercise.muscleGroups.length > 3 && (
+                  )}
+                  {exercise.isFeatured && (
                     <Chip
-                      label={`+${exercise.muscleGroups.length - 3}`}
+                      label="Featured"
                       size="small"
                       sx={{
-                        backgroundColor: 'rgba(45, 165, 142, 0.1)',
-                        color: '#2da58e',
-                        fontWeight: 500,
-                        fontSize: '0.7rem',
-                        height: 24
+                        backgroundColor: '#2da58e',
+                        color: 'white',
+                        fontWeight: 'bold'
                       }}
                     />
                   )}
                 </Box>
               </Box>
-            )}
-            
-            {/* Tags */}
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-              <Chip 
-                icon={TYPE_ICONS[exercise.type] || undefined}
-                label={exercise.type.charAt(0).toUpperCase() + exercise.type.slice(1)}
-                size="small"
-                sx={{ 
-                  backgroundColor: `${TYPE_COLORS[exercise.type]}15`,
-                  color: TYPE_COLORS[exercise.type],
-                  fontWeight: 'bold',
-                  border: `1px solid ${TYPE_COLORS[exercise.type]}30`
-                }}
-              />
-              <Chip 
-                label={exercise.difficulty.charAt(0).toUpperCase() + exercise.difficulty.slice(1)}
-                size="small"
-                sx={{ 
-                  backgroundColor: `${DIFFICULTY_COLORS[exercise.difficulty]}15`,
-                  color: DIFFICULTY_COLORS[exercise.difficulty],
-                  fontWeight: 'bold',
-                  border: `1px solid ${DIFFICULTY_COLORS[exercise.difficulty]}30`
-                }}
-              />
-            </Box>
-            
-            {/* Stats */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              {exercise.caloriesPerMinute && (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <CaloriesIcon sx={{ fontSize: 16, color: '#f59e0b' }} />
-                  <Typography variant="caption" color="text.secondary">
-                    {exercise.caloriesPerMinute} cal/min
-                  </Typography>
+              
+              <CardContent>
+                {/* Title */}
+                <Typography variant="h6" fontWeight="bold" gutterBottom>
+                  {exercise.name}
+                </Typography>
+                
+                {/* Description */}
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary" 
+                  sx={{ 
+                    mb: 2,
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden'
+                  }}
+                >
+                  {exercise.description}
+                </Typography>
+
+                {/* Muscle Groups */}
+                {exercise.muscleGroups && exercise.muscleGroups.length > 0 && (
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 'bold', mb: 0.5, display: 'block' }}>
+                      Target Muscles:
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {exercise.muscleGroups.slice(0, 3).map((muscle, idx) => (
+                        <Chip
+                          key={idx}
+                          label={muscle.charAt(0).toUpperCase() + muscle.slice(1)}
+                          size="small"
+                          sx={{
+                            backgroundColor: 'rgba(45, 165, 142, 0.1)',
+                            color: '#2da58e',
+                            fontWeight: 500,
+                            fontSize: '0.7rem',
+                            height: 24
+                          }}
+                        />
+                      ))}
+                      {exercise.muscleGroups.length > 3 && (
+                        <Chip
+                          label={`+${exercise.muscleGroups.length - 3}`}
+                          size="small"
+                          sx={{
+                            backgroundColor: 'rgba(45, 165, 142, 0.1)',
+                            color: '#2da58e',
+                            fontWeight: 500,
+                            fontSize: '0.7rem',
+                            height: 24
+                          }}
+                        />
+                      )}
+                    </Box>
+                  </Box>
+                )}
+                
+                {/* Tags */}
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+                  <Chip 
+                    icon={TYPE_ICONS[exercise.type] || undefined}
+                    label={exercise.type.charAt(0).toUpperCase() + exercise.type.slice(1)}
+                    size="small"
+                    sx={{ 
+                      backgroundColor: `${TYPE_COLORS[exercise.type]}15`,
+                      color: TYPE_COLORS[exercise.type],
+                      fontWeight: 'bold',
+                      border: `1px solid ${TYPE_COLORS[exercise.type]}30`
+                    }}
+                  />
+                  <Chip 
+                    label={exercise.difficulty.charAt(0).toUpperCase() + exercise.difficulty.slice(1)}
+                    size="small"
+                    sx={{ 
+                      backgroundColor: `${DIFFICULTY_COLORS[exercise.difficulty]}15`,
+                      color: DIFFICULTY_COLORS[exercise.difficulty],
+                      fontWeight: 'bold',
+                      border: `1px solid ${DIFFICULTY_COLORS[exercise.difficulty]}30`
+                    }}
+                  />
                 </Box>
-              )}
-              {exercise.muscleGroups && exercise.muscleGroups.length > 0 && (
-                <>
-                  <Typography variant="caption" color="text.secondary">•</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {exercise.muscleGroups.length} muscle groups
-                  </Typography>
-                </>
-              )}
-            </Box>
-          </CardContent>
-        </Card>
-      </Link>
+                
+                {/* Stats */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  {exercise.caloriesPerMinute && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <CaloriesIcon sx={{ fontSize: 16, color: '#f59e0b' }} />
+                      <Typography variant="caption" color="text.secondary">
+                        {exercise.caloriesPerMinute} cal/min
+                      </Typography>
+                    </Box>
+                  )}
+                  {exercise.muscleGroups && exercise.muscleGroups.length > 0 && (
+                    <>
+                      <Typography variant="caption" color="text.secondary">•</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {exercise.muscleGroups.length} muscle groups
+                      </Typography>
+                    </>
+                  )}
+                </Box>
+              </CardContent>
+            </Card>
+          </Link>
+        </Box>
+      </Tooltip>
     </Fade>
   );
 }

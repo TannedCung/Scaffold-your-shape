@@ -36,6 +36,7 @@ import {
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import MainLayout from '@/components/layout/MainLayout';
+import MuscleDiagram from '@/components/workout/MuscleDiagram';
 import { Exercise } from '@/types';
 
 const TYPE_COLORS = {
@@ -434,6 +435,37 @@ export default function ExerciseDetailPage() {
 
         {/* Sidebar */}
         <Grid item xs={12} md={4}>
+          {/* Muscle Visualization */}
+          {exercise.muscleGroups && exercise.muscleGroups.length > 0 && (
+            <Fade in timeout={750}>
+              <Card sx={{ borderRadius: '16px', mb: 3, bgcolor: '#f8fffe' }}>
+                <CardContent sx={{ p: 3 }}>
+                  <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ color: '#2da58e', textAlign: 'center' }}>
+                    Muscle Groups Targeted
+                  </Typography>
+                  <Divider sx={{ mb: 3 }} />
+                  <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                    <MuscleDiagram activeMuscles={exercise.muscleGroups} size="medium" />
+                  </Box>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'center' }}>
+                    {exercise.muscleGroups.map((muscle, idx) => (
+                      <Chip
+                        key={idx}
+                        label={muscle.charAt(0).toUpperCase() + muscle.slice(1)}
+                        size="small"
+                        sx={{
+                          backgroundColor: '#2da58e',
+                          color: 'white',
+                          fontWeight: 600,
+                        }}
+                      />
+                    ))}
+                  </Box>
+                </CardContent>
+              </Card>
+            </Fade>
+          )}
+
           {/* Equipment */}
           {exercise.equipmentRequired && exercise.equipmentRequired.length > 0 && (
             <Fade in timeout={800}>
@@ -461,32 +493,6 @@ export default function ExerciseDetailPage() {
             </Fade>
           )}
 
-          {/* Muscle Groups */}
-          {exercise.muscleGroups && exercise.muscleGroups.length > 0 && (
-            <Fade in timeout={1000}>
-              <Card sx={{ borderRadius: '16px', mb: 3 }}>
-                <CardContent sx={{ p: 3 }}>
-                  <Typography variant="h6" fontWeight="bold" gutterBottom>
-                    Muscle Groups
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                    {exercise.muscleGroups.map((muscle, index) => (
-                      <Chip 
-                        key={index}
-                        label={muscle.charAt(0).toUpperCase() + muscle.slice(1)}
-                        sx={{ 
-                          bgcolor: '#e0f7f3',
-                          color: '#2da58e',
-                          fontWeight: 'bold'
-                        }}
-                      />
-                    ))}
-                  </Box>
-                </CardContent>
-              </Card>
-            </Fade>
-          )}
 
           {/* Variations */}
           {exercise.variations && exercise.variations.length > 0 && (
