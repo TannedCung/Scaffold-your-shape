@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, IconButton, 
-  Typography, Avatar, Divider } from '@mui/material';
+  Typography, Avatar, Divider, Collapse } from '@mui/material';
 import { 
   DashboardOutlined as DashboardIcon,
   PeopleOutlined as ClubIcon,
@@ -10,6 +10,10 @@ import {
   PersonOutlined as ProfileIcon,
   FitnessCenterOutlined as FitnessIcon,
   SportsGymnasticsOutlined as WorkoutIcon,
+  FitnessCenterOutlined as ExercisesIcon,
+  CalendarMonthOutlined as PlansIcon,
+  ExpandLess as ExpandLessIcon,
+  ExpandMore as ExpandMoreIcon,
   Close as CloseIcon 
 } from '@mui/icons-material';
 import Link from 'next/link';
@@ -26,13 +30,18 @@ interface SidebarProps {
 export default function Sidebar({ isMobile, open, onClose, width = 280 }: SidebarProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const [workoutExpanded, setWorkoutExpanded] = useState(pathname?.startsWith('/workouts') || false);
   
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
-    { text: 'Workout', icon: <WorkoutIcon />, path: '/workouts/exercises' },
     { text: 'Club', icon: <ClubIcon />, path: '/club' },
     { text: 'Challenges', icon: <ChallengesIcon />, path: '/challenges' },
     { text: 'Profile', icon: <ProfileIcon />, path: '/profile' },
+  ];
+
+  const workoutSubItems = [
+    { text: 'Exercises', icon: <ExercisesIcon />, path: '/workouts/exercises' },
+    { text: 'Workout Plans', icon: <PlansIcon />, path: '/workouts/plans', disabled: true },
   ];
 
   const drawerContent = (
@@ -90,7 +99,7 @@ export default function Sidebar({ isMobile, open, onClose, width = 280 }: Sideba
         
         <List sx={{ flexGrow: 1, pt: 1 }}>
           {menuItems.map((item) => {
-            const isSelected = pathname === item.path || pathname?.startsWith(item.path.split('/')[1] === 'workouts' ? '/workouts' : item.path);
+            const isSelected = pathname === item.path || pathname?.startsWith(item.path);
             return (
               <ListItem key={item.text} disablePadding>
                 <Link href={item.path} passHref style={{ width: '100%', textDecoration: 'none', color: 'inherit' }}>
@@ -120,6 +129,90 @@ export default function Sidebar({ isMobile, open, onClose, width = 280 }: Sideba
               </ListItem>
             );
           })}
+
+          {/* Workout Menu with Submenu */}
+          <ListItem disablePadding>
+            <ListItemButton 
+              onClick={() => setWorkoutExpanded(!workoutExpanded)}
+              selected={pathname?.startsWith('/workouts')}
+              sx={{ 
+                borderRadius: '16px',
+                mx: 1,
+                '&.Mui-selected': {
+                  backgroundColor: 'rgba(45, 165, 142, 0.12)',
+                  color: '#2da58e',
+                  '&:hover': {
+                    backgroundColor: 'rgba(45, 165, 142, 0.18)',
+                  }
+                }
+              }}
+            >
+              <ListItemIcon sx={{ 
+                minWidth: 45,
+                color: pathname?.startsWith('/workouts') ? '#2da58e' : 'inherit'
+              }}>
+                <WorkoutIcon />
+              </ListItemIcon>
+              <ListItemText primary="Workout" />
+              {workoutExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            </ListItemButton>
+          </ListItem>
+
+          {/* Workout Submenu */}
+          <Collapse in={workoutExpanded} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              {workoutSubItems.map((subItem) => {
+                const isSelected = pathname === subItem.path || pathname?.startsWith(subItem.path);
+                return (
+                  <ListItem key={subItem.text} disablePadding>
+                    <Link 
+                      href={subItem.disabled ? '#' : subItem.path} 
+                      passHref 
+                      style={{ 
+                        width: '100%', 
+                        textDecoration: 'none', 
+                        color: 'inherit',
+                        pointerEvents: subItem.disabled ? 'none' : 'auto'
+                      }}
+                    >
+                      <ListItemButton 
+                        selected={isSelected}
+                        disabled={subItem.disabled}
+                        sx={{ 
+                          borderRadius: '16px',
+                          mx: 1,
+                          ml: 3,
+                          '&.Mui-selected': {
+                            backgroundColor: 'rgba(45, 165, 142, 0.12)',
+                            color: '#2da58e',
+                            '&:hover': {
+                              backgroundColor: 'rgba(45, 165, 142, 0.18)',
+                            }
+                          },
+                          '&.Mui-disabled': {
+                            opacity: 0.5
+                          }
+                        }}
+                      >
+                        <ListItemIcon sx={{ 
+                          minWidth: 40,
+                          color: isSelected ? '#2da58e' : 'inherit'
+                        }}>
+                          {subItem.icon}
+                        </ListItemIcon>
+                        <ListItemText 
+                          primary={subItem.text} 
+                          primaryTypographyProps={{
+                            fontSize: '0.9rem'
+                          }}
+                        />
+                      </ListItemButton>
+                    </Link>
+                  </ListItem>
+                );
+              })}
+            </List>
+          </Collapse>
         </List>
         
         <Box sx={{ p: 2 }}>
