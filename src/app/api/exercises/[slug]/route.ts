@@ -3,9 +3,9 @@ import { supabase } from '@/lib/supabase';
 import { mapExerciseDbToExercise, ExerciseDb } from '@/types';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 export async function GET(
@@ -13,7 +13,7 @@ export async function GET(
   { params }: RouteParams
 ) {
   try {
-    const { slug } = params;
+    const { slug } = await params;
     
     const { data, error } = await supabase
       .from('exercises')
