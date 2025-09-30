@@ -19,7 +19,15 @@ import {
   Fade,
   Skeleton,
   Tooltip,
-  Zoom
+  Zoom,
+  Menu,
+  MenuItem,
+  Button,
+  FormControlLabel,
+  Checkbox,
+  ListItemIcon,
+  ListItemText,
+  Divider
 } from '@mui/material';
 import { 
   Search as SearchIcon,
@@ -27,7 +35,21 @@ import {
   DirectionsRunOutlined as CardioIcon,
   SelfImprovementOutlined as FlexibilityIcon,
   LocalFireDepartmentOutlined as CaloriesIcon,
-  PlayCircleOutline as VideoIcon
+  PlayCircleOutline as VideoIcon,
+  ExpandMore as ExpandMoreIcon,
+  FilterList as FilterIcon,
+  // Muscle group icons - fitness-focused and anatomically clear
+  FavoriteBorderOutlined as ChestIcon,           // Heart/chest cavity
+  AirlineSeatReclineExtraOutlined as BackIcon,  // Reclined posture showing back
+  OpenInFullOutlined as ShouldersIcon,           // Expand/width representing shoulders
+  SportsMmaOutlined as ArmsIcon,                 // MMA/fighting representing arm strength
+  FilterCenterFocusOutlined as CoreIcon,         // Center focus for core/abs
+  DirectionsRunOutlined as LegsIcon,             // Running figure for legs
+  AccessibilityOutlined as FullBodyIcon,         // Full human figure
+  // Difficulty icons
+  Stars as BeginnerIcon,
+  TrendingUp as IntermediateIcon,
+  Whatshot as AdvancedIcon
 } from '@mui/icons-material';
 import Link from 'next/link';
 import MainLayout from '@/components/layout/MainLayout';
@@ -52,6 +74,16 @@ const DIFFICULTY_COLORS = {
   advanced: '#ef4444',
 };
 
+const MUSCLE_GROUPS = [
+  { id: 'chest', label: 'Chest', icon: <ChestIcon />, keywords: ['chest', 'pectorals', 'upper-chest', 'mid-chest', 'lower-chest'] },
+  { id: 'back', label: 'Back', icon: <BackIcon />, keywords: ['back', 'lats', 'trapezius', 'rhomboids', 'erector-spinae', 'upper-back'] },
+  { id: 'shoulders', label: 'Shoulders', icon: <ShouldersIcon />, keywords: ['shoulders', 'deltoid', 'anterior-deltoid', 'lateral-deltoid', 'posterior-deltoid'] },
+  { id: 'arms', label: 'Arms', icon: <ArmsIcon />, keywords: ['arms', 'biceps', 'triceps', 'forearms', 'brachialis'] },
+  { id: 'core', label: 'Core', icon: <CoreIcon />, keywords: ['core', 'abs', 'obliques', 'abdominals', 'rectus-abdominis'] },
+  { id: 'legs', label: 'Legs', icon: <LegsIcon />, keywords: ['legs', 'quadriceps', 'hamstrings', 'glutes', 'calves', 'quads'] },
+  { id: 'full-body', label: 'Full Body', icon: <FullBodyIcon />, keywords: ['full-body', 'full body', 'cardiovascular'] },
+];
+
 export default function ExercisesPage() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,6 +91,8 @@ export default function ExercisesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<ExerciseType | 'all'>('all');
   const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
+  const [muscleFilter, setMuscleFilter] = useState<string[]>([]);
+  const [muscleMenuAnchor, setMuscleMenuAnchor] = useState<null | HTMLElement>(null);
   const [hoveredExercise, setHoveredExercise] = useState<string | null>(null);
 
   useEffect(() => {
@@ -89,10 +123,37 @@ export default function ExercisesPage() {
     }
   };
 
-  const filteredExercises = exercises.filter((exercise) =>
-    exercise.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    exercise.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleMuscleToggle = (muscleId: string) => {
+    setMuscleFilter(prev =>
+      prev.includes(muscleId)
+        ? prev.filter(id => id !== muscleId)
+        : [...prev, muscleId]
+    );
+  };
+
+  const handleClearMuscleFilter = () => {
+    setMuscleFilter([]);
+  };
+
+  const filteredExercises = exercises.filter((exercise) => {
+    // Text search
+    const matchesSearch = exercise.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      exercise.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Muscle filter
+    const matchesMuscle = muscleFilter.length === 0 || muscleFilter.some(muscleId => {
+      const muscleGroup = MUSCLE_GROUPS.find(g => g.id === muscleId);
+      if (!muscleGroup) return false;
+      
+      return exercise.muscleGroups.some(exMuscle =>
+        muscleGroup.keywords.some(keyword =>
+          exMuscle.toLowerCase().includes(keyword.toLowerCase())
+        )
+      );
+    });
+    
+    return matchesSearch && matchesMuscle;
+  });
 
   const featuredExercises = filteredExercises.filter(ex => ex.isFeatured);
   const regularExercises = filteredExercises.filter(ex => !ex.isFeatured);
@@ -112,8 +173,9 @@ export default function ExercisesPage() {
 
       {/* Search and Filters */}
       <Box sx={{ mb: 4 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={4}>
+        <Grid container spacing={2}>
+          {/* Search Bar */}
+          <Grid item xs={12} md={6}>
             <TextField
               fullWidth
               placeholder="Search exercises..."
@@ -122,19 +184,109 @@ export default function ExercisesPage() {
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon />
+                    <SearchIcon sx={{ color: '#2da58e' }} />
                   </InputAdornment>
                 ),
               }}
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  borderRadius: '12px',
+                  borderRadius: '16px',
+                  '&:hover fieldset': {
+                    borderColor: '#2da58e',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#2da58e',
+                  }
                 }
               }}
             />
           </Grid>
-          
-          <Grid item xs={12} md={4}>
+
+          {/* Muscle Target Filter */}
+          <Grid item xs={12} md={6}>
+            <Button
+              fullWidth
+              variant="outlined"
+              onClick={(e) => setMuscleMenuAnchor(e.currentTarget)}
+              endIcon={<ExpandMoreIcon />}
+              startIcon={<FilterIcon />}
+              sx={{
+                height: '56px',
+                borderRadius: '16px',
+                justifyContent: 'space-between',
+                borderColor: muscleFilter.length > 0 ? '#2da58e' : 'rgba(0, 0, 0, 0.23)',
+                color: muscleFilter.length > 0 ? '#2da58e' : 'inherit',
+                backgroundColor: muscleFilter.length > 0 ? 'rgba(45, 165, 142, 0.04)' : 'transparent',
+                '&:hover': {
+                  borderColor: '#2da58e',
+                  backgroundColor: 'rgba(45, 165, 142, 0.08)',
+                }
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography>
+                  Target Muscles
+                  {muscleFilter.length > 0 && ` (${muscleFilter.length})`}
+                </Typography>
+              </Box>
+            </Button>
+            <Menu
+              anchorEl={muscleMenuAnchor}
+              open={Boolean(muscleMenuAnchor)}
+              onClose={() => setMuscleMenuAnchor(null)}
+              PaperProps={{
+                sx: {
+                  borderRadius: '12px',
+                  mt: 1,
+                  minWidth: 250,
+                }
+              }}
+            >
+              {MUSCLE_GROUPS.map((muscle) => (
+                <MenuItem
+                  key={muscle.id}
+                  onClick={() => handleMuscleToggle(muscle.id)}
+                  sx={{
+                    py: 1.5,
+                    '&:hover': {
+                      backgroundColor: 'rgba(45, 165, 142, 0.08)',
+                    }
+                  }}
+                >
+                  <Checkbox
+                    checked={muscleFilter.includes(muscle.id)}
+                    sx={{
+                      color: '#2da58e',
+                      '&.Mui-checked': {
+                        color: '#2da58e',
+                      }
+                    }}
+                  />
+                  <ListItemIcon sx={{ color: '#2da58e', minWidth: 40 }}>
+                    {muscle.icon}
+                  </ListItemIcon>
+                  <ListItemText primary={muscle.label} />
+                </MenuItem>
+              ))}
+              {muscleFilter.length > 0 && (
+                <>
+                  <Divider />
+                  <MenuItem
+                    onClick={() => {
+                      handleClearMuscleFilter();
+                      setMuscleMenuAnchor(null);
+                    }}
+                    sx={{ justifyContent: 'center', color: '#ef4444' }}
+                  >
+                    Clear All
+                  </MenuItem>
+                </>
+              )}
+            </Menu>
+          </Grid>
+
+          {/* Type Filter */}
+          <Grid item xs={12} md={6}>
             <ToggleButtonGroup
               value={typeFilter}
               exclusive
@@ -143,21 +295,43 @@ export default function ExercisesPage() {
               sx={{
                 '& .MuiToggleButton-root': {
                   borderRadius: '12px',
+                  py: 1.5,
                   '&.Mui-selected': {
                     backgroundColor: 'rgba(45, 165, 142, 0.12)',
                     color: '#2da58e',
+                    fontWeight: 600,
                   }
                 }
               }}
             >
-              <ToggleButton value="all">All</ToggleButton>
-              <ToggleButton value="cardio">Cardio</ToggleButton>
-              <ToggleButton value="strength">Strength</ToggleButton>
-              <ToggleButton value="flexibility">Flexibility</ToggleButton>
+              <ToggleButton value="all">
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  All Types
+                </Box>
+              </ToggleButton>
+              <ToggleButton value="cardio">
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <CardioIcon fontSize="small" />
+                  Cardio
+                </Box>
+              </ToggleButton>
+              <ToggleButton value="strength">
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <StrengthIcon fontSize="small" />
+                  Strength
+                </Box>
+              </ToggleButton>
+              <ToggleButton value="flexibility">
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <FlexibilityIcon fontSize="small" />
+                  Flexibility
+                </Box>
+              </ToggleButton>
             </ToggleButtonGroup>
           </Grid>
-          
-          <Grid item xs={12} md={4}>
+
+          {/* Difficulty Filter */}
+          <Grid item xs={12} md={6}>
             <ToggleButtonGroup
               value={difficultyFilter}
               exclusive
@@ -166,20 +340,74 @@ export default function ExercisesPage() {
               sx={{
                 '& .MuiToggleButton-root': {
                   borderRadius: '12px',
+                  py: 1.5,
                   '&.Mui-selected': {
                     backgroundColor: 'rgba(45, 165, 142, 0.12)',
                     color: '#2da58e',
+                    fontWeight: 600,
                   }
                 }
               }}
             >
-              <ToggleButton value="all">All Levels</ToggleButton>
-              <ToggleButton value="beginner">Beginner</ToggleButton>
-              <ToggleButton value="intermediate">Intermediate</ToggleButton>
-              <ToggleButton value="advanced">Advanced</ToggleButton>
+              <ToggleButton value="all">
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  All Levels
+                </Box>
+              </ToggleButton>
+              <ToggleButton value="beginner">
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <BeginnerIcon fontSize="small" />
+                  Beginner
+                </Box>
+              </ToggleButton>
+              <ToggleButton value="intermediate">
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <IntermediateIcon fontSize="small" />
+                  Intermediate
+                </Box>
+              </ToggleButton>
+              <ToggleButton value="advanced">
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <AdvancedIcon fontSize="small" />
+                  Advanced
+                </Box>
+              </ToggleButton>
             </ToggleButtonGroup>
           </Grid>
         </Grid>
+
+        {/* Active Filters Chips */}
+        {muscleFilter.length > 0 && (
+          <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
+              Filtering by:
+            </Typography>
+            {muscleFilter.map(muscleId => {
+              const muscle = MUSCLE_GROUPS.find(g => g.id === muscleId);
+              return muscle ? (
+                <Chip
+                  key={muscleId}
+                  label={muscle.label}
+                  icon={muscle.icon}
+                  onDelete={() => handleMuscleToggle(muscleId)}
+                  sx={{
+                    backgroundColor: 'rgba(45, 165, 142, 0.12)',
+                    color: '#2da58e',
+                    '& .MuiChip-icon': {
+                      color: '#2da58e',
+                    },
+                    '& .MuiChip-deleteIcon': {
+                      color: '#2da58e',
+                      '&:hover': {
+                        color: '#238f7a',
+                      }
+                    }
+                  }}
+                />
+              ) : null;
+            })}
+          </Box>
+        )}
       </Box>
 
       {/* Loading State */}
