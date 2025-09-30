@@ -34,38 +34,97 @@ export function mapUserDbToUser(db: UserDb): User {
 
 // Exercise types
 export type ExerciseType = 'strength' | 'cardio' | 'flexibility' | 'balance';
+export type ExerciseCategory = 'treadmill' | 'cycling' | 'rowing' | 'squats' | 'bench_press' | 'deadlifts' | 'stretching' | 'mobility';
+export type ExerciseDifficulty = 'beginner' | 'intermediate' | 'advanced';
 export type ExerciseUnit = 'reps' | 'meters' | 'seconds' | 'minutes' | 'hours';
 
 // DB shape for Exercise (snake_case)
 export interface ExerciseDb {
   id: string;
   name: string;
+  slug: string;
   type: ExerciseType;
-  unit: ExerciseUnit;
+  category: ExerciseCategory;
+  difficulty: ExerciseDifficulty;
   muscle_groups: string[];
+  equipment_required: string[];
   description?: string | null;
+  instructions: string[];
+  benefits?: string[] | null;
+  tips?: string[] | null;
+  common_mistakes?: string[] | null;
+  variations?: string[] | null;
   image_url?: string | null;
+  video_url?: string | null;
+  animation_url?: string | null;
+  default_sets?: number | null;
+  default_reps?: number | null;
+  default_duration?: number | null;
+  calories_per_minute?: number | null;
+  is_featured: boolean;
+  is_published: boolean;
+  view_count: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Exercise {
   id: string;
   name: string;
+  slug: string;
   type: ExerciseType;
-  unit: ExerciseUnit;
+  category: ExerciseCategory;
+  difficulty: ExerciseDifficulty;
   muscleGroups: string[];
+  equipmentRequired: string[];
   description?: string;
+  instructions: string[];
+  benefits?: string[];
+  tips?: string[];
+  commonMistakes?: string[];
+  variations?: string[];
   imageUrl?: string;
+  videoUrl?: string;
+  animationUrl?: string;
+  defaultSets?: number;
+  defaultReps?: number;
+  defaultDuration?: number;
+  caloriesPerMinute?: number;
+  isFeatured: boolean;
+  isPublished: boolean;
+  viewCount: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export function mapExerciseDbToExercise(db: ExerciseDb): Exercise {
   return {
     id: db.id,
     name: db.name,
+    slug: db.slug,
     type: db.type,
-    unit: db.unit,
+    category: db.category,
+    difficulty: db.difficulty,
     muscleGroups: db.muscle_groups,
+    equipmentRequired: db.equipment_required,
     description: db.description ?? undefined,
+    instructions: db.instructions,
+    benefits: db.benefits ?? undefined,
+    tips: db.tips ?? undefined,
+    commonMistakes: db.common_mistakes ?? undefined,
+    variations: db.variations ?? undefined,
     imageUrl: db.image_url ?? undefined,
+    videoUrl: db.video_url ?? undefined,
+    animationUrl: db.animation_url ?? undefined,
+    defaultSets: db.default_sets ?? undefined,
+    defaultReps: db.default_reps ?? undefined,
+    defaultDuration: db.default_duration ?? undefined,
+    caloriesPerMinute: db.calories_per_minute ?? undefined,
+    isFeatured: db.is_featured,
+    isPublished: db.is_published,
+    viewCount: db.view_count,
+    createdAt: db.created_at,
+    updatedAt: db.updated_at,
   };
 }
 

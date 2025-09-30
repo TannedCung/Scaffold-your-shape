@@ -9,6 +9,7 @@ import {
   EmojiEventsOutlined as ChallengesIcon,
   PersonOutlined as ProfileIcon,
   FitnessCenterOutlined as FitnessIcon,
+  SportsGymnasticsOutlined as WorkoutIcon,
   Close as CloseIcon 
 } from '@mui/icons-material';
 import Link from 'next/link';
@@ -28,6 +29,7 @@ export default function Sidebar({ isMobile, open, onClose, width = 280 }: Sideba
   
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
+    { text: 'Workout', icon: <WorkoutIcon />, path: '/workouts/exercises' },
     { text: 'Club', icon: <ClubIcon />, path: '/club' },
     { text: 'Challenges', icon: <ChallengesIcon />, path: '/challenges' },
     { text: 'Profile', icon: <ProfileIcon />, path: '/profile' },
@@ -87,34 +89,37 @@ export default function Sidebar({ isMobile, open, onClose, width = 280 }: Sideba
         <Divider />
         
         <List sx={{ flexGrow: 1, pt: 1 }}>
-          {menuItems.map((item) => (
-            <ListItem key={item.text} disablePadding>
-              <Link href={item.path} passHref style={{ width: '100%', textDecoration: 'none', color: 'inherit' }}>
-                <ListItemButton 
-                  selected={pathname === item.path}
-                  sx={{ 
-                    borderRadius: '16px',
-                    mx: 1,
-                    '&.Mui-selected': {
-                      backgroundColor: 'rgba(45, 165, 142, 0.12)',
-                      color: '#2da58e',
-                      '&:hover': {
-                        backgroundColor: 'rgba(45, 165, 142, 0.18)',
+          {menuItems.map((item) => {
+            const isSelected = pathname === item.path || pathname?.startsWith(item.path.split('/')[1] === 'workouts' ? '/workouts' : item.path);
+            return (
+              <ListItem key={item.text} disablePadding>
+                <Link href={item.path} passHref style={{ width: '100%', textDecoration: 'none', color: 'inherit' }}>
+                  <ListItemButton 
+                    selected={isSelected}
+                    sx={{ 
+                      borderRadius: '16px',
+                      mx: 1,
+                      '&.Mui-selected': {
+                        backgroundColor: 'rgba(45, 165, 142, 0.12)',
+                        color: '#2da58e',
+                        '&:hover': {
+                          backgroundColor: 'rgba(45, 165, 142, 0.18)',
+                        }
                       }
-                    }
-                  }}
-                >
-                  <ListItemIcon sx={{ 
-                    minWidth: 45,
-                    color: pathname === item.path ? '#2da58e' : 'inherit'
-                  }}>
-                    {item.icon}
-                  </ListItemIcon>
-                  <ListItemText primary={item.text} />
-                </ListItemButton>
-              </Link>
-            </ListItem>
-          ))}
+                    }}
+                  >
+                    <ListItemIcon sx={{ 
+                      minWidth: 45,
+                      color: isSelected ? '#2da58e' : 'inherit'
+                    }}>
+                      {item.icon}
+                    </ListItemIcon>
+                    <ListItemText primary={item.text} />
+                  </ListItemButton>
+                </Link>
+              </ListItem>
+            );
+          })}
         </List>
         
         <Box sx={{ p: 2 }}>

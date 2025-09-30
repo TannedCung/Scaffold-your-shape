@@ -47,7 +47,7 @@ const authOptions: NextAuthOptions = {
             .from('profiles')
             .select('*')
             .eq('id', user.id)
-            .single();
+            .maybeSingle();
 
           return {
             id: user.id,
@@ -83,7 +83,7 @@ const authOptions: NextAuthOptions = {
           .from('profiles')
           .select('*')
           .eq('id', token.id)
-          .single();
+          .maybeSingle();
 
         if (profile) {
           token.profile = profile;
