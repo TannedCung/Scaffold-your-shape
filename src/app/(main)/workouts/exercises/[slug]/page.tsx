@@ -2,10 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  Container, 
   Typography, 
   Box, 
-  Grid, 
   Card, 
   CardContent,
   CardMedia,
@@ -15,40 +13,42 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  Alert,
-  CircularProgress,
   Breadcrumbs,
-  Paper,
   Skeleton,
-  Fade
+  Stack,
+  Grid
 } from '@mui/material';
 import { 
   CheckCircleOutline as CheckIcon,
   WarningAmberOutlined as WarningIcon,
   TipsAndUpdatesOutlined as TipIcon,
   FitnessCenterOutlined as EquipmentIcon,
-  LocalFireDepartmentOutlined as CaloriesIcon,
   TimerOutlined as TimerIcon,
   RepeatOutlined as RepsIcon,
-  NavigateNext as NavigateNextIcon,
-  FavoriteBorderOutlined as BenefitIcon
+  NavigateNext as NavigateNextIcon
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import MainLayout from '@/components/layout/MainLayout';
 import MuscleDiagram3D from '@/components/workout/MuscleDiagram3DWithModel';
 import { Exercise } from '@/types';
+import { 
+  DetailPageLayout,
+  DetailPageHeader,
+  DetailPageContent 
+} from '@/components/common/DetailPageLayout';
 
 const TYPE_COLORS = {
   strength: '#2da58e',
-  cardio: '#f59e0b',
-  flexibility: '#8b5cf6',
+  cardio: '#4a90a4',
+  flexibility: '#6b8e7f',
+  balance: '#5a8a72'
 };
 
 const DIFFICULTY_COLORS = {
-  beginner: '#10b981',
-  intermediate: '#f59e0b',
-  advanced: '#ef4444',
+  beginner: '#2da58e',
+  intermediate: '#4a90a4',
+  advanced: '#6b8e7f',
 };
 
 // Helper function to extract YouTube video ID from URL
@@ -99,430 +99,335 @@ export default function ExerciseDetailPage() {
     }
   };
 
-  if (loading) {
+  if (loading || error || !exercise) {
     return (
       <MainLayout>
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-          <Skeleton variant="text" width={200} height={40} sx={{ mb: 2 }} />
-          <Skeleton variant="rectangular" height={400} sx={{ borderRadius: '16px', mb: 3 }} />
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={8}>
-              <Skeleton variant="rectangular" height={300} sx={{ borderRadius: '16px' }} />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Skeleton variant="rectangular" height={300} sx={{ borderRadius: '16px' }} />
-            </Grid>
-          </Grid>
-        </Container>
-      </MainLayout>
-    );
-  }
-
-  if (error || !exercise) {
-    return (
-      <MainLayout>
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-          <Alert severity="error" sx={{ borderRadius: '12px' }}>
-            {error || 'Exercise not found'}
-          </Alert>
-        </Container>
+        <DetailPageLayout loading={loading} error={error || (!exercise ? 'Exercise not found' : null)}>
+          <></>
+        </DetailPageLayout>
       </MainLayout>
     );
   }
 
   return (
     <MainLayout>
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-      {/* Breadcrumbs */}
-      <Breadcrumbs 
-        separator={<NavigateNextIcon fontSize="small" />} 
-        sx={{ mb: 3 }}
-      >
-        <Link href="/workouts/exercises" style={{ textDecoration: 'none', color: '#2da58e' }}>
-          <Typography color="text.primary">Exercises</Typography>
-        </Link>
-        <Typography color="text.secondary">{exercise.name}</Typography>
-      </Breadcrumbs>
+      <DetailPageLayout maxWidth="xl">
+        {/* Breadcrumbs */}
+        <Breadcrumbs 
+          separator={<NavigateNextIcon fontSize="small" />} 
+          sx={{ mb: 2 }}
+        >
+          <Link href="/workouts/exercises" style={{ textDecoration: 'none' }}>
+            <Typography variant="body2" color="text.secondary" sx={{ '&:hover': { color: '#2da58e' } }}>
+              Exercises
+            </Typography>
+          </Link>
+          <Typography variant="body2" color="text.primary" fontWeight={500}>
+            {exercise.name}
+          </Typography>
+        </Breadcrumbs>
 
-      {/* Hero Section */}
-      <Fade in timeout={500}>
-        <Card sx={{ borderRadius: '20px', mb: 4, overflow: 'hidden' }}>
-          <Grid container>
-            <Grid item xs={12} md={6}>
-              <Box sx={{ position: 'relative', height: { xs: 300, md: 450 }, bgcolor: '#e0f7f3' }}>
-                {!imageLoaded && (
-                  <Skeleton 
-                    variant="rectangular" 
-                    width="100%" 
-                    height="100%" 
-                    animation="wave"
-                  />
-                )}
-                <CardMedia
-                  component="img"
-                  image={exercise.imageUrl || '/images/workout-club.jpg'}
-                  alt={exercise.name}
-                  onLoad={() => setImageLoaded(true)}
-                  sx={{ 
-                    display: imageLoaded ? 'block' : 'none',
-                    height: '100%',
-                    objectFit: 'cover'
-                  }}
-                />
-                {exercise.isFeatured && (
-                  <Chip
-                    label="Featured"
-                    size="small"
-                    sx={{
-                      position: 'absolute',
-                      top: 16,
-                      right: 16,
-                      backgroundColor: '#2da58e',
-                      color: 'white',
-                      fontWeight: 'bold'
-                    }}
-                  />
-                )}
-              </Box>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <CardContent sx={{ p: { xs: 3, md: 4 }, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <Typography variant="h3" fontWeight="bold" gutterBottom>
-                  {exercise.name}
-                </Typography>
-                
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 3 }}>
-                  <Chip 
-                    label={exercise.type.charAt(0).toUpperCase() + exercise.type.slice(1)}
+        {/* Hero Header */}
+        <DetailPageHeader>
+          <Card sx={{ borderRadius: '12px', overflow: 'hidden', boxShadow: 1 }}>
+            <Grid container>
+              <Grid item xs={12} md={5}>
+                <Box sx={{ position: 'relative', height: { xs: 250, md: 350 } }}>
+                  {!imageLoaded && (
+                    <Skeleton 
+                      variant="rectangular" 
+                      width="100%" 
+                      height="100%" 
+                    />
+                  )}
+                  <CardMedia
+                    component="img"
+                    image={exercise.imageUrl || '/images/workout-club.jpg'}
+                    alt={exercise.name}
+                    onLoad={() => setImageLoaded(true)}
                     sx={{ 
-                      backgroundColor: `${TYPE_COLORS[exercise.type]}15`,
-                      color: TYPE_COLORS[exercise.type],
-                      fontWeight: 'bold',
-                      border: `1px solid ${TYPE_COLORS[exercise.type]}30`
+                      display: imageLoaded ? 'block' : 'none',
+                      height: '100%',
+                      objectFit: 'cover'
                     }}
-                  />
-                  <Chip 
-                    label={exercise.difficulty.charAt(0).toUpperCase() + exercise.difficulty.slice(1)}
-                    sx={{ 
-                      backgroundColor: `${DIFFICULTY_COLORS[exercise.difficulty]}15`,
-                      color: DIFFICULTY_COLORS[exercise.difficulty],
-                      fontWeight: 'bold',
-                      border: `1px solid ${DIFFICULTY_COLORS[exercise.difficulty]}30`
-                    }}
-                  />
-                  <Chip 
-                    label={exercise.category.replace('_', ' ').toUpperCase()}
-                    variant="outlined"
                   />
                 </Box>
-                
-                <Typography variant="body1" paragraph sx={{ flexGrow: 1 }}>
-                  {exercise.description}
-                </Typography>
-                
-                {/* Quick Stats */}
-                <Grid container spacing={2}>
-                  {exercise.caloriesPerMinute && (
-                    <Grid item xs={6} sm={4}>
-                      <Paper sx={{ p: 2, textAlign: 'center', borderRadius: '12px', bgcolor: '#fef3c7' }}>
-                        <CaloriesIcon sx={{ fontSize: 32, color: '#f59e0b', mb: 1 }} />
-                        <Typography variant="h6" fontWeight="bold" color="#f59e0b">
-                          {exercise.caloriesPerMinute}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          cal/min
-                        </Typography>
-                      </Paper>
-                    </Grid>
-                  )}
-                  {exercise.defaultDuration && (
-                    <Grid item xs={6} sm={4}>
-                      <Paper sx={{ p: 2, textAlign: 'center', borderRadius: '12px', bgcolor: '#e0f7f3' }}>
-                        <TimerIcon sx={{ fontSize: 32, color: '#2da58e', mb: 1 }} />
-                        <Typography variant="h6" fontWeight="bold" color="#2da58e">
-                          {Math.floor(exercise.defaultDuration / 60)}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          minutes
-                        </Typography>
-                      </Paper>
-                    </Grid>
-                  )}
-                  {exercise.defaultSets && exercise.defaultReps && (
-                    <>
-                      <Grid item xs={6} sm={4}>
-                        <Paper sx={{ p: 2, textAlign: 'center', borderRadius: '12px', bgcolor: '#e0f7f3' }}>
-                          <RepsIcon sx={{ fontSize: 32, color: '#2da58e', mb: 1 }} />
-                          <Typography variant="h6" fontWeight="bold" color="#2da58e">
-                            {exercise.defaultSets} × {exercise.defaultReps}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            sets × reps
-                          </Typography>
-                        </Paper>
-                      </Grid>
-                    </>
-                  )}
-                </Grid>
-              </CardContent>
-            </Grid>
-          </Grid>
-        </Card>
-      </Fade>
-
-      <Grid container spacing={3}>
-        {/* Main Content */}
-        <Grid item xs={12} md={8}>
-          {/* YouTube Video Tutorial */}
-          {exercise.youtubeUrl && (
-            <Fade in timeout={600}>
-              <Card sx={{ borderRadius: '16px', mb: 3 }}>
-                <CardContent sx={{ p: 3 }}>
-                  <Typography variant="h5" fontWeight="bold" gutterBottom sx={{ color: '#2da58e' }}>
-                    Video Tutorial
+              </Grid>
+              <Grid item xs={12} md={7}>
+                <CardContent sx={{ p: { xs: 3, md: 3 }, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                  <Typography variant="h4" fontWeight={600} gutterBottom color="text.primary">
+                    {exercise.name}
                   </Typography>
-                  <Divider sx={{ mb: 2 }} />
-                  <Box
-                    sx={{
-                      position: 'relative',
-                      paddingBottom: '56.25%', // 16:9 aspect ratio
-                      height: 0,
-                      overflow: 'hidden',
-                      borderRadius: '12px',
-                      bgcolor: '#000',
-                    }}
-                  >
-                    <iframe
-                      src={`https://www.youtube.com/embed/${getYouTubeVideoId(exercise.youtubeUrl)}`}
-                      title={`${exercise.name} Tutorial`}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        border: 'none',
+                  
+                  <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: 'wrap', gap: 1 }}>
+                    <Chip 
+                      label={exercise.type.charAt(0).toUpperCase() + exercise.type.slice(1)}
+                      size="small"
+                      sx={{ 
+                        backgroundColor: TYPE_COLORS[exercise.type],
+                        color: 'white',
+                        fontWeight: 500
                       }}
                     />
-                  </Box>
+                    <Chip 
+                      label={exercise.difficulty.charAt(0).toUpperCase() + exercise.difficulty.slice(1)}
+                      size="small"
+                      sx={{ 
+                        backgroundColor: DIFFICULTY_COLORS[exercise.difficulty],
+                        color: 'white',
+                        fontWeight: 500
+                      }}
+                    />
+                    {exercise.defaultDuration && (
+                      <Stack direction="row" spacing={0.5} alignItems="center">
+                        <TimerIcon sx={{ fontSize: 18, color: '#2da58e' }} />
+                        <Typography variant="body2" color="text.secondary">
+                          {Math.floor(exercise.defaultDuration / 60)} min
+                        </Typography>
+                      </Stack>
+                    )}
+                    {exercise.defaultSets && exercise.defaultReps && (
+                      <Stack direction="row" spacing={0.5} alignItems="center">
+                        <RepsIcon sx={{ fontSize: 18, color: '#2da58e' }} />
+                        <Typography variant="body2" color="text.secondary">
+                          {exercise.defaultSets} × {exercise.defaultReps}
+                        </Typography>
+                      </Stack>
+                    )}
+                  </Stack>
+                  
+                  {exercise.description && (
+                    <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+                      {exercise.description}
+                    </Typography>
+                  )}
                 </CardContent>
-              </Card>
-            </Fade>
-          )}
+              </Grid>
+            </Grid>
+          </Card>
+        </DetailPageHeader>
 
-          {/* Instructions */}
-          <Fade in timeout={700}>
-            <Card sx={{ borderRadius: '16px', mb: 3 }}>
+        <DetailPageContent
+          sidebar={
+            <Card sx={{ borderRadius: '8px', boxShadow: 1, width: '100%', height: 'fit-content' }}>
               <CardContent sx={{ p: 3 }}>
-                <Typography variant="h5" fontWeight="bold" gutterBottom sx={{ color: '#2da58e' }}>
-                  How to Perform
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-                <List>
-                  {exercise.instructions.map((instruction, index) => (
-                    <ListItem key={index} alignItems="flex-start">
-                      <ListItemIcon>
-                        <Box 
-                          sx={{ 
-                            width: 32, 
-                            height: 32, 
-                            borderRadius: '50%', 
-                            bgcolor: '#e0f7f3',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
+                {/* Muscle Groups */}
+                {exercise.muscleGroups && exercise.muscleGroups.length > 0 && (
+                  <Box sx={{ mb: exercise.equipmentRequired && exercise.equipmentRequired.length > 0 ? 3 : 0 }}>
+                    <Typography variant="h5" fontWeight={600} color="text.primary" sx={{ mb: 2 }}>
+                      Target Muscles
+                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                      <MuscleDiagram3D activeMuscles={exercise.muscleGroups} size="small" autoRotate={false} />
+                    </Box>
+                    <Box sx={{ 
+                      display: 'flex', 
+                      flexWrap: 'wrap', 
+                      gap: 0.75,
+                      justifyContent: 'flex-start'
+                    }}>
+                      {exercise.muscleGroups.map((muscle, idx) => (
+                        <Chip
+                          key={idx}
+                          label={muscle.charAt(0).toUpperCase() + muscle.slice(1)}
+                          size="small"
+                          sx={{
+                            backgroundColor: '#f0f9f7',
                             color: '#2da58e',
-                            fontWeight: 'bold'
+                            fontSize: '0.75rem',
+                            fontWeight: 500,
+                            border: '1px solid #e0f2f1',
+                            height: '24px'
                           }}
-                        >
-                          {index + 1}
-                        </Box>
-                      </ListItemIcon>
-                      <ListItemText 
-                        primary={instruction}
-                        primaryTypographyProps={{ variant: 'body1' }}
-                      />
-                    </ListItem>
-                  ))}
-                </List>
+                        />
+                      ))}
+                    </Box>
+                    {exercise.equipmentRequired && exercise.equipmentRequired.length > 0 && <Divider sx={{ mt: 3 }} />}
+                  </Box>
+                )}
+
+                {/* Equipment */}
+                {exercise.equipmentRequired && exercise.equipmentRequired.length > 0 && (
+                  <Box>
+                    <Stack direction="row" alignItems="center" spacing={0.75} sx={{ mb: 2 }}>
+                      <EquipmentIcon sx={{ fontSize: 20, color: '#2da58e' }} />
+                      <Typography variant="h6" fontWeight={600} color="text.primary">
+                        Equipment
+                      </Typography>
+                    </Stack>
+                    <Box sx={{ 
+                      display: 'flex', 
+                      flexWrap: 'wrap', 
+                      gap: 0.75,
+                      justifyContent: 'flex-start'
+                    }}>
+                      {exercise.equipmentRequired.map((equipment, index) => (
+                        <Chip 
+                          key={index}
+                          label={equipment.charAt(0).toUpperCase() + equipment.slice(1)}
+                          size="small"
+                          variant="outlined"
+                          sx={{ 
+                            borderColor: '#2da58e', 
+                            color: '#2da58e',
+                            fontSize: '0.75rem',
+                            fontWeight: 500,
+                            height: '24px'
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  </Box>
+                )}
               </CardContent>
             </Card>
-          </Fade>
-
-          {/* Benefits */}
-          {exercise.benefits && exercise.benefits.length > 0 && (
-            <Fade in timeout={900}>
-              <Card sx={{ borderRadius: '16px', mb: 3 }}>
-                <CardContent sx={{ p: 3 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <BenefitIcon sx={{ mr: 1, color: '#10b981' }} />
-                    <Typography variant="h5" fontWeight="bold" sx={{ color: '#10b981' }}>
-                      Benefits
+          }
+        >
+          <Card sx={{ borderRadius: '8px', boxShadow: 1, width: '100%', height: 'fit-content' }}>
+            <CardContent sx={{ p: 3 }}>
+                {/* Video Tutorial */}
+                {exercise.youtubeUrl && (
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="h5" fontWeight={600} color="text.primary" sx={{ mb: 2 }}>
+                      Video Tutorial
                     </Typography>
-                  </Box>
-                  <Divider sx={{ mb: 2 }} />
-                  <List>
-                    {exercise.benefits.map((benefit, index) => (
-                      <ListItem key={index}>
-                        <ListItemIcon>
-                          <CheckIcon sx={{ color: '#10b981' }} />
-                        </ListItemIcon>
-                        <ListItemText primary={benefit} />
-                      </ListItem>
-                    ))}
-                  </List>
-                </CardContent>
-              </Card>
-            </Fade>
-          )}
-
-          {/* Tips */}
-          {exercise.tips && exercise.tips.length > 0 && (
-            <Fade in timeout={1100}>
-              <Card sx={{ borderRadius: '16px', mb: 3, bgcolor: '#fffbeb' }}>
-                <CardContent sx={{ p: 3 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <TipIcon sx={{ mr: 1, color: '#f59e0b' }} />
-                    <Typography variant="h5" fontWeight="bold" sx={{ color: '#f59e0b' }}>
-                      Pro Tips
-                    </Typography>
-                  </Box>
-                  <Divider sx={{ mb: 2 }} />
-                  <List>
-                    {exercise.tips.map((tip, index) => (
-                      <ListItem key={index}>
-                        <ListItemIcon>
-                          <TipIcon sx={{ color: '#f59e0b' }} />
-                        </ListItemIcon>
-                        <ListItemText primary={tip} />
-                      </ListItem>
-                    ))}
-                  </List>
-                </CardContent>
-              </Card>
-            </Fade>
-          )}
-
-          {/* Common Mistakes */}
-          {exercise.commonMistakes && exercise.commonMistakes.length > 0 && (
-            <Fade in timeout={1300}>
-              <Card sx={{ borderRadius: '16px', mb: 3, bgcolor: '#fef2f2' }}>
-                <CardContent sx={{ p: 3 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <WarningIcon sx={{ mr: 1, color: '#ef4444' }} />
-                    <Typography variant="h5" fontWeight="bold" sx={{ color: '#ef4444' }}>
-                      Common Mistakes to Avoid
-                    </Typography>
-                  </Box>
-                  <Divider sx={{ mb: 2 }} />
-                  <List>
-                    {exercise.commonMistakes.map((mistake, index) => (
-                      <ListItem key={index}>
-                        <ListItemIcon>
-                          <WarningIcon sx={{ color: '#ef4444' }} />
-                        </ListItemIcon>
-                        <ListItemText primary={mistake} />
-                      </ListItem>
-                    ))}
-                  </List>
-                </CardContent>
-              </Card>
-            </Fade>
-          )}
-        </Grid>
-
-        {/* Sidebar */}
-        <Grid item xs={12} md={4}>
-          {/* Muscle Visualization */}
-          {exercise.muscleGroups && exercise.muscleGroups.length > 0 && (
-            <Fade in timeout={750}>
-              <Card sx={{ borderRadius: '16px', mb: 3, bgcolor: '#f8fffe' }}>
-                <CardContent sx={{ p: 3 }}>
-                  <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ color: '#2da58e', textAlign: 'center' }}>
-                    Muscle Groups Targeted
-                  </Typography>
-                  <Divider sx={{ mb: 3 }} />
-                  <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-                    <MuscleDiagram3D activeMuscles={exercise.muscleGroups} size="medium" autoRotate={true} />
-                  </Box>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'center' }}>
-                    {exercise.muscleGroups.map((muscle, idx) => (
-                      <Chip
-                        key={idx}
-                        label={muscle.charAt(0).toUpperCase() + muscle.slice(1)}
-                        size="small"
-                        sx={{
-                          backgroundColor: '#2da58e',
-                          color: 'white',
-                          fontWeight: 600,
+                    <Box
+                      sx={{
+                        position: 'relative',
+                        paddingBottom: '56.25%',
+                        height: 0,
+                        overflow: 'hidden',
+                        borderRadius: '6px',
+                        bgcolor: '#000',
+                      }}
+                    >
+                      <iframe
+                        src={`https://www.youtube.com/embed/${getYouTubeVideoId(exercise.youtubeUrl)}`}
+                        title={`${exercise.name} Tutorial`}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: '100%',
+                          border: 'none',
                         }}
                       />
-                    ))}
+                    </Box>
+                    <Divider sx={{ mt: 3 }} />
                   </Box>
-                </CardContent>
-              </Card>
-            </Fade>
-          )}
+                )}
 
-          {/* Equipment */}
-          {exercise.equipmentRequired && exercise.equipmentRequired.length > 0 && (
-            <Fade in timeout={800}>
-              <Card sx={{ borderRadius: '16px', mb: 3 }}>
-                <CardContent sx={{ p: 3 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <EquipmentIcon sx={{ mr: 1, color: '#2da58e' }} />
-                    <Typography variant="h6" fontWeight="bold">
-                      Equipment Needed
-                    </Typography>
-                  </Box>
-                  <Divider sx={{ mb: 2 }} />
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                    {exercise.equipmentRequired.map((equipment, index) => (
-                      <Chip 
-                        key={index}
-                        label={equipment.charAt(0).toUpperCase() + equipment.slice(1)}
-                        variant="outlined"
-                        sx={{ borderColor: '#2da58e', color: '#2da58e' }}
-                      />
-                    ))}
-                  </Box>
-                </CardContent>
-              </Card>
-            </Fade>
-          )}
-
-
-          {/* Variations */}
-          {exercise.variations && exercise.variations.length > 0 && (
-            <Fade in timeout={1200}>
-              <Card sx={{ borderRadius: '16px', mb: 3 }}>
-                <CardContent sx={{ p: 3 }}>
-                  <Typography variant="h6" fontWeight="bold" gutterBottom>
-                    Variations
+                {/* Instructions */}
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="h5" fontWeight={600} color="text.primary" sx={{ mb: 2 }}>
+                    Instructions
                   </Typography>
-                  <Divider sx={{ mb: 2 }} />
-                  <List dense>
-                    {exercise.variations.map((variation, index) => (
-                      <ListItem key={index}>
-                        <ListItemIcon>
-                          <CheckIcon sx={{ fontSize: 20, color: '#2da58e' }} />
+                  <List disablePadding>
+                    {exercise.instructions.map((instruction, index) => (
+                      <ListItem key={index} sx={{ px: 0, py: 0.75, alignItems: 'flex-start' }}>
+                        <ListItemIcon sx={{ minWidth: 32, mt: 0.5 }}>
+                          <Box 
+                            sx={{ 
+                              width: 24, 
+                              height: 24, 
+                              borderRadius: '50%', 
+                              bgcolor: '#2da58e',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: 'white',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              flexShrink: 0
+                            }}
+                          >
+                            {index + 1}
+                          </Box>
                         </ListItemIcon>
                         <ListItemText 
-                          primary={variation}
-                          primaryTypographyProps={{ variant: 'body2' }}
+                          primary={instruction}
+                          primaryTypographyProps={{ variant: 'body2', color: 'text.secondary', lineHeight: 1.5 }}
                         />
                       </ListItem>
                     ))}
                   </List>
-                </CardContent>
-              </Card>
-            </Fade>
-          )}
-        </Grid>
-      </Grid>
-      </Container>
+                  <Divider sx={{ mt: 2 }} />
+                </Box>
+
+                {/* Tips */}
+                {exercise.tips && exercise.tips.length > 0 && (
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="h6" fontWeight={600} color="text.primary" sx={{ mb: 1.5 }}>
+                      Tips
+                    </Typography>
+                    <List disablePadding>
+                      {exercise.tips.map((tip, index) => (
+                        <ListItem key={index} sx={{ px: 0, py: 0.5, alignItems: 'flex-start' }}>
+                          <ListItemIcon sx={{ minWidth: 24, mt: 0.5 }}>
+                            <TipIcon sx={{ fontSize: 16, color: '#4a90a4' }} />
+                          </ListItemIcon>
+                          <ListItemText 
+                            primary={tip}
+                            primaryTypographyProps={{ variant: 'body2', color: 'text.secondary', lineHeight: 1.5 }}
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+                    <Divider sx={{ mt: 2 }} />
+                  </Box>
+                )}
+
+                {/* Common Mistakes */}
+                {exercise.commonMistakes && exercise.commonMistakes.length > 0 && (
+                  <Box sx={{ mb: exercise.variations && exercise.variations.length > 0 ? 3 : 0 }}>
+                    <Typography variant="h6" fontWeight={600} color="text.primary" sx={{ mb: 1.5 }}>
+                      Common Mistakes
+                    </Typography>
+                    <List disablePadding>
+                      {exercise.commonMistakes.map((mistake, index) => (
+                        <ListItem key={index} sx={{ px: 0, py: 0.5, alignItems: 'flex-start' }}>
+                          <ListItemIcon sx={{ minWidth: 24, mt: 0.5 }}>
+                            <WarningIcon sx={{ fontSize: 16, color: '#6b8e7f' }} />
+                          </ListItemIcon>
+                          <ListItemText 
+                            primary={mistake}
+                            primaryTypographyProps={{ variant: 'body2', color: 'text.secondary', lineHeight: 1.5 }}
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+                    {exercise.variations && exercise.variations.length > 0 && <Divider sx={{ mt: 2 }} />}
+                  </Box>
+                )}
+
+                {/* Variations */}
+                {exercise.variations && exercise.variations.length > 0 && (
+                  <Box>
+                    <Typography variant="h6" fontWeight={600} color="text.primary" sx={{ mb: 1.5 }}>
+                      Variations
+                    </Typography>
+                    <List disablePadding>
+                      {exercise.variations.map((variation, index) => (
+                        <ListItem key={index} sx={{ px: 0, py: 0.5, alignItems: 'flex-start' }}>
+                          <ListItemIcon sx={{ minWidth: 24, mt: 0.5 }}>
+                            <CheckIcon sx={{ fontSize: 16, color: '#2da58e' }} />
+                          </ListItemIcon>
+                          <ListItemText 
+                            primary={variation}
+                            primaryTypographyProps={{ variant: 'body2', color: 'text.secondary', lineHeight: 1.5 }}
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Box>
+                )}
+              </CardContent>
+            </Card>
+        </DetailPageContent>
+      </DetailPageLayout>
     </MainLayout>
   );
 }
