@@ -37,19 +37,10 @@ import {
   DetailPageHeader,
   DetailPageContent 
 } from '@/components/common/DetailPageLayout';
-
-const TYPE_COLORS = {
-  strength: '#2da58e',
-  cardio: '#4a90a4',
-  flexibility: '#6b8e7f',
-  balance: '#5a8a72'
-};
-
-const DIFFICULTY_COLORS = {
-  beginner: '#2da58e',
-  intermediate: '#4a90a4',
-  advanced: '#6b8e7f',
-};
+import {
+  getExerciseTypeChipStyles,
+  getExerciseDifficultyChipStyles
+} from '@/constants/colors';
 
 // Helper function to extract YouTube video ID from URL
 function getYouTubeVideoId(url: string): string | null {
@@ -163,20 +154,12 @@ export default function ExerciseDetailPage() {
                     <Chip 
                       label={exercise.type.charAt(0).toUpperCase() + exercise.type.slice(1)}
                       size="small"
-                      sx={{ 
-                        backgroundColor: TYPE_COLORS[exercise.type],
-                        color: 'white',
-                        fontWeight: 500
-                      }}
+                      sx={getExerciseTypeChipStyles(exercise.type)}
                     />
                     <Chip 
                       label={exercise.difficulty.charAt(0).toUpperCase() + exercise.difficulty.slice(1)}
                       size="small"
-                      sx={{ 
-                        backgroundColor: DIFFICULTY_COLORS[exercise.difficulty],
-                        color: 'white',
-                        fontWeight: 500
-                      }}
+                      sx={getExerciseDifficultyChipStyles(exercise.difficulty)}
                     />
                     {exercise.defaultDuration && (
                       <Stack direction="row" spacing={0.5} alignItems="center">

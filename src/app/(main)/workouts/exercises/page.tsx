@@ -55,6 +55,10 @@ import Link from 'next/link';
 import MainLayout from '@/components/layout/MainLayout';
 import MuscleDiagram3D from '@/components/workout/MuscleDiagram3DWithModel';
 import { Exercise, ExerciseType } from '@/types';
+import {
+  getExerciseTypeChipStylesWithAlpha,
+  getExerciseDifficultyChipStylesWithAlpha
+} from '@/constants/colors';
 
 const TYPE_ICONS = {
   strength: <StrengthIcon />,
@@ -62,17 +66,6 @@ const TYPE_ICONS = {
   flexibility: <FlexibilityIcon />,
 };
 
-const TYPE_COLORS = {
-  strength: '#2da58e',
-  cardio: '#f59e0b',
-  flexibility: '#8b5cf6',
-};
-
-const DIFFICULTY_COLORS = {
-  beginner: '#10b981',
-  intermediate: '#f59e0b',
-  advanced: '#ef4444',
-};
 
 const MUSCLE_GROUPS = [
   { id: 'chest', label: 'Chest', icon: <ChestIcon />, keywords: ['chest', 'pectorals', 'upper-chest', 'mid-chest', 'lower-chest'] },
@@ -655,22 +648,12 @@ function ExerciseCard({ exercise }: ExerciseCardProps) {
                     icon={TYPE_ICONS[exercise.type] || undefined}
                     label={exercise.type.charAt(0).toUpperCase() + exercise.type.slice(1)}
                     size="small"
-                    sx={{ 
-                      backgroundColor: `${TYPE_COLORS[exercise.type]}15`,
-                      color: TYPE_COLORS[exercise.type],
-                      fontWeight: 'bold',
-                      border: `1px solid ${TYPE_COLORS[exercise.type]}30`
-                    }}
+                    sx={getExerciseTypeChipStylesWithAlpha(exercise.type)}
                   />
                   <Chip 
                     label={exercise.difficulty.charAt(0).toUpperCase() + exercise.difficulty.slice(1)}
                     size="small"
-                    sx={{ 
-                      backgroundColor: `${DIFFICULTY_COLORS[exercise.difficulty]}15`,
-                      color: DIFFICULTY_COLORS[exercise.difficulty],
-                      fontWeight: 'bold',
-                      border: `1px solid ${DIFFICULTY_COLORS[exercise.difficulty]}30`
-                    }}
+                    sx={getExerciseDifficultyChipStylesWithAlpha(exercise.difficulty)}
                   />
                 </Box>
                 
