@@ -168,7 +168,7 @@ export default function ExercisesPage() {
       <Box sx={{ mb: 4 }}>
         <Grid container spacing={2}>
           {/* Search Bar */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
               placeholder="Search exercises..."
@@ -196,7 +196,7 @@ export default function ExercisesPage() {
           </Grid>
 
           {/* Muscle Target Filter */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Button
               fullWidth
               variant="outlined"
@@ -279,7 +279,7 @@ export default function ExercisesPage() {
           </Grid>
 
           {/* Type Filter */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <ToggleButtonGroup
               value={typeFilter}
               exclusive
@@ -324,7 +324,7 @@ export default function ExercisesPage() {
           </Grid>
 
           {/* Difficulty Filter */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <ToggleButtonGroup
               value={difficultyFilter}
               exclusive
@@ -407,7 +407,7 @@ export default function ExercisesPage() {
       {loading && (
         <Grid container spacing={3}>
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Grid item xs={12} sm={6} md={4} key={i}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={i}>
               <Card sx={{ borderRadius: '16px' }}>
                 <Skeleton variant="rectangular" height={200} />
                 <CardContent>
@@ -436,7 +436,7 @@ export default function ExercisesPage() {
           </Typography>
           <Grid container spacing={3}>
             {featuredExercises.map((exercise) => (
-              <Grid item xs={12} sm={6} md={4} key={exercise.id}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={exercise.id}>
                 <ExerciseCard exercise={exercise} />
               </Grid>
             ))}
@@ -454,7 +454,7 @@ export default function ExercisesPage() {
           )}
           <Grid container spacing={3}>
             {regularExercises.map((exercise) => (
-              <Grid item xs={12} sm={6} md={4} key={exercise.id}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={exercise.id}>
                 <ExerciseCard exercise={exercise} />
               </Grid>
             ))}

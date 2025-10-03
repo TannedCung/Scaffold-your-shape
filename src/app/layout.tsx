@@ -1,19 +1,8 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { NextAuthProvider } from "@/contexts/AuthProvider";
 import ThemeRegistry from "@/contexts/ThemeRegistry";
 import { SnackbarProvider } from "@/contexts/SnackbarProvider";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Scaffold Your Shape - Track Your Fitness Journey",
@@ -35,7 +24,7 @@ export default function RootLayout({
         <link rel="icon" href="/logo.ico" type="image/png" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className="antialiased"
       >
         <ThemeRegistry>
           <SnackbarProvider>

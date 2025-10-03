@@ -121,8 +121,8 @@ export default function ExerciseDetailPage() {
         {/* Hero Header */}
         <DetailPageHeader>
           <Card sx={{ borderRadius: '12px', overflow: 'hidden', boxShadow: 1 }}>
-            <Grid container>
-              <Grid item xs={12} md={5}>
+            <Grid container spacing={0}>
+              <Grid size={{ xs: 12, md: 5 }}>
                 <Box sx={{ position: 'relative', height: { xs: 250, md: 350 } }}>
                   {!imageLoaded && (
                     <Skeleton 
@@ -144,7 +144,7 @@ export default function ExerciseDetailPage() {
                   />
                 </Box>
               </Grid>
-              <Grid item xs={12} md={7}>
+              <Grid size={{ xs: 12, md: 7 }}>
                 <CardContent sx={{ p: { xs: 3, md: 3 }, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                   <Typography variant="h4" fontWeight={600} gutterBottom color="text.primary">
                     {exercise.name}
