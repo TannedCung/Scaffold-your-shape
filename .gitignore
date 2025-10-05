@@ -48,3 +48,6 @@ third-party/
 
 data/
 logs/
+
+# Temporary ignore those md files
+*.md
