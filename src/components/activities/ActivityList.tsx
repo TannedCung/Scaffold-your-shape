@@ -36,7 +36,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import { motion } from 'framer-motion';
 import ActivityEditDialog from './ActivityEditDialog';
 import { deleteActivity } from '@/services/activityService';
-import type { Activity, ActivityData } from '@/types';
+import type { Activity } from '@/types';
 import { SportIconMap, SportColorMap, SportType } from '@/types';
 import { useRouter } from 'next/navigation';
 import { useSnackbar } from '@/contexts/SnackbarProvider';
@@ -145,13 +145,13 @@ export default function ActivityList({
     );
     
     if (sportType && SportIconMap[sportType]) {
-      const Icon = SportIconMap[sportType];
-      return <Icon sx={{ color: SportColorMap[sportType] }} />;
+      const IconComponent = SportIconMap[sportType];
+      return React.createElement(IconComponent, { sx: { color: SportColorMap[sportType] } });
     }
     
     // Fallback to default icon
-    const DefaultIcon = SportIconMap[SportType.Workout];
-    return <DefaultIcon sx={{ color: SportColorMap[SportType.Workout] }} />;
+    const DefaultIconComponent = SportIconMap[SportType.Workout];
+    return React.createElement(DefaultIconComponent, { sx: { color: SportColorMap[SportType.Workout] } });
   };
 
   const getActivityColor = (type: string) => {
@@ -286,7 +286,7 @@ export default function ActivityList({
                   <CardContent>
                     <BatchSocialInteractions
                       activityId={activity.id}
-                      activity={activity as unknown as ActivityData}
+                      activity={activity}
                       currentUserId={user?.id}
                       socialData={activitySocialData}
                       onSocialUpdate={refetchSocialData}

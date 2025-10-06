@@ -248,13 +248,14 @@ export default function ActivityEditDialog({
               required
             >
               {activityTypes.map((option) => {
-                const Icon = SportIconMap[option.value as SportType];
-                const color = SportColorMap[option.value as SportType];
+                const sportType = option.value as SportType;
+                const IconComponent = SportIconMap[sportType];
+                const color = SportColorMap[sportType];
                 
                 return (
                   <MenuItem key={option.value} value={option.value}>
                     <ListItemIcon>
-                      <Icon sx={{ color }} />
+                      {IconComponent && React.createElement(IconComponent, { sx: { color: color || 'inherit' } })}
                     </ListItemIcon>
                     <ListItemText>{option.label}</ListItemText>
                   </MenuItem>

@@ -290,7 +290,7 @@ export default function CreateActivityDialog({
                   return (
                     <MenuItem key={type} value={type}>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <IconComponent sx={{ mr: 1, color: 'text.secondary' }} />
+                        {React.createElement(IconComponent, { sx: { mr: 1, color: 'text.secondary' } })}
                         {formatActivityType(type)}
                       </Box>
                     </MenuItem>

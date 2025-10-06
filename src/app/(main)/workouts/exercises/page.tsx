@@ -60,7 +60,7 @@ import {
   getExerciseDifficultyChipStylesWithAlpha
 } from '@/constants/colors';
 
-const TYPE_ICONS = {
+const TYPE_ICONS: Partial<Record<ExerciseType, React.ReactElement>> = {
   strength: <StrengthIcon />,
   cardio: <CardioIcon />,
   flexibility: <FlexibilityIcon />,
@@ -645,7 +645,7 @@ function ExerciseCard({ exercise }: ExerciseCardProps) {
                 {/* Tags */}
                 <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
                   <Chip 
-                    icon={TYPE_ICONS[exercise.type] || undefined}
+                    icon={TYPE_ICONS[exercise.type as keyof typeof TYPE_ICONS] || undefined}
                     label={exercise.type.charAt(0).toUpperCase() + exercise.type.slice(1)}
                     size="small"
                     sx={getExerciseTypeChipStylesWithAlpha(exercise.type)}

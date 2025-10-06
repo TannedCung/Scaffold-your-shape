@@ -141,3 +141,5 @@ export function useExerciseDetail(params: UseExerciseDetailParams): UseExerciseD
     refetch: fetchExercise,
   };
 }
+
+
