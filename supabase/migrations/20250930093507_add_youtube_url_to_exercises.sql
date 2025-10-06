@@ -11,3 +11,5 @@ UPDATE exercises SET youtube_url = 'https://www.youtube.com/watch?v=4q1l40S8Zqo'
 UPDATE exercises SET youtube_url = 'https://www.youtube.com/watch?v=ultWZbUMPL8' WHERE slug = 'barbell-squats';
 UPDATE exercises SET youtube_url = 'https://www.youtube.com/watch?v=rT7DgCr-3pg' WHERE slug = 'bench-press';
 UPDATE exercises SET youtube_url = 'https://www.youtube.com/watch?v=op9kVnSso6Q' WHERE slug = 'deadlifts';
+
+
