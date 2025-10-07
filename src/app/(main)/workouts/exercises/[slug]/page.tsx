@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Typography, 
   Box, 
@@ -59,13 +59,7 @@ export default function ExerciseDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
 
-  useEffect(() => {
-    if (slug) {
-      fetchExercise();
-    }
-  }, [slug]);
-
-  const fetchExercise = async () => {
+  const fetchExercise = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -88,7 +82,13 @@ export default function ExerciseDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [slug]);
+
+  useEffect(() => {
+    if (slug) {
+      fetchExercise();
+    }
+  }, [slug, fetchExercise]);
 
   if (loading || error || !exercise) {
     return (

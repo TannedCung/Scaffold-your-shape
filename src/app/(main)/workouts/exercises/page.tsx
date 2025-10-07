@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Container, 
   Typography, 
@@ -88,11 +88,7 @@ export default function ExercisesPage() {
   const [muscleMenuAnchor, setMuscleMenuAnchor] = useState<null | HTMLElement>(null);
   const [hoveredExercise, setHoveredExercise] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchExercises();
-  }, [typeFilter, difficultyFilter]);
-
-  const fetchExercises = async () => {
+  const fetchExercises = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -114,7 +110,11 @@ export default function ExercisesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [typeFilter, difficultyFilter]);
+
+  useEffect(() => {
+    fetchExercises();
+  }, [fetchExercises]);
 
   const handleMuscleToggle = (muscleId: string) => {
     setMuscleFilter(prev =>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Exercise, ExerciseType } from '@/types';
 
 interface UseExercisesParams {
@@ -23,7 +23,7 @@ export function useExercises(params: UseExercisesParams = {}): UseExercisesResul
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchExercises = async () => {
+  const fetchExercises = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -65,10 +65,6 @@ export function useExercises(params: UseExercisesParams = {}): UseExercisesResul
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchExercises();
   }, [
     params.type,
     params.difficulty,
@@ -78,6 +74,10 @@ export function useExercises(params: UseExercisesParams = {}): UseExercisesResul
     params.limit,
     params.offset,
   ]);
+
+  useEffect(() => {
+    fetchExercises();
+  }, [fetchExercises]);
 
   return {
     exercises,
@@ -103,7 +103,7 @@ export function useExerciseDetail(params: UseExerciseDetailParams): UseExerciseD
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchExercise = async () => {
+  const fetchExercise = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -126,13 +126,13 @@ export function useExerciseDetail(params: UseExerciseDetailParams): UseExerciseD
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.slug]);
 
   useEffect(() => {
     if (params.slug) {
       fetchExercise();
     }
-  }, [params.slug]);
+  }, [params.slug, fetchExercise]);
 
   return {
     exercise,

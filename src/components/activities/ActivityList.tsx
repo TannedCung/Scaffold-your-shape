@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useUser } from '@/hooks/useUser';
 import { useBatchSocialData } from '@/hooks/useBatchSocialData';
 import BatchSocialInteractions from './BatchSocialInteractions';
@@ -62,7 +62,7 @@ export default function ActivityList({
   const { showSuccess, showError } = useSnackbar();
   const { user, loading: userLoading } = useUser();
 
-  const activities = propActivities || [];
+  const activities = useMemo(() => propActivities || [], [propActivities]);
   const loading = propLoading !== undefined ? propLoading : false;
   const error = propError !== undefined ? propError : null;
 
